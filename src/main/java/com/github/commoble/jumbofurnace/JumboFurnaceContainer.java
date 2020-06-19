@@ -1,12 +1,16 @@
 package com.github.commoble.jumbofurnace;
 
+import com.github.commoble.jumbofurnace.config.ServerConfig;
+
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.IContainerProvider;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIntArray;
 import net.minecraft.util.IWorldPosCallable;
+import net.minecraft.util.IntArray;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -56,11 +60,12 @@ public class JumboFurnaceContainer extends Container
 	/** Used by the Server to determine whether the player is close enough to use the Container **/
 	private final IWorldPosCallable usabilityTest;
 	private final PlayerEntity player;
+	private final IIntArray furnaceData;
 
 	public static JumboFurnaceContainer getClientContainer(int id, PlayerInventory playerInventory)
 	{
 		// init client inventory with dummy slots
-		return new JumboFurnaceContainer(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new ItemStackHandler(9));
+		return new JumboFurnaceContainer(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new IntArray(4));
 	}
 	
 	/**
@@ -71,15 +76,16 @@ public class JumboFurnaceContainer extends Container
 	 */
 	public static IContainerProvider getServerContainerProvider(JumboFurnaceCoreTileEntity te, BlockPos activationPos)
 	{
-		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output);
+		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output, new JumboFurnaceData(te));
 	}
 	
-	protected JumboFurnaceContainer(int id, PlayerInventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs)
+	protected JumboFurnaceContainer(int id, PlayerInventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IIntArray furnaceData)
 	{
 		super(JumboFurnaceObjects.CONTAINER_TYPE, id);
 		
 		this.player = playerInventory.player;
 		this.usabilityTest = IWorldPosCallable.of(this.player.world, pos);
+		this.furnaceData = furnaceData;
 		
 		// add input slots
 		for (int row=0; row < SLOT_ROWS; row++)
@@ -101,7 +107,7 @@ public class JumboFurnaceContainer extends Container
 			{
 				int x = FUEL_START_X + SLOT_SPACING*column;
 				int index = row * SLOT_COLUMNS + column;
-				this.addSlot(new SlotItemHandler(fuel, index, x, y));
+				this.addSlot(new JumboFurnaceFuelSlot(fuel, index, x, y));
 			}
 		}
 		
@@ -113,7 +119,7 @@ public class JumboFurnaceContainer extends Container
 			{
 				int x = OUTPUT_START_X + SLOT_SPACING*column;
 				int index = row * SLOT_COLUMNS + column;
-				this.addSlot(new SlotItemHandler(outputs, index, x, y));
+				this.addSlot(new JumboFurnaceOutputSlot(this.player, outputs, index, x, y));
 			}
 		}
 		
@@ -135,6 +141,8 @@ public class JumboFurnaceContainer extends Container
 				this.addSlot(new Slot(playerInventory, index, x, y));
 			}
 		}
+
+		this.trackIntArray(furnaceData);
 	}
 
 	@Override
@@ -196,6 +204,44 @@ public class JumboFurnaceContainer extends Container
 		}
 		
 		return slotStackCopy;
+	}
+	
+	public int getBurnTimeRemaining()
+	{
+		return this.furnaceData.get(0);
+	}
+	
+	public int getItemBurnedValue()
+	{
+		return this.furnaceData.get(1);
+	}
+	
+	public int getCookProgress()
+	{
+		return this.furnaceData.get(2);
+	}
+
+	public int getCookProgressionScaled()
+	{
+		int cookProgress = this.getCookProgress();
+		int cookTimeForRecipe = ServerConfig.INSTANCE.jumboFurnaceCookTime.get();
+		return cookTimeForRecipe != 0 && cookProgress != 0 ? cookProgress * 24 / cookTimeForRecipe : 0;
+	}
+
+	public int getBurnLeftScaled()
+	{
+		int totalBurnTime = this.getItemBurnedValue();
+		if (totalBurnTime == 0)
+		{
+			totalBurnTime = 200;
+		}
+
+		return this.getBurnTimeRemaining() * 13 / totalBurnTime;
+	}
+
+	public boolean isBurning()
+	{
+		return this.getBurnTimeRemaining() > 0;
 	}
 
 }

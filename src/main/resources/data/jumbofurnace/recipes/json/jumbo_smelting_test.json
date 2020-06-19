@@ -1,0 +1,24 @@
+{
+	"type": "jumbofurnace:jumbo_smelting",
+	"ingredients": 
+	[
+		{
+			"tag": "minecraft:fishes"
+		},
+		{
+			"tag": "minecraft:fishes"
+		},
+		{
+			"tag": "minecraft:fishes"
+		},
+		{
+			"tag": "minecraft:fishes"
+		}
+	],
+	"result": 
+	{
+		"item": "minecraft:slime_ball",
+		"count": 3
+	},
+	"experience": 0.35
+}

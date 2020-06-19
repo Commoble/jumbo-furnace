@@ -24,6 +24,6 @@ public class InputItemHandler extends ItemStackHandler
 	{
 		super.onContentsChanged(slot);
 		this.te.markDirty();
-		this.te.onInputUpdated();
+		this.te.onInputInventoryChanged();
 	}
 }

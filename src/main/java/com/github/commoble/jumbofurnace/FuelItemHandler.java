@@ -25,7 +25,7 @@ public class FuelItemHandler extends ItemStackHandler
 	{
 		super.onContentsChanged(slot);
 		this.te.markDirty();
-		this.te.onFuelUpdated();
+		this.te.onFuelInventoryChanged();
 	}
 	
 	

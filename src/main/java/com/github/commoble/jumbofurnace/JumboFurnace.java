@@ -1,6 +1,8 @@
 package com.github.commoble.jumbofurnace;
 
 import com.github.commoble.jumbofurnace.client.ClientEvents;
+import com.github.commoble.jumbofurnace.config.ServerConfig;
+import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
 
 import net.minecraft.block.Block;
@@ -9,6 +11,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
@@ -29,6 +32,7 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 public class JumboFurnace
 {
 	public static final String MODID = "jumbofurnace";
+	public static final IRecipeType<JumboFurnaceRecipe> JUMBO_SMELTING_RECIPE_TYPE = IRecipeType.register("jumbofurnace:jumbo_smelting");
 	
 	public JumboFurnace()
 	{
@@ -37,6 +41,8 @@ public class JumboFurnace
 		
 		this.addModListeners(modBus);
 		this.addForgeListeners(forgeBus);
+		
+		ServerConfig.initConfig();
 		
 		if (FMLEnvironment.dist == Dist.CLIENT)
 		{
@@ -61,7 +67,7 @@ public class JumboFurnace
 		
 		containers.register(Names.JUMBO_FURNACE, () -> new ContainerType<>(JumboFurnaceContainer::getClientContainer));
 		
-		recipeSerializers.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceRecipeSerializer());
+		recipeSerializers.register(Names.JUMBO_SMELTING, () -> new JumboFurnaceRecipeSerializer(JUMBO_SMELTING_RECIPE_TYPE));
 	}
 	
 	private <T extends IForgeRegistryEntry<T>> DeferredRegister<T> makeDeferredRegister(IEventBus modBus, IForgeRegistry<T> registry)
