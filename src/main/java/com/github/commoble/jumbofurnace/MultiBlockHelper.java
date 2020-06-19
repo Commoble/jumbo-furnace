@@ -55,7 +55,7 @@ public class MultiBlockHelper
 	
 	public static List<BlockSnapshot> getSnapshotsIfPermitted(IWorld world, BlockPos corePos, BlockState againstState, Entity placer)
 	{
-		List<BlockSnapshot> snapshots = BlockHolders.JUMBO_FURNACE.getStatesForFurnace(world, corePos);
+		List<BlockSnapshot> snapshots = JumboFurnaceObjects.BLOCK.getStatesForFurnace(world, corePos);
 		return doesPlayerHavePermissionToMakeJumboFurnace(snapshots, againstState, placer)
 			? snapshots
 			: NO_SNAPSHOTS;
