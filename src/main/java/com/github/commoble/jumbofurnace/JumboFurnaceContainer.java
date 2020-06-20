@@ -1,7 +1,5 @@
 package com.github.commoble.jumbofurnace;
 
-import com.github.commoble.jumbofurnace.config.ServerConfig;
-
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
@@ -62,6 +60,7 @@ public class JumboFurnaceContainer extends Container
 	private final PlayerEntity player;
 	private final IIntArray furnaceData;
 
+	/** Container factory for opening the container clientside **/
 	public static JumboFurnaceContainer getClientContainer(int id, PlayerInventory playerInventory)
 	{
 		// init client inventory with dummy slots
@@ -69,7 +68,7 @@ public class JumboFurnaceContainer extends Container
 	}
 	
 	/**
-	 * 
+	 * Get the server container provider for NetworkHooks.openGui
 	 * @param te The TileEntity of the furnace core
 	 * @param activationPos The position of the block that the player actually activated to open the container (may be different than te.getPos)
 	 * @return
@@ -178,11 +177,7 @@ public class JumboFurnaceContainer extends Container
 				{
 					return ItemStack.EMPTY;
 				}
-				// otherwise, try to put it in the input slots
-				if (!this.mergeItemStack(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
-				{
-					return ItemStack.EMPTY;
-				}
+				// vanilla doesn't shift-click stuff into furnace input slots, so don't bother here either
 			}
 			
 			if (stackInSlot.isEmpty())
@@ -224,7 +219,7 @@ public class JumboFurnaceContainer extends Container
 	public int getCookProgressionScaled()
 	{
 		int cookProgress = this.getCookProgress();
-		int cookTimeForRecipe = ServerConfig.INSTANCE.jumboFurnaceCookTime.get();
+		int cookTimeForRecipe = JumboFurnace.SERVER_CONFIG.jumboFurnaceCookTime.get();
 		return cookTimeForRecipe != 0 && cookProgress != 0 ? cookProgress * 24 / cookTimeForRecipe : 0;
 	}
 

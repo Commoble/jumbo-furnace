@@ -2,28 +2,39 @@ package com.github.commoble.jumbofurnace;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+
+import javax.annotation.Nullable;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.RedstoneTorchBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.inventory.container.IContainerProvider;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.inventory.container.SimpleNamedContainerProvider;
+import net.minecraft.item.ItemStack;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.fml.network.NetworkHooks;
 
@@ -100,7 +111,67 @@ public class JumboFurnaceBlock extends Block
 		
 		return super.onBlockActivated(state, world, corePos, player, handIn, hit);
 	}
+
+	@Override
+	public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving)
+	{
+		if (state.getBlock() != newState.getBlock())
+		{
+			TileEntity te = world.getTileEntity(pos);
+			if (te instanceof JumboFurnaceCoreTileEntity)
+			{
+				JumboFurnaceCoreTileEntity core = (JumboFurnaceCoreTileEntity)te;
+				List<ItemStack> drops = new ArrayList<>();
+				double x = pos.getX() + 0.5D;
+				double y = pos.getY() + 0.5D;
+				double z = pos.getZ() + 0.5D;
+				float experience = 0;
+				for (int i=0; i<JumboFurnaceContainer.INPUT_SLOTS; i++)
+				{
+					drops.add(core.input.getStackInSlot(i));
+					drops.add(core.fuel.getStackInSlot(i));
+					drops.add(core.output.getStackInSlot(i));
+					experience += core.output.storedExperience[i];
+				}
+				for (ItemStack drop : drops)
+				{
+					InventoryHelper.spawnItemStack(world, x, y, z, drop);
+				}
+				PlayerEntity player = world.getClosestPlayer(x, y, z);
+				if (player != null)
+				{
+					JumboFurnaceOutputSlot.spawnExpOrbs(player, experience);
+				}
+				
+			}
+			
+			this.destroyNextBlockPos(world, state, pos);
+
+			super.onReplaced(state, world, pos, newState, isMoving);
+		}
+	}
 	
+	public void destroyNextBlockPos(World world, BlockState state, BlockPos pos)
+	{
+		if (state.has(X) && state.has(Y) && state.has(Z))
+		{
+			int xIndex = state.get(X);
+			int yIndex = state.get(Y);
+			int zIndex = state.get(Z);
+			
+			int nextXIndex = (xIndex + 1) % 3;
+			int nextYIndex = (xIndex == 2) ? (yIndex + 1) % 3 : yIndex;
+			int nextZIndex = (xIndex == 2 && yIndex == 2) ? (zIndex + 1) % 3 : zIndex;
+			
+			BlockPos nextPos = pos.add(nextXIndex - xIndex, nextYIndex - yIndex, nextZIndex - zIndex);
+			BlockState nextState = world.getBlockState(nextPos);
+			if (nextState.getBlock() == this)
+			{
+				world.destroyBlock(nextPos, true);
+			}
+		}
+	}
+
 	/**
 	 * Returns the assumed core position of a furnace cluster given one of its component blockstates.
 	 * Not guaranteed to return a useful position if an invalid blockstate is used.
@@ -149,11 +220,85 @@ public class JumboFurnaceBlock extends Block
 	}
 
 	/**
+	 * Called periodically clientside on blocks near the player to show effects
+	 * (like furnace fire particles). Note that this method is unrelated to
+	 * {@link randomTick} and {@link #needsRandomTick}, and will always be called
+	 * regardless of whether the block can receive random update ticks
+	 */
+	@Override
+	@OnlyIn(Dist.CLIENT)
+	public void animateTick(BlockState state, World worldIn, BlockPos pos, Random rand)
+	{
+		if (state.get(LIT))
+		{
+			double x = pos.getX() + 0.5D;
+			double y = pos.getY();
+			double z = pos.getZ() + 0.5D;
+			if (rand.nextDouble() < 0.1D)
+			{
+				worldIn.playSound(x, y, z, SoundEvents.BLOCK_FURNACE_FIRE_CRACKLE, SoundCategory.BLOCKS, 1.0F, 1.0F, false);
+			}
+
+			Direction direction = this.getSmelterHoleDirection(state);
+			if (direction != null)
+			{
+				Direction.Axis direction$axis = direction.getAxis();
+				double orthagonalOffset = rand.nextDouble() * 0.6D - 0.3D;
+				double xOff = direction$axis == Direction.Axis.X ? direction.getXOffset() * 0.52D : orthagonalOffset;
+				double yOff = rand.nextDouble() * 6.0D / 16.0D;
+				double zOff = direction$axis == Direction.Axis.Z ? direction.getZOffset() * 0.52D : orthagonalOffset;
+				worldIn.addParticle(ParticleTypes.SMOKE, x + xOff, y + yOff, z + zOff, 0.0D, 0.0D, 0.0D);
+				worldIn.addParticle(ParticleTypes.FLAME, x + xOff, y + yOff, z + zOff, 0.0D, 0.0D, 0.0D);
+			}
+		}
+	}
+	
+	/** Returns null if this isn't one of the blocks with the smelter holes **/
+	@Nullable
+	public Direction getSmelterHoleDirection(BlockState state)
+	{
+		if (state.has(X) && state.has(Y) && state.has(Z))
+		{
+			int y = state.get(Y);
+			if (y == 1)
+			{
+				int x = state.get(X);
+				int z = state.get(Z);
+				if (x == 1 && z == 0)
+				{
+					return Direction.NORTH;
+				}
+				else if (x == 1 && z == 2)
+				{
+					return Direction.SOUTH;
+				}
+				else if (x == 0 && z == 1)
+				{
+					return Direction.WEST;
+				}
+				else if (x == 2 && z == 1)
+				{
+					return Direction.EAST;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			else
+			{
+				return null;
+			}
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+	/**
 	 * Returns the blockstate with the given rotation from the passed blockstate. If
 	 * inapplicable, returns the passed blockstate.
-	 * 
-	 * @deprecated call via {@link IBlockState#withRotation(Rotation)} whenever
-	 *             possible. Implementing/overriding is fine.
 	 */
 	@Deprecated
 	@Override
@@ -186,9 +331,6 @@ public class JumboFurnaceBlock extends Block
 	/**
 	 * Returns the blockstate with the given mirror of the passed blockstate. If
 	 * inapplicable, returns the passed blockstate.
-	 * 
-	 * @deprecated call via {@link IBlockState#withMirror(Mirror)} whenever
-	 *             possible. Implementing/overriding is fine.
 	 */
 	@Deprecated
 	@Override

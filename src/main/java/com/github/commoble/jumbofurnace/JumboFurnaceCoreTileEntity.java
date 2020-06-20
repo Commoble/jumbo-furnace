@@ -3,10 +3,9 @@ package com.github.commoble.jumbofurnace;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.commoble.jumbofurnace.config.ServerConfig;
 import com.github.commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
 import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
-import com.github.commoble.jumbofurnace.recipes.RecipeHelper;
+import com.github.commoble.jumbofurnace.recipes.RecipeSorter;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.inventory.InventoryHelper;
@@ -18,6 +17,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -35,6 +35,10 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	public final ItemStackHandler fuel = new FuelItemHandler(this);
 	public final OutputItemHandler output = new OutputItemHandler(this);
 	
+	public final LazyOptional<IItemHandler> inputOptional = LazyOptional.of(() -> this.input);
+	public final LazyOptional<IItemHandler> fuelOptional = LazyOptional.of(() -> this.fuel);
+	public final LazyOptional<IItemHandler> outputOptional = LazyOptional.of(() -> this.output);
+	
 	public int burnTimeRemaining = 0;
 	public int lastItemBurnedValue = 200;
 	public int cookProgress = 0;
@@ -48,6 +52,15 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	public JumboFurnaceCoreTileEntity()
 	{
 		super(JumboFurnaceObjects.CORE_TE_TYPE);
+	}
+
+	@Override
+	public void remove()
+	{
+		this.inputOptional.invalidate();
+		this.fuelOptional.invalidate();
+		this.outputOptional.invalidate();
+		super.remove();
 	}
 
 	@Override
@@ -80,15 +93,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	
 	public int getBurnConsumption()
 	{
-		int recipes = this.cachedRecipes.getRecipeCount();
-		if (recipes <= 1)
-		{
-			return 1;
-		}
-		else
-		{
-			return (int)Math.ceil(Math.sqrt(recipes));
-		}
+		return Math.max(1, this.cachedRecipes.getRecipeCount());
 	}
 	
 	public boolean isBurning()
@@ -131,12 +136,12 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		// get all recipes allowed by furnace or jumbo furnace
 		// sort them by specificity (can we do this on recipe reload?)
 		// recipes requiring multiple ingredients = most important, ingredients with more matching items (tags) = less important
-		List<JumboFurnaceRecipe> recipes = RecipeHelper.getSortedFurnaceRecipes(this.world.getRecipeManager());
+		List<JumboFurnaceRecipe> recipes = RecipeSorter.INSTANCE.getSortedFurnaceRecipes(this.world.getRecipeManager());
 		// start assigning input slots to usable recipes as they are found
 		for (JumboFurnaceRecipe recipe : recipes)
 		{
 			// loop recipe over inputs until it can't match or we have no unused inputs left
-			while (wrapper.matchAndClaimInputs(recipe, this.world) && wrapper.hasUnusedInputsLeft());
+			while (wrapper.getRecipeCount() < JumboFurnace.SERVER_CONFIG.maxSimultaneousRecipes.get() && wrapper.matchAndClaimInputs(recipe, this.world) && wrapper.hasUnusedInputsLeft());
 		}
 		// when all input slots are claimed or the recipe list is exhausted, set the new recipe cache
 		this.cachedRecipes = wrapper;
@@ -250,7 +255,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 					this.cookProgress++;
 					
 					// if cook progress is complete, reset cook progress and do crafting
-					if (this.cookProgress >= ServerConfig.INSTANCE.jumboFurnaceCookTime.get())
+					if (this.cookProgress >= JumboFurnace.SERVER_CONFIG.jumboFurnaceCookTime.get())
 					{
 						this.cookProgress = 0;
 						this.craft();
@@ -287,15 +292,6 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 			
 			
 		}
-		
-		
-		if (this.isBurning())
-		{
-			this.burnTimeRemaining -= this.getBurnConsumption();
-		}
-		if (!this.world.isRemote)
-		{
-		}
 	}
 	
 	public void consumeFuel()
@@ -316,6 +312,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 				{
 					this.fuel.setStackInSlot(slot, stackInSlot.getContainerItem());
 				}
+				break;
 			}
 		}
 	}
