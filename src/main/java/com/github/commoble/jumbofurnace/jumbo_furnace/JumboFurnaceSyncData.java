@@ -1,12 +1,12 @@
-package com.github.commoble.jumbofurnace;
+package com.github.commoble.jumbofurnace.jumbo_furnace;
 
 import net.minecraft.util.IIntArray;
 
-public class JumboFurnaceData implements IIntArray
+public class JumboFurnaceSyncData implements IIntArray
 {
 	private final JumboFurnaceCoreTileEntity te;
 	
-	public JumboFurnaceData(JumboFurnaceCoreTileEntity te)
+	public JumboFurnaceSyncData(JumboFurnaceCoreTileEntity te)
 	{
 		this.te = te;
 	}

@@ -1,8 +1,9 @@
-package com.github.commoble.jumbofurnace;
+package com.github.commoble.jumbofurnace.jumbo_furnace;
 
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
 import com.google.common.collect.ImmutableList;
 
 import net.minecraft.block.BlockState;

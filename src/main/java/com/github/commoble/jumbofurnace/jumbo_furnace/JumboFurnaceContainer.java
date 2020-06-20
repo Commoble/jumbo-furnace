@@ -1,4 +1,7 @@
-package com.github.commoble.jumbofurnace;
+package com.github.commoble.jumbofurnace.jumbo_furnace;
+
+import com.github.commoble.jumbofurnace.JumboFurnace;
+import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -75,7 +78,7 @@ public class JumboFurnaceContainer extends Container
 	 */
 	public static IContainerProvider getServerContainerProvider(JumboFurnaceCoreTileEntity te, BlockPos activationPos)
 	{
-		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output, new JumboFurnaceData(te));
+		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output, new JumboFurnaceSyncData(te));
 	}
 	
 	protected JumboFurnaceContainer(int id, PlayerInventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IIntArray furnaceData)

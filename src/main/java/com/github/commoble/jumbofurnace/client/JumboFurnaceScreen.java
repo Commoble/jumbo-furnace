@@ -1,6 +1,6 @@
 package com.github.commoble.jumbofurnace.client;
 
-import com.github.commoble.jumbofurnace.JumboFurnaceContainer;
+import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
 
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;

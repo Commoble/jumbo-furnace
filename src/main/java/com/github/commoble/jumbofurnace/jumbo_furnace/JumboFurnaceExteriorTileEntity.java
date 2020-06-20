@@ -1,6 +1,8 @@
-package com.github.commoble.jumbofurnace;
+package com.github.commoble.jumbofurnace.jumbo_furnace;
 
 import javax.annotation.Nullable;
+
+import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.tileentity.TileEntity;

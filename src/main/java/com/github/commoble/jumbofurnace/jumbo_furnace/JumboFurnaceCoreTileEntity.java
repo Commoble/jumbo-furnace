@@ -1,8 +1,10 @@
-package com.github.commoble.jumbofurnace;
+package com.github.commoble.jumbofurnace.jumbo_furnace;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.commoble.jumbofurnace.JumboFurnace;
+import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
 import com.github.commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
 import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import com.github.commoble.jumbofurnace.recipes.RecipeSorter;

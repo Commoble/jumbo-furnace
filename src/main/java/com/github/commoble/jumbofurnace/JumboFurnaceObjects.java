@@ -1,5 +1,9 @@
 package com.github.commoble.jumbofurnace;
 
+import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceBlock;
+import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
+import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceCoreTileEntity;
+import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorTileEntity;
 import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 
 import net.minecraft.inventory.container.ContainerType;

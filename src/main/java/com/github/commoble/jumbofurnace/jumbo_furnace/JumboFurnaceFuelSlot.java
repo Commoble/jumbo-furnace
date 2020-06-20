@@ -1,4 +1,4 @@
-package com.github.commoble.jumbofurnace;
+package com.github.commoble.jumbofurnace.jumbo_furnace;
 
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.ForgeHooks;

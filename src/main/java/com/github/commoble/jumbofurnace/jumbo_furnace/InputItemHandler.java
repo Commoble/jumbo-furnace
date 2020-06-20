@@ -1,4 +1,4 @@
-package com.github.commoble.jumbofurnace;
+package com.github.commoble.jumbofurnace.jumbo_furnace;
 
 import com.github.commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
 

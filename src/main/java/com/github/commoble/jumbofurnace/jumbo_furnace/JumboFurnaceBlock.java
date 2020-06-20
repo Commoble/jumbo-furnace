@@ -1,10 +1,12 @@
-package com.github.commoble.jumbofurnace;
+package com.github.commoble.jumbofurnace.jumbo_furnace;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import javax.annotation.Nullable;
+
+import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
