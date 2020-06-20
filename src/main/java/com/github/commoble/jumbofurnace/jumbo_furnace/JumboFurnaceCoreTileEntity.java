@@ -214,11 +214,12 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	public void tick()
 	{
 		// if burning, decrement burn time
+		boolean dirty = false;
 		boolean wasBurningBeforeTick = this.isBurning();
 		if (wasBurningBeforeTick)
 		{
 			this.burnTimeRemaining -= this.getBurnConsumption();
-			this.markDirty();
+			dirty = true;
 		}
 		
 		if (!this.world.isRemote)
@@ -262,12 +263,12 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 						this.cookProgress = 0;
 						this.craft();
 					}
-					this.markDirty();
+					dirty = true;
 				}
 				else // otherwise, reset cook progress
 				{
 					this.cookProgress = 0;
-					this.markDirty();
+					dirty = true;
 				}
 			}
 			// otherwise, if not burning but has cookprogress, reduce cook progress
@@ -281,7 +282,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 				{
 					this.cookProgress = 0;
 				}
-				this.markDirty();
+				dirty = true;
 			}
 			
 			boolean isBurningAfterTick = this.isBurning();
@@ -290,6 +291,11 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 			if (isBurningAfterTick != wasBurningBeforeTick)
 			{
 				this.updateBurningBlockstates(isBurningAfterTick);
+			}
+			
+			if (dirty)
+			{
+				this.world.notifyBlockUpdate(this.pos, this.getBlockState(), this.getBlockState(), 3);
 			}
 			
 			
