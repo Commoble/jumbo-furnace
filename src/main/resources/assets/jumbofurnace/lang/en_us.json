@@ -1,4 +1,5 @@
 {
 	"block.jumbofurnace.jumbo_furnace": "Jumbo Furnace",
-	"container.jumbofurnace.jumbo_furnace": "Jumbo Furnace"
+	"container.jumbofurnace.jumbo_furnace": "Jumbo Furnace",
+	"gui.jumbofurnace.category.jumbo_smelting": "Jumbo Smelting"
 }
