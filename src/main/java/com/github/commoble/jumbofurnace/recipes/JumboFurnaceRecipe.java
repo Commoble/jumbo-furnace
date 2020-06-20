@@ -118,13 +118,14 @@ public class JumboFurnaceRecipe implements IRecipe<ClaimableRecipeWrapper>
 		int totalItems = ForgeRegistries.ITEMS.getKeys().size();
 		for (Ingredient ingredient : this.ingredients)
 		{
+			ItemStack[] matchingStacks = ingredient.getMatchingStacks();
 			// safe to assume that recipe has at least one ingredient, and at least two items are registered to forge
-			int matchingItems = Math.min(totalItems, ingredient.getMatchingStacks().length);
+			int matchingItems = Math.min(totalItems, matchingStacks.length);
 			
 			// this equation gives a value of 1D when matchingitems = 1, and 0D when matchingItems = totalItems
 			double matchFactor = (double)(totalItems - matchingItems) / (double)(totalItems - 1);
 			
-			int ingredientWeight = (int)(100D * matchFactor);
+			int ingredientWeight = (int)(100D * matchingStacks[0].getCount() * matchFactor);
 			specificity += ingredientWeight;
 		}
 		return specificity;

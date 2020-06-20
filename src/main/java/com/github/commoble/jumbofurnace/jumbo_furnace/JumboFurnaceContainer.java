@@ -180,7 +180,11 @@ public class JumboFurnaceContainer extends Container
 				{
 					return ItemStack.EMPTY;
 				}
-				// vanilla doesn't shift-click stuff into furnace input slots, so don't bother here either
+				// otherwise, try to put it in the input slots
+				if (!this.mergeItemStack(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
+				{
+					return ItemStack.EMPTY;
+				}
 			}
 			
 			if (stackInSlot.isEmpty())

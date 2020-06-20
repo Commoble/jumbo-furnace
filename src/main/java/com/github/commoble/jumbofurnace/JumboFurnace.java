@@ -21,6 +21,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.ContainerType;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.IRecipeType;
@@ -74,11 +75,14 @@ public class JumboFurnace
 	{
 		// register forge objects
 		DeferredRegister<Block> blocks = this.makeDeferredRegister(modBus, ForgeRegistries.BLOCKS);
+		DeferredRegister<Item> items = this.makeDeferredRegister(modBus, ForgeRegistries.ITEMS);
 		DeferredRegister<TileEntityType<?>> tileEntities = this.makeDeferredRegister(modBus, ForgeRegistries.TILE_ENTITIES);
 		DeferredRegister<ContainerType<?>> containers = this.makeDeferredRegister(modBus, ForgeRegistries.CONTAINERS);
 		DeferredRegister<IRecipeSerializer<?>> recipeSerializers = this.makeDeferredRegister(modBus, ForgeRegistries.RECIPE_SERIALIZERS);
 		
 		blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.from(Blocks.FURNACE)));
+		
+		items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties()));
 		
 		tileEntities.register(Names.JUMBO_FURNACE_CORE,
 			() -> TileEntityType.Builder.create(JumboFurnaceCoreTileEntity::new, JumboFurnaceObjects.BLOCK).build(null));

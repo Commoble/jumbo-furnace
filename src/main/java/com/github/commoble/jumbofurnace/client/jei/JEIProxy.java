@@ -5,16 +5,19 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.github.commoble.jumbofurnace.JumboFurnace;
+import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
 import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import com.github.commoble.jumbofurnace.recipes.RecipeSorter;
 import com.google.common.collect.ImmutableList;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.RecipeManager;
 import net.minecraft.util.ResourceLocation;
 
@@ -42,6 +45,17 @@ public class JEIProxy implements IModPlugin
 	{
 		this.jumboSmeltingCategory = new JumboSmeltingCategory(registration.getJeiHelpers().getGuiHelper());
 		registration.addRecipeCategories(this.jumboSmeltingCategory);
+	}
+
+	/**
+	 * Register recipe catalysts. Recipe Catalysts are ingredients that are needed
+	 * in order to craft other things. Vanilla examples of Recipe Catalysts are the
+	 * Crafting Table and Furnace.
+	 */
+	@Override
+	public void registerRecipeCatalysts(IRecipeCatalystRegistration registration)
+	{
+		registration.addRecipeCatalyst(new ItemStack(JumboFurnaceObjects.JEI_DUMMY), JumboSmeltingCategory.ID);
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package com.github.commoble.jumbofurnace.recipes;
 
+import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -33,10 +34,10 @@ public class JumboFurnaceRecipeSerializer extends ForgeRegistryEntry<IRecipeSeri
 		{
 			throw new JsonParseException("No ingredients for jumbo furnace recipe");
 		}
-//		else if (ingredients.size() > JumboFurnaceContainer.INPUT_SLOTS)
-//		{
-//			throw new JsonParseException("Too many ingredients for jumbo furnace recipe! the max is " + (JumboFurnaceContainer.INPUT_SLOTS));
-//		}
+		else if (ingredients.size() > JumboFurnaceContainer.INPUT_SLOTS)
+		{
+			throw new JsonParseException("Too many ingredients for jumbo furnace recipe! the max is " + (JumboFurnaceContainer.INPUT_SLOTS));
+		}
 		else
 		{
 			ItemStack result = ShapedRecipe.deserializeItem(JSONUtils.getJsonObject(json, "result"));

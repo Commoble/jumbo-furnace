@@ -7,6 +7,7 @@ import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorTileEn
 import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 
 import net.minecraft.inventory.container.ContainerType;
+import net.minecraft.item.Item;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraftforge.registries.ObjectHolder;
@@ -28,4 +29,7 @@ public class JumboFurnaceObjects
 	
 	@ObjectHolder(Names.JUMBO_SMELTING)
 	public static final IRecipeSerializer<JumboFurnaceRecipe> RECIPE_SERIALIZER = null;
+	
+	@ObjectHolder(Names.JUMBO_FURNACE_JEI)
+	public static final Item JEI_DUMMY = null;
 }
