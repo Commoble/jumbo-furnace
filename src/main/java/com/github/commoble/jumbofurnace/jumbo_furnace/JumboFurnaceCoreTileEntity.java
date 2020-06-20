@@ -19,7 +19,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -300,7 +299,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 				BlockPos.getAllInBox(this.getPos().add(-1,-1,-1), this.getPos().add(1,1,1)).forEach(subPos ->
 				{
 					BlockState state = this.world.getBlockState(subPos);
-					this.world.notifyBlockUpdate(subPos.toImmutable(), state,state, Constants.BlockFlags.DEFAULT | Constants.BlockFlags.NO_RERENDER);
+					this.world.notifyNeighbors(subPos, state.getBlock());
 				});
 					
 			}
