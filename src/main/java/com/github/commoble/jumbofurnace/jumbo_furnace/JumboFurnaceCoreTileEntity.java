@@ -298,7 +298,11 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 			{
 				this.markDirty();
 				BlockPos.getAllInBox(this.getPos().add(-1,-1,-1), this.getPos().add(1,1,1)).forEach(subPos ->
-					this.world.notifyBlockUpdate(subPos.toImmutable(), this.getBlockState(), this.getBlockState(), Constants.BlockFlags.DEFAULT | Constants.BlockFlags.NO_RERENDER));
+				{
+					BlockState state = this.world.getBlockState(subPos);
+					this.world.notifyBlockUpdate(subPos.toImmutable(), state,state, Constants.BlockFlags.DEFAULT | Constants.BlockFlags.NO_RERENDER);
+				});
+					
 			}
 			
 			
