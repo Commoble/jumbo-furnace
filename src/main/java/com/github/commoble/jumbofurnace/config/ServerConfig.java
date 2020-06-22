@@ -19,7 +19,7 @@ public class ServerConfig
 		this.maxSimultaneousRecipes = subscriber.subscribe(builder
 			.comment("Maximum recipes the Jumbo Furnace is able to process simultaneously")
 			.translation("jumbofurnace.max_simultaneous_recipes")
-			.defineInRange("max_simultaneous_recipes", 16, 1, Integer.MAX_VALUE));
+			.defineInRange("max_simultaneous_recipes", 1, 1, Integer.MAX_VALUE));
 		builder.pop();
 	}
 }
