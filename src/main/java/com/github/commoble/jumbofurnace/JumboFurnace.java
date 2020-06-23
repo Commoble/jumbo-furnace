@@ -3,6 +3,8 @@ package com.github.commoble.jumbofurnace;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import com.github.commoble.jumbofurnace.client.ClientEvents;
 import com.github.commoble.jumbofurnace.config.ConfigHelper;
 import com.github.commoble.jumbofurnace.config.ServerConfig;
@@ -18,6 +20,7 @@ import com.github.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.ContainerType;
@@ -29,8 +32,12 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorld;
+import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
@@ -82,7 +89,18 @@ public class JumboFurnace
 		
 		blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.from(Blocks.FURNACE)));
 		
-		items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties()));
+		items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties())
+		{
+			/**
+			 * allows items to add custom lines of information to the mouseover description
+			 */
+			@Override
+			@OnlyIn(Dist.CLIENT)
+			public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
+			{
+				tooltip.add(new TranslationTextComponent("jumbofurnace.jumbo_furnace_info_tooltip"));
+			}
+		});
 		
 		tileEntities.register(Names.JUMBO_FURNACE_CORE,
 			() -> TileEntityType.Builder.create(JumboFurnaceCoreTileEntity::new, JumboFurnaceObjects.BLOCK).build(null));
