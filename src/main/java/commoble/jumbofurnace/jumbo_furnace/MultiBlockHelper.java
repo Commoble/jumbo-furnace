@@ -7,9 +7,9 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 
+import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.JumboFurnaceObjects;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
@@ -51,7 +51,7 @@ public class MultiBlockHelper
 	public static boolean canJumboFurnaceFormAt(IWorld world, BlockPos corePos, BlockPos placePos)
 	{
 		return get3x3CubeAround(corePos)
-			.allMatch(pos -> pos.equals(placePos) || world.getBlockState(pos).getBlock() == Blocks.FURNACE);
+			.allMatch(pos -> pos.equals(placePos) || JumboFurnace.JUMBOFURNACEABLE_TAG.contains(world.getBlockState(pos).getBlock()));
 	}
 	
 	public static Stream<BlockPos> get3x3CubeAround(BlockPos pos)

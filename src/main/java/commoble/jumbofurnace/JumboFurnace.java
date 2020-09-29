@@ -29,6 +29,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ITag;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
@@ -60,6 +62,8 @@ public class JumboFurnace
 {
 	public static final String MODID = "jumbofurnace";
 	public static final IRecipeType<JumboFurnaceRecipe> JUMBO_SMELTING_RECIPE_TYPE = IRecipeType.register("jumbofurnace:jumbo_smelting");
+	public static final ITag<Block> JUMBOFURNACEABLE_TAG = BlockTags.makeWrapperTag(MODID + ":" + "jumbofurnaceable");
+	
 	public static ServerConfig SERVER_CONFIG;
 	
 	public JumboFurnace()
@@ -134,7 +138,7 @@ public class JumboFurnace
 	{
 		Block block = event.getPlacedBlock().getBlock();
 		IWorld world = event.getWorld();
-		if (!(event instanceof EntityMultiPlaceEvent) && block == Blocks.FURNACE && world instanceof World)
+		if (!(event instanceof EntityMultiPlaceEvent) && JumboFurnace.JUMBOFURNACEABLE_TAG.contains(block) && world instanceof World)
 		{
 			BlockPos pos = event.getPos();
 			BlockState againstState = event.getPlacedAgainst();
@@ -148,9 +152,15 @@ public class JumboFurnace
 				BlockPos newPos = pair.getFirst();
 				BlockState newState = pair.getSecond();
 				TileEntity te = world.getTileEntity(newPos);
-				te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP).ifPresent(handler -> addItemsToList(stacks, handler));
-				te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.DOWN).ifPresent(handler -> addItemsToList(stacks, handler));
-				te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.NORTH).ifPresent(handler -> addItemsToList(stacks, handler));
+				// attempt to remove items from existing itemhandlers if possible
+				if (te != null)
+				{
+					for (Direction dir : Direction.values())
+					{
+						te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, dir).ifPresent(handler -> addItemsToList(stacks, handler));
+					}
+					te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).ifPresent(handler -> addItemsToList(stacks, handler));
+				}
 				world.setBlockState(newPos, newState, 3);
 			}
 			if (!stacks.isEmpty())
