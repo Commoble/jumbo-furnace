@@ -6,6 +6,8 @@ import java.util.Random;
 
 import javax.annotation.Nullable;
 
+import com.mojang.datafixers.util.Pair;
+
 import commoble.jumbofurnace.JumboFurnaceObjects;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -26,7 +28,6 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Mirror;
-import net.minecraft.util.RegistryKey;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
@@ -37,7 +38,6 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 public class JumboFurnaceBlock extends Block
@@ -185,9 +185,9 @@ public class JumboFurnaceBlock extends Block
 			&& state.get(Z) == 1;
 	}
 	
-	public List<BlockSnapshot> getStatesForFurnace(RegistryKey<World> key, IWorld world, BlockPos corePos)
+	public List<Pair<BlockPos, BlockState>> getStatesForFurnace(IWorld world, BlockPos corePos)
 	{
-		List<BlockSnapshot> snapshots = new ArrayList<>(27);
+		List<Pair<BlockPos, BlockState>> pairs = new ArrayList<>(27);
 		
 		for (int x=0; x<3; x++)
 		{
@@ -195,18 +195,18 @@ public class JumboFurnaceBlock extends Block
 			{
 				for (int z=0; z<3; z++)
 				{
-//					BlockState state = this.getDefaultState()
-//						.with(X, x)
-//						.with(Y, y)
-//						.with(Z, z);
+					BlockState state = this.getDefaultState()
+						.with(X, x)
+						.with(Y, y)
+						.with(Z, z);
 					BlockPos pos = corePos.add(x-1, y-1, z-1);
-					BlockSnapshot snapshot = BlockSnapshot.create(key, world, pos);
-					snapshots.add(snapshot);
+//					BlockSnapshot snapshot = BlockSnapshot.create(key, world, pos);
+					pairs.add(Pair.of(pos, state));
 				}
 			}
 		}
 		
-		return snapshots;
+		return pairs;
 	}
 
 	/**

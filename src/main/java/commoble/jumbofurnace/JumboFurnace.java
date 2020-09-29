@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.mojang.datafixers.util.Pair;
+
 import commoble.jumbofurnace.client.ClientEvents;
 import commoble.jumbofurnace.config.ConfigHelper;
 import commoble.jumbofurnace.config.ServerConfig;
@@ -38,7 +40,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
@@ -141,14 +142,16 @@ public class JumboFurnace
 			List<ItemStack> stacks = new ArrayList<>();
 			
 			// returns a non-empty list if we can make furnace
-			List<BlockSnapshot> snapshots = MultiBlockHelper.getJumboFurnaceStates(((World)world).getDimensionKey(), world, pos, againstState, entity);
-			for (BlockSnapshot snapshot : snapshots)
+			List<Pair<BlockPos, BlockState>> pairs = MultiBlockHelper.getJumboFurnaceStates(((World)world).getDimensionKey(), world, pos, againstState, entity);
+			for (Pair<BlockPos, BlockState> pair : pairs)
 			{
-				TileEntity te = world.getTileEntity(snapshot.getPos());
+				BlockPos newPos = pair.getFirst();
+				BlockState newState = pair.getSecond();
+				TileEntity te = world.getTileEntity(newPos);
 				te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP).ifPresent(handler -> addItemsToList(stacks, handler));
 				te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.DOWN).ifPresent(handler -> addItemsToList(stacks, handler));
 				te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.NORTH).ifPresent(handler -> addItemsToList(stacks, handler));
-				snapshot.getWorld().setBlockState(snapshot.getPos(), snapshot.getReplacedBlock(), 3);
+				world.setBlockState(newPos, newState, 3);
 			}
 			if (!stacks.isEmpty())
 			{
