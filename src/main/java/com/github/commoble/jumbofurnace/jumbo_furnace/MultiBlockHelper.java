@@ -9,8 +9,10 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
@@ -26,11 +28,11 @@ public class MultiBlockHelper
 	 * @param placePos
 	 * @return
 	 */
-	public static List<BlockSnapshot> getJumboFurnaceStates(IWorld world, BlockPos placePos, BlockState againstState, Entity entity)
+	public static List<BlockSnapshot> getJumboFurnaceStates(RegistryKey<World> key, IWorld world, BlockPos placePos, BlockState againstState, Entity entity)
 	{
 		return get3x3CubeAround(placePos)
 			.filter(pos -> canJumboFurnaceFormAt(world, pos, placePos))
-			.map(pos -> getSnapshotsIfPermitted(world, pos, againstState, entity))
+			.map(pos -> getSnapshotsIfPermitted(key, world, pos, againstState, entity))
 			.filter(list -> !list.isEmpty())
 			.findFirst()
 			.orElse(ImmutableList.of());
@@ -54,9 +56,9 @@ public class MultiBlockHelper
 		return BlockPos.getAllInBox(pos.add(-1, -1, -1), pos.add(1,1,1));
 	}
 	
-	public static List<BlockSnapshot> getSnapshotsIfPermitted(IWorld world, BlockPos corePos, BlockState againstState, Entity placer)
+	public static List<BlockSnapshot> getSnapshotsIfPermitted(RegistryKey<World> key, IWorld world, BlockPos corePos, BlockState againstState, Entity placer)
 	{
-		List<BlockSnapshot> snapshots = JumboFurnaceObjects.BLOCK.getStatesForFurnace(world, corePos);
+		List<BlockSnapshot> snapshots = JumboFurnaceObjects.BLOCK.getStatesForFurnace(key, world, corePos);
 		return doesPlayerHavePermissionToMakeJumboFurnace(snapshots, againstState, placer)
 			? snapshots
 			: NO_SNAPSHOTS;

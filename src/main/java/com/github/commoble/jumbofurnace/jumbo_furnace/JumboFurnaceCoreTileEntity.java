@@ -66,9 +66,9 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	}
 
 	@Override
-	public void read(CompoundNBT compound)
+	public void read(BlockState state, CompoundNBT compound)
 	{
-		super.read(compound);
+		super.read(state, compound);
 		this.input.deserializeNBT(compound.getCompound(INPUT));
 		this.fuel.deserializeNBT(compound.getCompound(FUEL));
 		this.output.deserializeNBT(compound.getCompound(OUTPUT));
@@ -299,7 +299,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 				BlockPos.getAllInBox(this.getPos().add(-1,-1,-1), this.getPos().add(1,1,1)).forEach(subPos ->
 				{
 					BlockState state = this.world.getBlockState(subPos);
-					this.world.notifyNeighbors(subPos, state.getBlock());
+					this.world.notifyNeighborsOfStateChange(subPos, state.getBlock());
 				});
 					
 			}

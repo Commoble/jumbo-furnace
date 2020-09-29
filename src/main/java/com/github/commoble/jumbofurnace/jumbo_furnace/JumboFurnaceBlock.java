@@ -27,6 +27,7 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Mirror;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
@@ -78,18 +79,6 @@ public class JumboFurnaceBlock extends Block
 			? JumboFurnaceObjects.CORE_TE_TYPE.create()
 			: JumboFurnaceObjects.EXTERIOR_TE_TYPE.create();
 	}
-
-	/**
-	 * Amount of light emitted
-	 * 
-	 * @deprecated prefer calling {@link IBlockState#getLightValue()}
-	 */
-	@Override
-	@Deprecated
-	public int getLightValue(BlockState state)
-	{
-		return state.get(LIT) ? super.getLightValue(state) : 0;
-	}
 	
 	@Deprecated
 	@Override
@@ -139,7 +128,7 @@ public class JumboFurnaceBlock extends Block
 				{
 					InventoryHelper.spawnItemStack(world, x, y, z, drop);
 				}
-				PlayerEntity player = world.getClosestPlayer(x, y, z);
+				PlayerEntity player = world.getClosestPlayer(x, y, z, 16D, null);
 				if (player != null)
 				{
 					JumboFurnaceOutputSlot.spawnExpOrbs(player, experience);
@@ -155,7 +144,7 @@ public class JumboFurnaceBlock extends Block
 	
 	public void destroyNextBlockPos(World world, BlockState state, BlockPos pos)
 	{
-		if (state.has(X) && state.has(Y) && state.has(Z))
+		if (state.hasProperty(X) && state.hasProperty(Y) && state.hasProperty(Z))
 		{
 			int xIndex = state.get(X);
 			int yIndex = state.get(Y);
@@ -183,21 +172,21 @@ public class JumboFurnaceBlock extends Block
 	 */
 	public BlockPos getCorePos(BlockState exteriorState, BlockPos exteriorPos)
 	{
-		int xOff = exteriorState.has(X) ? 1 - exteriorState.get(X) : 0;
-		int yOff = exteriorState.has(Y) ? 1 - exteriorState.get(Y) : 0;
-		int zOff = exteriorState.has(Z) ? 1 - exteriorState.get(Z) : 0;
+		int xOff = exteriorState.hasProperty(X) ? 1 - exteriorState.get(X) : 0;
+		int yOff = exteriorState.hasProperty(Y) ? 1 - exteriorState.get(Y) : 0;
+		int zOff = exteriorState.hasProperty(Z) ? 1 - exteriorState.get(Z) : 0;
 		return exteriorPos.add(xOff, yOff, zOff);
 	}
 
 	public boolean isCore(BlockState state)
 	{
-		return state.has(X) && state.has(Y) && state.has(Z)
+		return state.hasProperty(X) && state.hasProperty(Y) && state.hasProperty(Z)
 			&& state.get(X) == 1
 			&& state.get(Y) == 1
 			&& state.get(Z) == 1;
 	}
 	
-	public List<BlockSnapshot> getStatesForFurnace(IWorld world, BlockPos corePos)
+	public List<BlockSnapshot> getStatesForFurnace(RegistryKey<World> key, IWorld world, BlockPos corePos)
 	{
 		List<BlockSnapshot> snapshots = new ArrayList<>(27);
 		
@@ -207,12 +196,12 @@ public class JumboFurnaceBlock extends Block
 			{
 				for (int z=0; z<3; z++)
 				{
-					BlockState state = this.getDefaultState()
-						.with(X, x)
-						.with(Y, y)
-						.with(Z, z);
+//					BlockState state = this.getDefaultState()
+//						.with(X, x)
+//						.with(Y, y)
+//						.with(Z, z);
 					BlockPos pos = corePos.add(x-1, y-1, z-1);
-					BlockSnapshot snapshot = new BlockSnapshot(world, pos, state);
+					BlockSnapshot snapshot = BlockSnapshot.create(key, world, pos);
 					snapshots.add(snapshot);
 				}
 			}
@@ -259,7 +248,7 @@ public class JumboFurnaceBlock extends Block
 	@Nullable
 	public Direction getSmelterHoleDirection(BlockState state)
 	{
-		if (state.has(X) && state.has(Y) && state.has(Z))
+		if (state.hasProperty(X) && state.hasProperty(Y) && state.hasProperty(Z))
 		{
 			int y = state.get(Y);
 			if (y == 1)
@@ -306,7 +295,7 @@ public class JumboFurnaceBlock extends Block
 	@Override
 	public BlockState rotate(BlockState state, Rotation rot)
 	{
-		if (state.has(X) && state.has(Z))
+		if (state.hasProperty(X) && state.hasProperty(Z))
 		{
 			int x = state.get(X);
 			int z = state.get(Z);
@@ -338,7 +327,7 @@ public class JumboFurnaceBlock extends Block
 	@Override
 	public BlockState mirror(BlockState state, Mirror mirror)
 	{
-		if (state.has(X) && state.has(Z))
+		if (state.hasProperty(X) && state.hasProperty(Z))
 		{
 			switch(mirror)
 			{

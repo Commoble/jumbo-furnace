@@ -4,6 +4,7 @@ import com.github.commoble.jumbofurnace.JumboFurnace;
 import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
 import com.github.commoble.jumbofurnace.Names;
 import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
+import com.mojang.blaze3d.matrix.MatrixStack;
 
 import mezz.jei.api.constants.ModIds;
 import mezz.jei.api.constants.VanillaTypes;
@@ -84,11 +85,11 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	}
 
 	@Override
-	public void draw(JumboFurnaceRecipe recipe, double mouseX, double mouseY)
+	public void draw(JumboFurnaceRecipe recipe, MatrixStack stack, double mouseX, double mouseY)
 	{
-		this.backgroundFlame.draw(66,38);
-		this.animatedFlame.draw(66, 38);
-		this.arrow.draw(60, 18);
+		this.backgroundFlame.draw(stack, 66, 38);
+		this.animatedFlame.draw(stack, 66, 38);
+		this.arrow.draw(stack, 60, 18);
 
 		float experience = recipe.experience;
 		if (experience > 0)
@@ -97,7 +98,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 			Minecraft minecraft = Minecraft.getInstance();
 			FontRenderer fontRenderer = minecraft.fontRenderer;
 			int stringWidth = fontRenderer.getStringWidth(experienceString);
-			fontRenderer.drawString(experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080);
+			fontRenderer.drawString(stack, experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080);
 		}
 	}
 

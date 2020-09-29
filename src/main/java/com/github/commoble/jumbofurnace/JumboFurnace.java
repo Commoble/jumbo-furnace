@@ -40,12 +40,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -114,35 +114,35 @@ public class JumboFurnace
 	
 	private <T extends IForgeRegistryEntry<T>> DeferredRegister<T> makeDeferredRegister(IEventBus modBus, IForgeRegistry<T> registry)
 	{
-		DeferredRegister<T> register = new DeferredRegister<>(registry, MODID);
+		DeferredRegister<T> register = DeferredRegister.create(registry, MODID);
 		register.register(modBus);
 		return register;
 	}
 	
 	private void addForgeListeners(IEventBus forgeBus)
 	{
-		forgeBus.addListener(this::onServerStarting);
+		forgeBus.addListener(this::onAddServerReloadListeners);
 		forgeBus.addListener(this::onEntityPlaceBlock);
 	}
 	
-	private void onServerStarting(FMLServerStartingEvent event)
+	private void onAddServerReloadListeners(AddReloadListenerEvent event)
 	{
-		event.getServer().getResourceManager().addReloadListener(RecipeSorter.INSTANCE);
+		event.addListener(RecipeSorter.INSTANCE);
 	}
 	
 	private void onEntityPlaceBlock(EntityPlaceEvent event)
 	{
 		Block block = event.getPlacedBlock().getBlock();
-		if (!(event instanceof EntityMultiPlaceEvent) && block == Blocks.FURNACE)
+		IWorld world = event.getWorld();
+		if (!(event instanceof EntityMultiPlaceEvent) && block == Blocks.FURNACE && world instanceof World)
 		{
-			IWorld world = event.getWorld();
 			BlockPos pos = event.getPos();
 			BlockState againstState = event.getPlacedAgainst();
 			Entity entity = event.getEntity();
 			List<ItemStack> stacks = new ArrayList<>();
 			
 			// returns a non-empty list if we can make furnace
-			List<BlockSnapshot> snapshots = MultiBlockHelper.getJumboFurnaceStates(world, pos, againstState, entity);
+			List<BlockSnapshot> snapshots = MultiBlockHelper.getJumboFurnaceStates(((World)world).getDimensionKey(), world, pos, againstState, entity);
 			for (BlockSnapshot snapshot : snapshots)
 			{
 				TileEntity te = world.getTileEntity(snapshot.getPos());
