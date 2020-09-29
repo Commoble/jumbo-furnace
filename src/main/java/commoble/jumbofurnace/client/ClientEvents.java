@@ -1,7 +1,6 @@
-package com.github.commoble.jumbofurnace.client;
+package commoble.jumbofurnace.client;
 
-import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
-
+import commoble.jumbofurnace.JumboFurnaceObjects;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;

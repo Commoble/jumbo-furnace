@@ -1,7 +1,6 @@
-package com.github.commoble.jumbofurnace.config;
+package commoble.jumbofurnace.config;
 
-import com.github.commoble.jumbofurnace.config.ConfigHelper.ConfigValueListener;
-
+import commoble.jumbofurnace.config.ConfigHelper.ConfigValueListener;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class ServerConfig

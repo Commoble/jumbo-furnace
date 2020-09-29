@@ -1,11 +1,11 @@
-package com.github.commoble.jumbofurnace.client.jei;
+package commoble.jumbofurnace.client.jei;
 
-import com.github.commoble.jumbofurnace.JumboFurnace;
-import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
-import com.github.commoble.jumbofurnace.Names;
-import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import com.mojang.blaze3d.matrix.MatrixStack;
 
+import commoble.jumbofurnace.JumboFurnace;
+import commoble.jumbofurnace.JumboFurnaceObjects;
+import commoble.jumbofurnace.Names;
+import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import mezz.jei.api.constants.ModIds;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.IRecipeLayout;

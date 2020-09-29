@@ -1,8 +1,7 @@
-package com.github.commoble.jumbofurnace.jumbo_furnace;
+package commoble.jumbofurnace.jumbo_furnace;
 
-import com.github.commoble.jumbofurnace.JumboFurnace;
-import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
-
+import commoble.jumbofurnace.JumboFurnace;
+import commoble.jumbofurnace.JumboFurnaceObjects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;

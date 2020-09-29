@@ -1,8 +1,8 @@
-package com.github.commoble.jumbofurnace.client;
+package commoble.jumbofurnace.client;
 
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
 import com.mojang.blaze3d.matrix.MatrixStack;
 
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;

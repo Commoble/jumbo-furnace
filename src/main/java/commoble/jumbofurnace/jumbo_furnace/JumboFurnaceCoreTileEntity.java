@@ -1,14 +1,13 @@
-package com.github.commoble.jumbofurnace.jumbo_furnace;
+package commoble.jumbofurnace.jumbo_furnace;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.commoble.jumbofurnace.JumboFurnace;
-import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
-import com.github.commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
-import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
-import com.github.commoble.jumbofurnace.recipes.RecipeSorter;
-
+import commoble.jumbofurnace.JumboFurnace;
+import commoble.jumbofurnace.JumboFurnaceObjects;
+import commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
+import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
+import commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.block.BlockState;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;

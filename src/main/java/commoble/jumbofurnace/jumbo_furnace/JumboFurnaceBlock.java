@@ -1,4 +1,4 @@
-package com.github.commoble.jumbofurnace.jumbo_furnace;
+package commoble.jumbofurnace.jumbo_furnace;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,8 +6,7 @@ import java.util.Random;
 
 import javax.annotation.Nullable;
 
-import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
-
+import commoble.jumbofurnace.JumboFurnaceObjects;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.RedstoneTorchBlock;

@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.commoble.jumbofurnace.config;
+package commoble.jumbofurnace.config;
 
 import java.util.ArrayList;
 import java.util.List;

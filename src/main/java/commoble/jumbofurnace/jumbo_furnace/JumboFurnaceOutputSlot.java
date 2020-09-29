@@ -1,4 +1,4 @@
-package com.github.commoble.jumbofurnace.jumbo_furnace;
+package commoble.jumbofurnace.jumbo_furnace;
 
 import net.minecraft.entity.item.ExperienceOrbEntity;
 import net.minecraft.entity.player.PlayerEntity;

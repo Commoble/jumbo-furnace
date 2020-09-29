@@ -1,7 +1,6 @@
-package com.github.commoble.jumbofurnace.jumbo_furnace;
+package commoble.jumbofurnace.jumbo_furnace;
 
-import com.github.commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
-
+import commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
 import net.minecraftforge.items.ItemStackHandler;
 
 public class InputItemHandler extends ItemStackHandler

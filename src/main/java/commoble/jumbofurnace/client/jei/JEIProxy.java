@@ -1,15 +1,15 @@
-package com.github.commoble.jumbofurnace.client.jei;
+package commoble.jumbofurnace.client.jei;
 
 import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.github.commoble.jumbofurnace.JumboFurnace;
-import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
-import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
-import com.github.commoble.jumbofurnace.recipes.RecipeSorter;
 import com.google.common.collect.ImmutableList;
 
+import commoble.jumbofurnace.JumboFurnace;
+import commoble.jumbofurnace.JumboFurnaceObjects;
+import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
+import commoble.jumbofurnace.recipes.RecipeSorter;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
