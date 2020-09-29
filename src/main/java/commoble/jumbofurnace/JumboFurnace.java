@@ -1,22 +1,21 @@
-package com.github.commoble.jumbofurnace;
+package commoble.jumbofurnace;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.github.commoble.jumbofurnace.client.ClientEvents;
-import com.github.commoble.jumbofurnace.config.ConfigHelper;
-import com.github.commoble.jumbofurnace.config.ServerConfig;
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceBlock;
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceCoreTileEntity;
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorTileEntity;
-import com.github.commoble.jumbofurnace.jumbo_furnace.MultiBlockHelper;
-import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
-import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
-import com.github.commoble.jumbofurnace.recipes.RecipeSorter;
-
+import commoble.jumbofurnace.client.ClientEvents;
+import commoble.jumbofurnace.config.ConfigHelper;
+import commoble.jumbofurnace.config.ServerConfig;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceBlock;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceCoreTileEntity;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorTileEntity;
+import commoble.jumbofurnace.jumbo_furnace.MultiBlockHelper;
+import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
+import commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
+import commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;

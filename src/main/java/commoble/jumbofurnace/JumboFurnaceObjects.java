@@ -1,11 +1,10 @@
-package com.github.commoble.jumbofurnace;
+package commoble.jumbofurnace;
 
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceBlock;
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceCoreTileEntity;
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorTileEntity;
-import com.github.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
-
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceBlock;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceCoreTileEntity;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorTileEntity;
+import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.crafting.IRecipeSerializer;

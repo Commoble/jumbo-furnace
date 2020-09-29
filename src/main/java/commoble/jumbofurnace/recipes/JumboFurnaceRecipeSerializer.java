@@ -1,10 +1,10 @@
-package com.github.commoble.jumbofurnace.recipes;
+package commoble.jumbofurnace.recipes;
 
-import com.github.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.IRecipeType;

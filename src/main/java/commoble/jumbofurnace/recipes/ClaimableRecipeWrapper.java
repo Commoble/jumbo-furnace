@@ -1,4 +1,4 @@
-package com.github.commoble.jumbofurnace.recipes;
+package commoble.jumbofurnace.recipes;
 
 import java.util.ArrayList;
 import java.util.List;

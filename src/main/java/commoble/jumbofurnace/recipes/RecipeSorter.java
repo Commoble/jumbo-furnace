@@ -1,13 +1,13 @@
-package com.github.commoble.jumbofurnace.recipes;
+package commoble.jumbofurnace.recipes;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.commoble.jumbofurnace.JumboFurnace;
 import com.google.common.collect.Streams;
 
+import commoble.jumbofurnace.JumboFurnace;
 import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.item.crafting.FurnaceRecipe;
 import net.minecraft.item.crafting.IRecipeType;

@@ -1,8 +1,7 @@
-package com.github.commoble.jumbofurnace.recipes;
+package commoble.jumbofurnace.recipes;
 
-import com.github.commoble.jumbofurnace.JumboFurnace;
-import com.github.commoble.jumbofurnace.JumboFurnaceObjects;
-
+import commoble.jumbofurnace.JumboFurnace;
+import commoble.jumbofurnace.JumboFurnaceObjects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipe;
 import net.minecraft.item.crafting.IRecipe;

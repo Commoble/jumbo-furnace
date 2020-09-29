@@ -1,4 +1,4 @@
-package com.github.commoble.jumbofurnace;
+package commoble.jumbofurnace;
 
 public class Names
 {
