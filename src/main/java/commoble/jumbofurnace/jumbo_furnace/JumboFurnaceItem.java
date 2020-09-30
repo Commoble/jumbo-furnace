@@ -25,9 +25,9 @@ public class JumboFurnaceItem extends Item
 	public ActionResultType onItemUse(ItemUseContext context)
 	{
 		// get the nine positions around the point of activation, offset by the raytrace normal
-		BlockPos usePos = context.getPos();
+		BlockPos againstPos = context.getPos();
 		Direction useNormal = context.getFace();
-		BlockPos corePos = usePos.offset(useNormal);
+		BlockPos corePos = againstPos.offset(useNormal, 2);
 		World world = context.getWorld();
 		RegistryKey<World> key = world.getDimensionKey();
 		BlockItemUseContext blockContext = new BlockItemUseContext(context);
@@ -35,7 +35,6 @@ public class JumboFurnaceItem extends Item
 		{
 			if (!world.isRemote)
 			{
-				BlockPos againstPos = usePos.offset(useNormal.getOpposite());
 				BlockState againstState = world.getBlockState(againstPos);
 				@Nullable PlayerEntity player = context.getPlayer();
 				MultiBlockHelper.getStatesForPlacementIfPermitted(key, world, corePos, againstState, player)

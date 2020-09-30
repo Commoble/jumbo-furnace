@@ -11,8 +11,10 @@ import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.JumboFurnaceObjects;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.util.RegistryKey;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -63,7 +65,8 @@ public class MultiBlockHelper
 	 */
 	public static boolean canJumboFurnacePlaceAt(IWorld world, BlockPos corePos, BlockItemUseContext useContext)
 	{
-		return get3x3CubeAround(corePos)
+		boolean noEntitiesInArea = world.getEntitiesWithinAABB(LivingEntity.class, new AxisAlignedBB(corePos.add(-1,-1,-1), corePos.add(1,1,1))).isEmpty();
+		return noEntitiesInArea && get3x3CubeAround(corePos)
 			.allMatch(pos ->
 				world.getBlockState(pos)
 				.isReplaceable(useContext));
