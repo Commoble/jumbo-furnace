@@ -85,11 +85,15 @@ public class JumboFurnaceBlock extends Block
 	public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
 	{
 		// if player uses shears on block, drop a whole jumbo furnace instead
-		if (player.isSneaking() && handIn != null && Tags.Items.SHEARS.contains(player.getHeldItem(handIn).getItem()))
+		ItemStack stack = player.getHeldItem(handIn);
+		if (player.isSneaking() && handIn != null && Tags.Items.SHEARS.contains(stack.getItem()))
 		{
-			
+			if (!world.isRemote)
+			{
+			}
+			return ActionResultType.SUCCESS;
 		}
-		BlockPos corePos = this.getCorePos(state, pos);
+		BlockPos corePos = JumboFurnaceBlock.getCorePos(state, pos);
 		TileEntity te = world.getTileEntity(corePos);
 		if (te instanceof JumboFurnaceCoreTileEntity)
 		{
@@ -109,6 +113,7 @@ public class JumboFurnaceBlock extends Block
 	}
 
 	@Override
+	@Deprecated
 	public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving)
 	{
 		if (state.getBlock() != newState.getBlock())
@@ -141,7 +146,13 @@ public class JumboFurnaceBlock extends Block
 				
 			}
 			
-			this.destroyNextBlockPos(world, state, pos);
+			// we use the moving flag to check whether we should dismantle the rest of the furnace in the usual manner and drop blocks
+			// things that dismantle the furnace themselves (shears) should remove blocks with moving == true
+			// (block flag 64 or 1<<6 or Constants.BlockFlags.IS_MOVING)
+			if (!isMoving)
+			{
+				this.destroyNextBlockPos(world, state, pos);
+			}
 
 			super.onReplaced(state, world, pos, newState, isMoving);
 		}
@@ -175,7 +186,7 @@ public class JumboFurnaceBlock extends Block
 	 * @param exteriorPos
 	 * @return
 	 */
-	public BlockPos getCorePos(BlockState exteriorState, BlockPos exteriorPos)
+	public static BlockPos getCorePos(BlockState exteriorState, BlockPos exteriorPos)
 	{
 		int xOff = exteriorState.hasProperty(X) ? 1 - exteriorState.get(X) : 0;
 		int yOff = exteriorState.hasProperty(Y) ? 1 - exteriorState.get(Y) : 0;

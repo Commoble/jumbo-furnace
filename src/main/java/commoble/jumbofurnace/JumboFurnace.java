@@ -35,7 +35,11 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ITag;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -44,9 +48,13 @@ import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
+import net.minecraftforge.eventbus.api.Event.Result;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -131,6 +139,7 @@ public class JumboFurnace
 	{
 		forgeBus.addListener(this::onAddServerReloadListeners);
 		forgeBus.addListener(this::onEntityPlaceBlock);
+		forgeBus.addListener(EventPriority.LOW, this::onRightClickBlockLow);
 	}
 	
 	private void onAddServerReloadListeners(AddReloadListenerEvent event)
@@ -183,6 +192,53 @@ public class JumboFurnace
 					{
 						entity.entityDropItem(stack);
 					}
+				}
+			}
+		}
+	}
+	
+	// the idea here is that we want using-shears-on-jumbo-furnace-while-sneaking to drop the jumbo furnace as jumbo furnace item
+	// without causing the sub-blocks to recursively destroy themselves or drop themselves as regular furnaces
+	// we can't cause behaviour to happen when use-shears-on-block-while-sneaking from the block's activation method
+	// but we can "override" both the block and item's behaviour if we do something in this event and then cancel it
+	// we subscribe on low priority because we want to allow standard events to deny block or item behaviour
+	// but we also want events to run if we don't cancel it
+	private void onRightClickBlockLow(RightClickBlock event)
+	{
+		// if block or item usage is denied, do nothing
+		if (event.getUseItem() != Result.DENY && event.getUseBlock() != Result.DENY)
+		{
+			PlayerEntity player = event.getPlayer();
+			ItemStack stack = event.getItemStack();
+			if (player.isSecondaryUseActive() && Tags.Items.SHEARS.contains(stack.getItem()))
+			{
+				World world = event.getWorld();
+				BlockPos pos = event.getPos();
+				BlockState state = world.getBlockState(pos);
+				if (state.getBlock() == JumboFurnaceObjects.BLOCK)
+				{
+					// we used shears on a jumbo furnace while sneaking -- event will now be cancelled/overridden
+					
+					// only make changes to world on server (blocks, itemstacks, entities, etc)
+					if (!world.isRemote)
+					{
+						BlockPos corePos = JumboFurnaceBlock.getCorePos(state, pos);
+						// forge fires a RightClickBlock event before this is called, we can assume that this would fail if the player didn't have
+						// permission to use items on the block
+			            Block.spawnAsEntity(world, pos, new ItemStack(JumboFurnaceObjects.ITEM));
+			            Hand hand = event.getHand();
+			            stack.damageItem(1, player, (playerEntity) -> {
+			               playerEntity.sendBreakAnimation(hand);
+			            });
+						
+						MultiBlockHelper.get3x3CubeAround(corePos)
+							.forEach(componentPos ->
+								world.removeBlock(componentPos, true));	// use isMoving flag to prevent recursive destruction from occurring or dropping blocks
+					}
+					world.playSound(player, player.getPosX(), player.getPosY(), player.getPosZ(), SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+									
+					event.setCanceled(true);
+					event.setCancellationResult(ActionResultType.SUCCESS);
 				}
 			}
 		}

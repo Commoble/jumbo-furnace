@@ -65,7 +65,9 @@ public class MultiBlockHelper
 	 */
 	public static boolean canJumboFurnacePlaceAt(IWorld world, BlockPos corePos, BlockItemUseContext useContext)
 	{
-		boolean noEntitiesInArea = world.getEntitiesWithinAABB(LivingEntity.class, new AxisAlignedBB(corePos.add(-1,-1,-1), corePos.add(1,1,1))).isEmpty();
+		// the two-blockpos constructor for AABB is [inclusive, exclusive)
+		// so we have to add 2 to the second arg
+		boolean noEntitiesInArea = world.getEntitiesWithinAABB(LivingEntity.class, new AxisAlignedBB(corePos.add(-1,-1,-1), corePos.add(2,2,2))).isEmpty();
 		return noEntitiesInArea && get3x3CubeAround(corePos)
 			.allMatch(pos ->
 				world.getBlockState(pos)
