@@ -38,6 +38,7 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.fml.network.NetworkHooks;
 
 public class JumboFurnaceBlock extends Block
@@ -83,6 +84,11 @@ public class JumboFurnaceBlock extends Block
 	@Override
 	public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
 	{
+		// if player uses shears on block, drop a whole jumbo furnace instead
+		if (player.isSneaking() && handIn != null && Tags.Items.SHEARS.contains(player.getHeldItem(handIn).getItem()))
+		{
+			
+		}
 		BlockPos corePos = this.getCorePos(state, pos);
 		TileEntity te = world.getTileEntity(corePos);
 		if (te instanceof JumboFurnaceCoreTileEntity)

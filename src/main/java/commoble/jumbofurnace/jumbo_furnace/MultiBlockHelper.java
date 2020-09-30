@@ -11,6 +11,7 @@ import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.JumboFurnaceObjects;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
@@ -52,6 +53,20 @@ public class MultiBlockHelper
 	{
 		return get3x3CubeAround(corePos)
 			.allMatch(pos -> pos.equals(placePos) || JumboFurnace.JUMBOFURNACEABLE_TAG.contains(world.getBlockState(pos).getBlock()));
+	}
+	
+	/**
+	 * Returns whether the world contains sufficiently empty space for a jumbo furnace around the given core position
+	 * @param world
+	 * @param corePos
+	 * @return true if the 3x3 cube around the position contains replaceable blockstates (air, plants, etc)
+	 */
+	public static boolean canJumboFurnacePlaceAt(IWorld world, BlockPos corePos, BlockItemUseContext useContext)
+	{
+		return get3x3CubeAround(corePos)
+			.allMatch(pos ->
+				world.getBlockState(pos)
+				.isReplaceable(useContext));
 	}
 	
 	public static Stream<BlockPos> get3x3CubeAround(BlockPos pos)

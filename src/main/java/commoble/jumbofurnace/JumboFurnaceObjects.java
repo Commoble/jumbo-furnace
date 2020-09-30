@@ -29,6 +29,9 @@ public class JumboFurnaceObjects
 	@ObjectHolder(Names.JUMBO_SMELTING)
 	public static final IRecipeSerializer<JumboFurnaceRecipe> RECIPE_SERIALIZER = null;
 	
+	@ObjectHolder(Names.JUMBO_FURNACE)
+	public static final Item ITEM = null;
+	
 	@ObjectHolder(Names.JUMBO_FURNACE_JEI)
 	public static final Item JEI_DUMMY = null;
 }
