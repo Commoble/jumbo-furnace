@@ -14,6 +14,7 @@ import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceBlock;
 import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
 import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceCoreTileEntity;
 import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorTileEntity;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceItem;
 import commoble.jumbofurnace.jumbo_furnace.MultiBlockHelper;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
@@ -26,6 +27,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.IRecipeType;
@@ -92,6 +94,8 @@ public class JumboFurnace
 		DeferredRegister<IRecipeSerializer<?>> recipeSerializers = this.makeDeferredRegister(modBus, ForgeRegistries.RECIPE_SERIALIZERS);
 		
 		blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.from(Blocks.FURNACE)));
+		
+		items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)));
 		
 		items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties())
 		{
