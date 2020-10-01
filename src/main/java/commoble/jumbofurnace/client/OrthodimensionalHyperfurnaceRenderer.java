@@ -85,31 +85,32 @@ public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRen
 	}
 	
 	static final float OUTER_ALPHA = 0.5F;
-	static final float CONJUNCT_ALPHA = 0.75F;
+	static final float CONJUNCT_ALPHA = 1F;
 	static final float INNER_ALPHA = 1F;
 	
+	// vertices should be clockwise from bottom-left of front of furnace
 	public static final Face[] FACES = {
 		// outer faces
 		face(0,1,2,3, OUTER_ALPHA),	// -z
 		face(4,5,6,7, OUTER_ALPHA),	// +z
-		face(0,7,6,1, OUTER_ALPHA),	// -x
-		face(2,5,4,3, OUTER_ALPHA),	// +x
+		face(7,6,1,0, OUTER_ALPHA),	// -x
+		face(3,2,5,4, OUTER_ALPHA),	// +x
 		face(0,3,4,7, OUTER_ALPHA),	// -y
 		face(2,1,6,5, OUTER_ALPHA),	// +y
 		
 		// inner faces
 		face(8,9,10,11, INNER_ALPHA),	//-z
 		face(12,13,14,15, INNER_ALPHA),	//+z
-		face(8,15,14,9, INNER_ALPHA),	//-x
-		face(10,13,12,11, INNER_ALPHA),	//+x
+		face(15,14,9,8, INNER_ALPHA),	//-x
+		face(11,10,13,12, INNER_ALPHA),	//+x
 		face(8,11,12,15, INNER_ALPHA),	//-y
 		face(10,9,14,13, INNER_ALPHA),	//+y
 		
 		// upper conjoining faces
 		face(1,9,10,2,CONJUNCT_ALPHA),		//-z
 		face(5,6,14,13,CONJUNCT_ALPHA),	//+z
-		face(6,1,9,14,CONJUNCT_ALPHA),		//-x
-		face(2,5,13,10,CONJUNCT_ALPHA),	//+x
+		face(1,9,14,6,CONJUNCT_ALPHA),		//-x
+		face(5,13,10,2,CONJUNCT_ALPHA),	//+x
 		
 		// middle conjoining faces
 		face(1,9,8,0,CONJUNCT_ALPHA),	//-x,-z
@@ -118,10 +119,10 @@ public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRen
 		face(6,14,15,7,CONJUNCT_ALPHA),//-x,+z
 		
 		// bottom conjoining faces
-		face(0,3,11,8,CONJUNCT_ALPHA), //-z
-		face(4,7,15,12,CONJUNCT_ALPHA),//+z
-		face(7,0,8,15,CONJUNCT_ALPHA),	//-x
-		face(3,4,12,11,CONJUNCT_ALPHA)	//+x
+		face(3,11,8,0,CONJUNCT_ALPHA), //-z
+		face(7,15,12,4,CONJUNCT_ALPHA),//+z
+		face(0,8,15,7,CONJUNCT_ALPHA),	//-x
+		face(4,12,11,3,CONJUNCT_ALPHA)	//+x
 		
 	};
 	
