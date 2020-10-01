@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import com.mojang.datafixers.util.Pair;
 
 import commoble.jumbofurnace.client.ClientEvents;
+import commoble.jumbofurnace.client.OrthodimensionalHyperfurnaceRenderer;
 import commoble.jumbofurnace.config.ConfigHelper;
 import commoble.jumbofurnace.config.ServerConfig;
 import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceBlock;
@@ -104,6 +105,7 @@ public class JumboFurnace
 		blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.from(Blocks.FURNACE)));
 		
 		items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)));
+		items.register(Names.ORTHODIMENSIONAL_HYPERFURNACE, () -> new Item(new Item.Properties().group(ItemGroup.MISC).setISTER(() -> OrthodimensionalHyperfurnaceRenderer::new)));
 		
 		items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties())
 		{
