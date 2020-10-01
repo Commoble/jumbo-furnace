@@ -3,7 +3,6 @@ package commoble.jumbofurnace.client;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
@@ -58,14 +57,12 @@ public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRen
 		public final Vector3d[] vertices;
 		public final Vector3d normal;
 		public final Vector3d reverseNormal;
-		public final float alpha;
 		
-		public Face(Vector3d a, Vector3d b, Vector3d c, Vector3d d, float alpha)
+		public Face(Vector3d a, Vector3d b, Vector3d c, Vector3d d)
 		{
 			// can't do this.vertices = {a,b,c,d} because java
 			Vector3d[] tempVertices = {a,b,c,d};
 			this.vertices = tempVertices;
-			this.alpha = alpha;
 
 			// need to calculate normals so vertex can have sided lighting
 			// to get the normal for a vertex v1 connected to v2 and v3,
@@ -79,67 +76,61 @@ public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRen
 	}
 	
 	// vertices should be declared in clockwise order
-	public static Face face(int a, int b, int c, int d, float alpha)
+	public static Face face(int a, int b, int c, int d)
 	{
-		return new Face(VERTICES[a], VERTICES[b], VERTICES[c], VERTICES[d], alpha);
+		return new Face(VERTICES[a], VERTICES[b], VERTICES[c], VERTICES[d]);
 	}
-	
-	static final float OUTER_ALPHA = 0.5F;
-	static final float CONJUNCT_ALPHA = 1F;
-	static final float INNER_ALPHA = 1F;
 	
 	// vertices should be clockwise from bottom-left of front of furnace
 	public static final Face[] FACES = {
 		// outer faces
-		face(0,1,2,3, OUTER_ALPHA),	// -z
-		face(4,5,6,7, OUTER_ALPHA),	// +z
-		face(7,6,1,0, OUTER_ALPHA),	// -x
-		face(3,2,5,4, OUTER_ALPHA),	// +x
-		face(0,3,4,7, OUTER_ALPHA),	// -y
-		face(2,1,6,5, OUTER_ALPHA),	// +y
+		// outer faces binned as transparent textures have sorting issues
+//		face(0,1,2,3, FaceType.OUTER),	// -z
+//		face(4,5,6,7, FaceType.OUTER),	// +z
+//		face(7,6,1,0, FaceType.OUTER),	// -x
+//		face(3,2,5,4, FaceType.OUTER),	// +x
+//		face(0,3,4,7, FaceType.OUTER),	// -y
+//		face(2,1,6,5, FaceType.OUTER),	// +y
 		
 		// inner faces
-		face(8,9,10,11, INNER_ALPHA),	//-z
-		face(12,13,14,15, INNER_ALPHA),	//+z
-		face(15,14,9,8, INNER_ALPHA),	//-x
-		face(11,10,13,12, INNER_ALPHA),	//+x
-		face(8,11,12,15, INNER_ALPHA),	//-y
-		face(10,9,14,13, INNER_ALPHA),	//+y
+		face(8,9,10,11),	//-z
+		face(12,13,14,15),	//+z
+		face(15,14,9,8),	//-x
+		face(11,10,13,12),	//+x
+		face(8,11,12,15),	//-y
+		face(10,9,14,13),	//+y
 		
 		// upper conjoining faces
-		face(1,9,10,2,CONJUNCT_ALPHA),		//-z
-		face(5,6,14,13,CONJUNCT_ALPHA),	//+z
-		face(1,9,14,6,CONJUNCT_ALPHA),		//-x
-		face(5,13,10,2,CONJUNCT_ALPHA),	//+x
+		face(1,9,10,2),		//-z
+		face(5,6,14,13),	//+z
+		face(1,9,14,6),		//-x
+		face(5,13,10,2),	//+x
 		
 		// middle conjoining faces
-		face(1,9,8,0,CONJUNCT_ALPHA),	//-x,-z
-		face(2,10,11,3,CONJUNCT_ALPHA),//+x,-z
-		face(5,13,12,4,CONJUNCT_ALPHA),//+x,+z
-		face(6,14,15,7,CONJUNCT_ALPHA),//-x,+z
+		face(1,9,8,0),	//-x,-z
+		face(2,10,11,3),//+x,-z
+		face(5,13,12,4),//+x,+z
+		face(6,14,15,7),//-x,+z
 		
 		// bottom conjoining faces
-		face(3,11,8,0,CONJUNCT_ALPHA), //-z
-		face(7,15,12,4,CONJUNCT_ALPHA),//+z
-		face(0,8,15,7,CONJUNCT_ALPHA),	//-x
-		face(4,12,11,3,CONJUNCT_ALPHA)	//+x
+		face(3,11,8,0), //-z
+		face(7,15,12,4),//+z
+		face(0,8,15,7),	//-x
+		face(4,12,11,3)	//+x
 		
 	};
 	
 	//render
 	@Override
 	public void func_239207_a_(ItemStack stack, TransformType transformType, MatrixStack matrixStack, IRenderTypeBuffer buffer, int combinedLight, int combinedOverlay)
-	{
-		float partialTicks = Minecraft.getInstance().getRenderPartialTicks();
-		
+	{		
 		TextureAtlasSprite texture = MATERIAL.getSprite();
-		IVertexBuilder vertexBuilder = MATERIAL.getItemRendererBuffer(buffer, RenderType::getEntityTranslucent, stack.hasEffect());
+		IVertexBuilder vertexBuilder = MATERIAL.getItemRendererBuffer(buffer, RenderType::getEntitySolid, stack.hasEffect());
 		
 		float minU = texture.getMinU();
 		float maxU = texture.getMaxU();
 		float minV = texture.getMinV();
 		float maxV = texture.getMaxV();
-		// let's start by rendering a single face to make sure our thing works
 		
 		matrixStack.push();
 		
@@ -152,26 +143,26 @@ public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRen
 			Vector3d[] vertices = face.vertices;
 			Vector3d normal = face.normal;
 			Vector3d reverseNormal = face.reverseNormal;
-			float alpha = face.alpha;
 			
-			putVertex(matrixEntry, vertexBuilder, vertices[0], maxU, maxV, combinedLight, normal, alpha);
-			putVertex(matrixEntry, vertexBuilder, vertices[1], maxU, minV, combinedLight, normal, alpha);
-			putVertex(matrixEntry, vertexBuilder, vertices[2], minU, minV, combinedLight, normal, alpha);
-			putVertex(matrixEntry, vertexBuilder, vertices[3], minU, maxV, combinedLight, normal, alpha);
+			putVertex(matrixEntry, vertexBuilder, vertices[0], minU, maxV, combinedLight, normal);
+			putVertex(matrixEntry, vertexBuilder, vertices[1], minU, minV, combinedLight, normal);
+			putVertex(matrixEntry, vertexBuilder, vertices[2], maxU, minV, combinedLight, normal);
+			putVertex(matrixEntry, vertexBuilder, vertices[3], maxU, maxV, combinedLight, normal);
 
-//			putVertex(matrixEntry, vertexBuilder, vertices[3], minU, maxV, combinedLight, normal, alpha);
-//			putVertex(matrixEntry, vertexBuilder, vertices[2], minU, minV, combinedLight, normal, alpha);
-//			putVertex(matrixEntry, vertexBuilder, vertices[1], maxU, minV, combinedLight, normal, alpha);
-//			putVertex(matrixEntry, vertexBuilder, vertices[0], maxU, maxV, combinedLight, normal, alpha);
+
+			putVertex(matrixEntry, vertexBuilder, vertices[3], maxU, maxV, combinedLight, reverseNormal);
+			putVertex(matrixEntry, vertexBuilder, vertices[2], maxU, minV, combinedLight, reverseNormal);
+			putVertex(matrixEntry, vertexBuilder, vertices[1], minU, minV, combinedLight, reverseNormal);
+			putVertex(matrixEntry, vertexBuilder, vertices[0], minU, maxV, combinedLight, reverseNormal);
 		}
 		
 		matrixStack.pop();
 	}
 	
-	private static void putVertex(MatrixStack.Entry matrixEntryIn, IVertexBuilder bufferIn, Vector3d pos, float texU, float texV, int packedLight, Vector3d normal, float alpha)
+	private static void putVertex(MatrixStack.Entry matrixEntryIn, IVertexBuilder bufferIn, Vector3d pos, float texU, float texV, int packedLight, Vector3d normal)
 	{
 		bufferIn.pos(matrixEntryIn.getMatrix(), (float)pos.getX(), (float)pos.getY(), (float)pos.getZ())
-			.color(1F, 1F, 1F, alpha)
+			.color(1F, 1F, 1F, 1F)
 			.tex(texU, texV)
 			.overlay(0, 10)
 			.lightmap(packedLight)
