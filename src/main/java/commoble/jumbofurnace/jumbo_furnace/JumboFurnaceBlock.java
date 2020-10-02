@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.mojang.datafixers.util.Pair;
@@ -33,6 +34,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -40,6 +42,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.items.IItemHandler;
 
 public class JumboFurnaceBlock extends Block
 {
@@ -303,6 +306,64 @@ public class JumboFurnaceBlock extends Block
 			return null;
 		}
 	}
+	
+	@Override
+	@Deprecated
+	public boolean hasComparatorInputOverride(BlockState state)
+	{
+		return true;
+	}
+
+	@Override
+	@Deprecated
+	public int getComparatorInputOverride(BlockState state, World world, BlockPos pos)
+	{
+		BlockPos corePos = getCorePos(state, pos);
+		TileEntity te = world.getTileEntity(corePos);
+		if (!(te instanceof JumboFurnaceCoreTileEntity) || !state.hasProperty(Y))
+		{
+			// if we are in an invalid state, return 0
+			return 0;
+		}
+		
+		JumboFurnaceCoreTileEntity core = (JumboFurnaceCoreTileEntity)te;
+		int y = state.get(Y);
+
+		// top layer of blocks: comparator output is input inventory
+		// middle layer of blocks: comparator output is fuel inventory
+		// bottom layer of blocks: comparator output is output inventory
+		
+		switch(y)
+		{
+			case 0: return calcRedstoneFromItemHandler(core.output);
+			case 1: return calcRedstoneFromItemHandler(core.fuel);
+			case 2: return calcRedstoneFromItemHandler(core.input);
+			default: return 0;
+		}
+	}
+	
+	// same math as Container.calcRedstone
+	public static int calcRedstoneFromItemHandler(@Nonnull IItemHandler handler)
+	{
+		int nonEmptySlots = 0;
+		float totalItemValue = 0.0F;
+		int slots = handler.getSlots();
+
+		for (int slot = 0; slot < slots; ++slot)
+		{
+			ItemStack itemstack = handler.getStackInSlot(slot);
+			if (!itemstack.isEmpty())
+			{
+				totalItemValue += itemstack.getCount() / (float) Math.min(handler.getSlotLimit(slot), itemstack.getMaxStackSize());
+				++nonEmptySlots;
+			}
+		}
+
+		float averageItemValue = totalItemValue = totalItemValue / slots;
+		return MathHelper.floor(averageItemValue * 14.0F) + (nonEmptySlots > 0 ? 1 : 0);
+	}
+	
+	
 
 	/**
 	 * Returns the blockstate with the given rotation from the passed blockstate. If

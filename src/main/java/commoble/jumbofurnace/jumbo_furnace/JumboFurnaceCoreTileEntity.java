@@ -414,6 +414,17 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 			}
 		}
 	}
+
+	@Override
+	public void markDirty()
+	{
+		super.markDirty();
+		
+		// make sure comparators reading from exterior blocks are updated as well
+		MultiBlockHelper.get3x3CubeAround(this.pos)
+			.filter(exteriorPos -> !exteriorPos.equals(this.pos))
+			.forEach(exteriorPos -> this.world.updateComparatorOutputLevel(exteriorPos, this.getBlockState().getBlock()));
+	}
 	
 
 }

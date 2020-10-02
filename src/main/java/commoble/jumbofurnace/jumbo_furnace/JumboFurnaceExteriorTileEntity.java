@@ -58,5 +58,7 @@ public class JumboFurnaceExteriorTileEntity extends TileEntity
 		TileEntity te = world.getTileEntity(corePos);
 		return te instanceof JumboFurnaceCoreTileEntity ? (JumboFurnaceCoreTileEntity)te : null;
 	}
+	
+	
 
 }
