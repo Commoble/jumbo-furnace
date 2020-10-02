@@ -28,6 +28,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	public static final String INPUT = "input";
 	public static final String FUEL = "fuel";
 	public static final String OUTPUT = "output";
+	public static final String MULTIPROCESS_UPGRADES = "multiprocess_upgrades";
 	public static final String COOK_PROGRESS = "cook_progress";
 	public static final String BURN_TIME = "burn_time";
 	public static final String BURN_VALUE = "burn_value";
@@ -35,10 +36,12 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	public final InputItemHandler input = new InputItemHandler(this);
 	public final ItemStackHandler fuel = new FuelItemHandler(this);
 	public final OutputItemHandler output = new OutputItemHandler(this);
+	public final MultiprocessUpgradeHandler multiprocessUpgradeHandler = new MultiprocessUpgradeHandler(this);
 	
 	public final LazyOptional<IItemHandler> inputOptional = LazyOptional.of(() -> this.input);
 	public final LazyOptional<IItemHandler> fuelOptional = LazyOptional.of(() -> this.fuel);
 	public final LazyOptional<IItemHandler> outputOptional = LazyOptional.of(() -> this.output);
+	// multiprocess upgrade slot isn't exposed, no need to cache a lazy wrapper
 	
 	public int burnTimeRemaining = 0;
 	public int lastItemBurnedValue = 200;
@@ -56,12 +59,11 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	}
 
 	@Override
-	public void remove()
+	public void invalidateCaps()
 	{
 		this.inputOptional.invalidate();
 		this.fuelOptional.invalidate();
 		this.outputOptional.invalidate();
-		super.remove();
 	}
 
 	@Override
@@ -86,6 +88,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		compound.put(INPUT, this.input.serializeNBT());
 		compound.put(FUEL, this.fuel.serializeNBT());
 		compound.put(OUTPUT, this.output.serializeNBT());
+		compound.put(MULTIPROCESS_UPGRADES, this.multiprocessUpgradeHandler.serializeNBT());
 		compound.putInt(COOK_PROGRESS, this.cookProgress);
 		compound.putInt(BURN_TIME, this.burnTimeRemaining);
 		compound.putInt(BURN_VALUE, this.lastItemBurnedValue);
@@ -130,6 +133,11 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		this.needsOutputUpdate = true;
 	}
 	
+	public int getMaxSimultaneousRecipes()
+	{
+		return 1 + this.multiprocessUpgradeHandler.getStackInSlot(0).getCount();
+	}
+	
 	/** Called at the start of a tick when the input inventory has changed **/
 	public void updateRecipes()
 	{
@@ -142,7 +150,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		for (JumboFurnaceRecipe recipe : recipes)
 		{
 			// loop recipe over inputs until it can't match or we have no unused inputs left
-			while (wrapper.getRecipeCount() < JumboFurnace.SERVER_CONFIG.maxSimultaneousRecipes.get() && wrapper.matchAndClaimInputs(recipe, this.world) && wrapper.hasUnusedInputsLeft());
+			while (wrapper.getRecipeCount() < this.getMaxSimultaneousRecipes() && wrapper.matchAndClaimInputs(recipe, this.world) && wrapper.hasUnusedInputsLeft());
 		}
 		// when all input slots are claimed or the recipe list is exhausted, set the new recipe cache
 		this.cachedRecipes = wrapper;

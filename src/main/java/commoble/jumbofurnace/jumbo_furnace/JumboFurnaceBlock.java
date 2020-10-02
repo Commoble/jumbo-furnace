@@ -134,6 +134,7 @@ public class JumboFurnaceBlock extends Block
 					drops.add(core.output.getStackInSlot(i));
 					experience += core.output.storedExperience[i];
 				}
+				drops.add(core.multiprocessUpgradeHandler.getStackInSlot(0));
 				for (ItemStack drop : drops)
 				{
 					InventoryHelper.spawnItemStack(world, x, y, z, drop);

@@ -34,6 +34,7 @@ import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ITag;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ActionResultType;
@@ -74,6 +75,7 @@ public class JumboFurnace
 	public static final String MODID = "jumbofurnace";
 	public static final IRecipeType<JumboFurnaceRecipe> JUMBO_SMELTING_RECIPE_TYPE = IRecipeType.register("jumbofurnace:jumbo_smelting");
 	public static final ITag<Block> JUMBOFURNACEABLE_TAG = BlockTags.makeWrapperTag(MODID + ":" + "jumbofurnaceable");
+	public static final ITag<Item> MULTIPROCESSING_UPGRADE_TAG = ItemTags.makeWrapperTag(MODID+":" + "multiprocessing_upgrade");
 	
 	public static ServerConfig SERVER_CONFIG;
 	
@@ -208,7 +210,7 @@ public class JumboFurnace
 	private void onRightClickBlockLow(RightClickBlock event)
 	{
 		// if block or item usage is denied, do nothing
-		if (event.getUseItem() != Result.DENY && event.getUseBlock() != Result.DENY)
+		if (SERVER_CONFIG.allowShearing.get() && event.getUseItem() != Result.DENY && event.getUseBlock() != Result.DENY)
 		{
 			PlayerEntity player = event.getPlayer();
 			ItemStack stack = event.getItemStack();

@@ -6,19 +6,24 @@ import net.minecraftforge.common.ForgeConfigSpec;
 public class ServerConfig
 {	
 	public final ConfigValueListener<Integer> jumboFurnaceCookTime;
-	public final ConfigValueListener<Integer> maxSimultaneousRecipes;
+	
+	public final ConfigValueListener<Boolean> allowShearing;
 	
 	public ServerConfig(ForgeConfigSpec.Builder builder, ConfigHelper.Subscriber subscriber)
 	{
 		builder.push("Cooking Settings");
 		this.jumboFurnaceCookTime = subscriber.subscribe(builder
-			.comment("Cook Time")
+			.comment("Cook Time: Time in ticks needed for one cooking cycle")
 			.translation("jumbofurnace.cooktime")
 			.defineInRange("cooktime", 200, 1, Integer.MAX_VALUE));
-		this.maxSimultaneousRecipes = subscriber.subscribe(builder
-			.comment("Maximum recipes the Jumbo Furnace is able to process simultaneously")
-			.translation("jumbofurnace.max_simultaneous_recipes")
-			.defineInRange("max_simultaneous_recipes", 1, 1, Integer.MAX_VALUE));
 		builder.pop();
+		
+		builder.push("Construction Settings");
+		this.allowShearing = subscriber.subscribe(builder
+			.comment("Shearable: Allow jumbo furnaces to be cleanly dismantled with shears")
+			.translation("jumbofurnace.shearable")
+			.define("shearable", true));
+		builder.pop();
+		
 	}
 }

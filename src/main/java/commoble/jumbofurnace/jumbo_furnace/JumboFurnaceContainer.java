@@ -35,6 +35,8 @@ public class JumboFurnaceContainer extends Container
 	public static final int BACKPACK_START_Y = 158;
 	public static final int HOTBAR_START_X = INPUT_START_X;
 	public static final int HOTBAR_START_Y = 216;
+	public static final int ORTHOFURNACE_SLOT_X = 134;
+	public static final int ORTHOFURNACE_SLOT_Y = 117;
 	
 	// slot counts
 	public static final int SLOT_ROWS = 3;
@@ -49,7 +51,8 @@ public class JumboFurnaceContainer extends Container
 	public static final int FIRST_INPUT_SLOT = 0;
 	public static final int FIRST_FUEL_SLOT = FIRST_INPUT_SLOT + INPUT_SLOTS;
 	public static final int FIRST_OUTPUT_SLOT = FIRST_FUEL_SLOT + INPUT_SLOTS;
-	public static final int FIRST_HOTBAR_SLOT = FIRST_OUTPUT_SLOT + INPUT_SLOTS;
+	public static final int ORTHOFURNACE_SLOT = FIRST_OUTPUT_SLOT + INPUT_SLOTS;
+	public static final int FIRST_HOTBAR_SLOT = ORTHOFURNACE_SLOT + 1;
 	public static final int FIRST_BACKPACK_SLOT = FIRST_HOTBAR_SLOT + HOTBAR_SLOTS;
 	public static final int FIRST_PLAYER_SLOT = FIRST_HOTBAR_SLOT;
 
@@ -66,7 +69,7 @@ public class JumboFurnaceContainer extends Container
 	public static JumboFurnaceContainer getClientContainer(int id, PlayerInventory playerInventory)
 	{
 		// init client inventory with dummy slots
-		return new JumboFurnaceContainer(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new IntArray(4));
+		return new JumboFurnaceContainer(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new ItemStackHandler(1), new IntArray(4));
 	}
 	
 	/**
@@ -77,10 +80,10 @@ public class JumboFurnaceContainer extends Container
 	 */
 	public static IContainerProvider getServerContainerProvider(JumboFurnaceCoreTileEntity te, BlockPos activationPos)
 	{
-		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output, new JumboFurnaceSyncData(te));
+		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output, te.multiprocessUpgradeHandler, new JumboFurnaceSyncData(te));
 	}
 	
-	protected JumboFurnaceContainer(int id, PlayerInventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IIntArray furnaceData)
+	protected JumboFurnaceContainer(int id, PlayerInventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IItemHandler multiprocessUpgrades, IIntArray furnaceData)
 	{
 		super(JumboFurnaceObjects.CONTAINER_TYPE, id);
 		
@@ -124,6 +127,9 @@ public class JumboFurnaceContainer extends Container
 			}
 		}
 		
+		// add multiprocess upgrade slot
+		this.addSlot(new MultiprocessUpgradeHandler.MultiprocessUpgradeSlotHandler(multiprocessUpgrades, 0, ORTHOFURNACE_SLOT_X, ORTHOFURNACE_SLOT_Y));
+		
 		// add hotbar slots
 		for (int hotbarSlot = 0; hotbarSlot < PLAYER_COLUMNS; hotbarSlot++)
 		{
@@ -163,7 +169,7 @@ public class JumboFurnaceContainer extends Container
 			ItemStack stackInSlot = slot.getStack();
 			slotStackCopy = stackInSlot.copy();
 			
-			// if this is an input/fuel/output slot, try to put the item in the player slots
+			// if this is an input/fuel/output/upgrade slot, try to put the item in the player slots
 			if (index < FIRST_PLAYER_SLOT)
 			{
 				if (!this.mergeItemStack(stackInSlot, FIRST_PLAYER_SLOT, END_PLAYER_SLOTS, true))
@@ -174,6 +180,11 @@ public class JumboFurnaceContainer extends Container
 			// otherwise, this is a player slot
 			else
 			{
+				// if this is an upgrade item, try to put it in the upgrade slot first
+				if (JumboFurnace.MULTIPROCESSING_UPGRADE_TAG.contains(stackInSlot.getItem()) && !this.mergeItemStack(stackInSlot, ORTHOFURNACE_SLOT, ORTHOFURNACE_SLOT+1, false))
+				{
+					return ItemStack.EMPTY;
+				}
 				// if we can burn the item, try to put it in the fuel slots first
 				if (ForgeHooks.getBurnTime(stackInSlot) > 0 && !this.mergeItemStack(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))
 				{
