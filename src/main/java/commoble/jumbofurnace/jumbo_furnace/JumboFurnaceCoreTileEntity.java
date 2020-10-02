@@ -73,6 +73,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		this.input.deserializeNBT(compound.getCompound(INPUT));
 		this.fuel.deserializeNBT(compound.getCompound(FUEL));
 		this.output.deserializeNBT(compound.getCompound(OUTPUT));
+		this.multiprocessUpgradeHandler.deserializeNBT(compound.getCompound(MULTIPROCESS_UPGRADES));
 		this.cookProgress = compound.getInt(COOK_PROGRESS);
 		this.burnTimeRemaining = compound.getInt(BURN_TIME);
 		this.lastItemBurnedValue = compound.getInt(BURN_VALUE);
