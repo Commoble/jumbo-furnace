@@ -20,6 +20,7 @@ import commoble.jumbofurnace.jumbo_furnace.MultiBlockHelper;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
 import commoble.jumbofurnace.recipes.RecipeSorter;
+import commoble.jumbofurnace.recipes.TagStackIngredient;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -40,6 +41,7 @@ import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -51,7 +53,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.Tags;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
 import net.minecraftforge.event.world.BlockEvent.EntityPlaceEvent;
@@ -130,6 +134,8 @@ public class JumboFurnace
 		containers.register(Names.JUMBO_FURNACE, () -> new ContainerType<>(JumboFurnaceContainer::getClientContainer));
 		
 		recipeSerializers.register(Names.JUMBO_SMELTING, () -> new JumboFurnaceRecipeSerializer(JUMBO_SMELTING_RECIPE_TYPE));
+		
+		modBus.addGenericListener(IRecipeSerializer.class, this::onRegisterRecipeStuff);
 	}
 	
 	private <T extends IForgeRegistryEntry<T>> DeferredRegister<T> makeDeferredRegister(IEventBus modBus, IForgeRegistry<T> registry)
@@ -246,6 +252,12 @@ public class JumboFurnace
 				}
 			}
 		}
+	}
+	
+	private void onRegisterRecipeStuff(RegistryEvent.Register<IRecipeSerializer<?>> event)
+	{
+		// forge registers ingredient serializers here for some reason, might as well do it here too
+		CraftingHelper.register(new ResourceLocation("jumbofurnace:tag_stack"), TagStackIngredient.SERIALIZER);
 	}
 	
 	private static void addItemsToList(List<ItemStack> stacks, IItemHandler handler)
