@@ -118,7 +118,11 @@ public class JumboFurnaceRecipe implements IRecipe<ClaimableRecipeWrapper>
 		for (Ingredient ingredient : this.ingredients)
 		{
 			ItemStack[] matchingStacks = ingredient.getMatchingStacks();
-			// safe to assume that recipe has at least one ingredient, and at least two items are registered to forge
+			if(matchingStacks.length < 1)
+			{
+				continue;
+			}
+			// safe to assume that ingredient has at least one matching stack, and at least two items are registered to forge
 			int matchingItems = Math.min(totalItems, matchingStacks.length);
 			
 			// this equation gives a value of 1D when matchingitems = 1, and 0D when matchingItems = totalItems
