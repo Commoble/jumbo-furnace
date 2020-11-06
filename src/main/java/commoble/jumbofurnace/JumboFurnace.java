@@ -7,6 +7,8 @@ import javax.annotation.Nullable;
 
 import com.mojang.datafixers.util.Pair;
 
+import commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger;
+import commoble.jumbofurnace.advancements.UpgradeJumboFurnaceTrigger;
 import commoble.jumbofurnace.client.ClientEvents;
 import commoble.jumbofurnace.client.OrthodimensionalHyperfurnaceRenderer;
 import commoble.jumbofurnace.config.ConfigHelper;
@@ -21,12 +23,14 @@ import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
 import commoble.jumbofurnace.recipes.RecipeSorter;
 import commoble.jumbofurnace.recipes.TagStackIngredient;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -64,6 +68,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -111,7 +116,7 @@ public class JumboFurnace
 		blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.from(Blocks.FURNACE)));
 		
 		items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)));
-		items.register(Names.ORTHODIMENSIONAL_HYPERFURNACE, () -> new Item(new Item.Properties().group(ItemGroup.MISC).setISTER(() -> OrthodimensionalHyperfurnaceRenderer::new)));
+		items.register(Names.ORTHODIMENSIONAL_HYPERFURNACE, () -> new OrthodimensionalHyperfurnaceItem(new Item.Properties().group(ItemGroup.MISC).setISTER(() -> OrthodimensionalHyperfurnaceRenderer::new)));
 		
 		items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties())
 		{
@@ -136,6 +141,7 @@ public class JumboFurnace
 		recipeSerializers.register(Names.JUMBO_SMELTING, () -> new JumboFurnaceRecipeSerializer(JUMBO_SMELTING_RECIPE_TYPE));
 		
 		modBus.addGenericListener(IRecipeSerializer.class, this::onRegisterRecipeStuff);
+		modBus.addListener(this::onCommonSetup);
 	}
 	
 	private <T extends IForgeRegistryEntry<T>> DeferredRegister<T> makeDeferredRegister(IEventBus modBus, IForgeRegistry<T> registry)
@@ -170,21 +176,28 @@ public class JumboFurnace
 			
 			// returns a non-empty list if we can make furnace
 			List<Pair<BlockPos, BlockState>> pairs = MultiBlockHelper.getJumboFurnaceStates(((World)world).getDimensionKey(), world, pos, againstState, entity);
-			for (Pair<BlockPos, BlockState> pair : pairs)
+			if (pairs.size() > 0)
 			{
-				BlockPos newPos = pair.getFirst();
-				BlockState newState = pair.getSecond();
-				TileEntity te = world.getTileEntity(newPos);
-				// attempt to remove items from existing itemhandlers if possible
-				if (te != null)
+				for (Pair<BlockPos, BlockState> pair : pairs)
 				{
-					for (Direction dir : Direction.values())
+					BlockPos newPos = pair.getFirst();
+					BlockState newState = pair.getSecond();
+					TileEntity te = world.getTileEntity(newPos);
+					// attempt to remove items from existing itemhandlers if possible
+					if (te != null)
 					{
-						te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, dir).ifPresent(handler -> addItemsToList(stacks, handler));
+						for (Direction dir : Direction.values())
+						{
+							te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, dir).ifPresent(handler -> addItemsToList(stacks, handler));
+						}
+						te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).ifPresent(handler -> addItemsToList(stacks, handler));
 					}
-					te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).ifPresent(handler -> addItemsToList(stacks, handler));
+					world.setBlockState(newPos, newState, 3);
 				}
-				world.setBlockState(newPos, newState, 3);
+				if (entity instanceof ServerPlayerEntity)
+				{
+					AssembleJumboFurnaceTrigger.INSTANCE.trigger((ServerPlayerEntity)entity);
+				}
 			}
 			if (!stacks.isEmpty())
 			{
@@ -252,6 +265,19 @@ public class JumboFurnace
 				}
 			}
 		}
+	}
+	
+	private void onCommonSetup(FMLCommonSetupEvent event)
+	{
+		event.enqueueWork(this::afterCommonSetup);
+	}
+	
+	// runs on main thread after common setup event
+	// adding things to unsynchronized registries (i.e. most vanilla registries) can be done here
+	private void afterCommonSetup()
+	{
+		CriteriaTriggers.register(AssembleJumboFurnaceTrigger.INSTANCE);
+		CriteriaTriggers.register(UpgradeJumboFurnaceTrigger.INSTANCE);
 	}
 	
 	private void onRegisterRecipeStuff(RegistryEvent.Register<IRecipeSerializer<?>> event)

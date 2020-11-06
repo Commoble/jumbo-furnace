@@ -1,0 +1,36 @@
+{
+	"parent": "jumbofurnace:obtain_orthodimensional_hyperfurnace",
+	"display":
+	{
+		"icon": 
+		{
+			"item": "jumbofurnace:orthodimensional_hyperfurnace"
+		},
+		"title":
+		{
+			"translate": "jumbofurnace.advancements.story.fully_upgrade_jumbo_furnace_with_hyperfurnaces.title"
+		},
+		"description":
+		{
+			"translate": "jumbofurnace.advancements.story.fully_upgrade_jumbo_furnace_with_hyperfurnaces.description"
+		},
+		"frame": "challenge"
+	},
+	"criteria": 
+	{
+		"fully_upgrade_jumbo_furnace_with_hyperfurnaces": 
+		{
+			"trigger": "jumbofurnace:upgrade_jumbo_furnace",
+			"conditions": 
+			{
+				"item": 
+				{
+					"tag": "jumbofurnace:multiprocessing_upgrade",
+					"count":
+					{
+						"min": 64
+					}
+				}
+			}
+		}
+	}}

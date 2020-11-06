@@ -2,8 +2,10 @@ package commoble.jumbofurnace.jumbo_furnace;
 
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.JumboFurnaceObjects;
+import commoble.jumbofurnace.advancements.UpgradeJumboFurnaceTrigger;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.IContainerProvider;
 import net.minecraft.inventory.container.Slot;
@@ -153,6 +155,19 @@ public class JumboFurnaceContainer extends Container
 	}
 
 	@Override
+	public void onContainerClosed(PlayerEntity player)
+	{
+		if (player instanceof ServerPlayerEntity)
+		{
+			ItemStack finalUpgradeStack = this.getSlot(ORTHOFURNACE_SLOT).getStack();
+			UpgradeJumboFurnaceTrigger.INSTANCE.test((ServerPlayerEntity)player, finalUpgradeStack);
+		}
+		
+		
+		super.onContainerClosed(player);
+	}
+
+	@Override
 	public boolean canInteractWith(PlayerEntity arg0)
 	{
 		return isWithinUsableDistance(this.usabilityTest, arg0, JumboFurnaceObjects.BLOCK);
@@ -217,7 +232,7 @@ public class JumboFurnaceContainer extends Container
 		
 		return slotStackCopy;
 	}
-	
+
 	public int getBurnTimeRemaining()
 	{
 		return this.furnaceData.get(0);

@@ -1,0 +1,34 @@
+{
+	"parent": "jumbofurnace:assemble_jumbo_furnace",
+	"display":
+	{
+		"icon": 
+		{
+			"item": "jumbofurnace:jumbo_furnace"
+		},
+		"title":
+		{
+			"translate": "jumbofurnace.advancements.story.obtain_jumbo_furnace.title"
+		},
+		"description":
+		{
+			"translate": "jumbofurnace.advancements.story.obtain_jumbo_furnace.description"
+		}
+	},
+	"criteria": 
+	{
+		"obtain_jumbo_furnace": 
+		{
+			"trigger": "minecraft:inventory_changed",
+			"conditions": 
+			{
+				"items": 
+				[
+					{
+						"item": "jumbofurnace:jumbo_furnace"
+					}
+				]
+			}
+		}
+	}
+}
