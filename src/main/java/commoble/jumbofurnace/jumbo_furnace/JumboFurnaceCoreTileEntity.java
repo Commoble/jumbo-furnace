@@ -119,14 +119,32 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		}
 	}
 	
+	public void markFuelInventoryChanged()
+	{
+		this.markDirty();
+		this.onFuelInventoryChanged();
+	}
+	
 	public void onFuelInventoryChanged()
 	{
 		this.needsFuelUpdate = true;
 	}
 	
+	public void markInputInventoryChanged()
+	{
+		this.markDirty();
+		this.onInputInventoryChanged();
+	}
+	
 	public void onInputInventoryChanged()
 	{
 		this.needsRecipeUpdate = true;
+	}
+	
+	public void markOutputInventoryCHanged()
+	{
+		this.markDirty();
+		this.onOutputInventoryChanged();
 	}
 	
 	public void onOutputInventoryChanged()

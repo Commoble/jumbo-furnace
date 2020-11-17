@@ -1,5 +1,7 @@
 package commoble.jumbofurnace.jumbo_furnace;
 
+import java.util.Optional;
+
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.JumboFurnaceObjects;
 import commoble.jumbofurnace.advancements.UpgradeJumboFurnaceTrigger;
@@ -64,14 +66,14 @@ public class JumboFurnaceContainer extends Container
 	
 	/** Used by the Server to determine whether the player is close enough to use the Container **/
 	private final IWorldPosCallable usabilityTest;
-	private final PlayerEntity player;
 	private final IIntArray furnaceData;
+	private final Optional<JumboFurnaceCoreTileEntity> serverFurnace;
 
 	/** Container factory for opening the container clientside **/
 	public static JumboFurnaceContainer getClientContainer(int id, PlayerInventory playerInventory)
 	{
 		// init client inventory with dummy slots
-		return new JumboFurnaceContainer(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new ItemStackHandler(1), new IntArray(4));
+		return new JumboFurnaceContainer(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new ItemStackHandler(1), new IntArray(4), Optional.empty());
 	}
 	
 	/**
@@ -82,16 +84,17 @@ public class JumboFurnaceContainer extends Container
 	 */
 	public static IContainerProvider getServerContainerProvider(JumboFurnaceCoreTileEntity te, BlockPos activationPos)
 	{
-		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output, te.multiprocessUpgradeHandler, new JumboFurnaceSyncData(te));
+		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output, te.multiprocessUpgradeHandler, new JumboFurnaceSyncData(te), Optional.of(te));
 	}
 	
-	protected JumboFurnaceContainer(int id, PlayerInventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IItemHandler multiprocessUpgrades, IIntArray furnaceData)
+	protected JumboFurnaceContainer(int id, PlayerInventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IItemHandler multiprocessUpgrades, IIntArray furnaceData, Optional<JumboFurnaceCoreTileEntity> serverFurnace)
 	{
 		super(JumboFurnaceObjects.CONTAINER_TYPE, id);
 		
-		this.player = playerInventory.player;
-		this.usabilityTest = IWorldPosCallable.of(this.player.world, pos);
+		PlayerEntity player = playerInventory.player;
+		this.usabilityTest = IWorldPosCallable.of(player.world, pos);
 		this.furnaceData = furnaceData;
+		this.serverFurnace = serverFurnace;
 		
 		// add input slots
 		for (int row=0; row < SLOT_ROWS; row++)
@@ -125,7 +128,7 @@ public class JumboFurnaceContainer extends Container
 			{
 				int x = OUTPUT_START_X + SLOT_SPACING*column;
 				int index = row * SLOT_COLUMNS + column;
-				this.addSlot(new JumboFurnaceOutputSlot(this.player, outputs, index, x, y));
+				this.addSlot(new JumboFurnaceOutputSlot(player, outputs, index, x, y));
 			}
 		}
 		
@@ -195,18 +198,39 @@ public class JumboFurnaceContainer extends Container
 			// otherwise, this is a player slot
 			else
 			{
+				// note: mergeItemStack returns true if any slot contents were changed
 				// if this is an upgrade item, try to put it in the upgrade slot first
-				if (JumboFurnace.MULTIPROCESSING_UPGRADE_TAG.contains(stackInSlot.getItem()) && !this.mergeItemStack(stackInSlot, ORTHOFURNACE_SLOT, ORTHOFURNACE_SLOT+1, false))
+				if (JumboFurnace.MULTIPROCESSING_UPGRADE_TAG.contains(stackInSlot.getItem()))
 				{
-					return ItemStack.EMPTY;
+					// if we altered any input slots
+					if (this.mergeItemStack(stackInSlot, ORTHOFURNACE_SLOT, ORTHOFURNACE_SLOT+1, false))
+					{
+						this.serverFurnace.ifPresent(JumboFurnaceCoreTileEntity::markInputInventoryChanged);
+					}
+					else
+					{
+						return ItemStack.EMPTY;
+					}
 				}
 				// if we can burn the item, try to put it in the fuel slots first
-				if (ForgeHooks.getBurnTime(stackInSlot) > 0 && !this.mergeItemStack(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))
+				if (ForgeHooks.getBurnTime(stackInSlot) > 0)
 				{
-					return ItemStack.EMPTY;
+					// if we changed any fuel item slots
+					if (this.mergeItemStack(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))
+					{
+						this.serverFurnace.ifPresent(JumboFurnaceCoreTileEntity::markFuelInventoryChanged);
+					}
+					else
+					{
+						return ItemStack.EMPTY;
+					}
 				}
 				// otherwise, try to put it in the input slots
-				if (!this.mergeItemStack(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
+				if (this.mergeItemStack(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
+				{
+					this.serverFurnace.ifPresent(JumboFurnaceCoreTileEntity::markInputInventoryChanged);
+				}
+				else
 				{
 					return ItemStack.EMPTY;
 				}
