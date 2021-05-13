@@ -1,0 +1,20 @@
+{
+	"block.jumbofurnace.jumbo_furnace": "Гигантская печь",
+	"item.jumbofurnace.jumbo_furnace": "Гигантская печь",
+	"item.jumbofurnace.jumbo_furnace_jei": "Гигантская печь",
+	"item.jumbofurnace.orthodimensional_hyperfurnace": "Ортопространственная гиперпечь",
+	"item.jumbofurnace.orthodimensional_hyperfurnace.use_message": "Эта конструкция не может существовать в Вашей маленькой трехмерной вселенной!",
+	"item.jumbofurnace.orthodimensional_hyperfurnace.tooltip": "Положите это улучшение в слот Гигантской печи, чтобы плавить больше вещей одновременно.",
+	"container.jumbofurnace.jumbo_furnace": "Гигантская печь",
+	"gui.jumbofurnace.category.jumbo_smelting": "Jumbo плавка",
+	"gui.jumbofurnace.category.multiblock_building": "Мультиблочное строительство",
+	"jumbofurnace.jumbo_furnace_info_tooltip": "Поставьте 27 печек в куб 3x3x3, чтобы создать Гигантскую печь.",
+	"jumbofurnace.advancements.story.assemble_jumbo_furnace.title": "Гигантская печь",
+	"jumbofurnace.advancements.story.assemble_jumbo_furnace.description": "Поставьте 27 печек в куб 3x3x3, чтобы создать Гигантскую печь.",
+	"jumbofurnace.advancements.story.obtain_jumbo_furnace.title": "Меньше снаружи",
+	"jumbofurnace.advancements.story.obtain_jumbo_furnace.description": "Создайте предмет Гигантской печи (возможно плавление на уровне 27 печек в Гигантской печи.)",
+	"jumbofurnace.advancements.story.obtain_orthodimensional_hyperfurnace.title": "Больше снаружи",
+	"jumbofurnace.advancements.story.obtain_orthodimensional_hyperfurnace.description": "Создайте ортопространственная гиперпечь (возможно плавление на уровне 8 Гигантских печей с помощью Жемчуга краяl)",
+	"jumbofurnace.advancements.story.fully_upgrade_jumbo_furnace_with_hyperfurnaces.title": "Печки прошли весь долгий путь",
+	"jumbofurnace.advancements.story.fully_upgrade_jumbo_furnace_with_hyperfurnaces.description": "Улучшите Гигантскую печь с помощью целого стэка из 64 Ортопространственных гиперпечей."
+}
