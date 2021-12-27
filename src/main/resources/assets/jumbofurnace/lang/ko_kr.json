@@ -1,0 +1,20 @@
+{
+	"block.jumbofurnace.jumbo_furnace": "점보 화로",
+	"item.jumbofurnace.jumbo_furnace": "점보 화로",
+	"item.jumbofurnace.jumbo_furnace_jei": "점보 화로",
+	"item.jumbofurnace.orthodimensional_hyperfurnace": "표준차원 하이퍼화로",
+	"item.jumbofurnace.orthodimensional_hyperfurnace.use_message": "이 구조물은 당신의 천박한 3차원 우주에서는 존재할 수 없어요!",
+	"item.jumbofurnace.orthodimensional_hyperfurnace.tooltip": "점보 화로의 업그레이드 슬롯에 넣어 더 많은 제련을 동시에 합니다.",
+	"container.jumbofurnace.jumbo_furnace": "점보 화로",
+	"gui.jumbofurnace.category.jumbo_smelting": "점보 제련",
+	"gui.jumbofurnace.category.multiblock_building": "멀티블록 빌딩",
+	"jumbofurnace.jumbo_furnace_info_tooltip": "27개의 화로를 3x3x3 정육면체에 넣어 점보 화로를 만듭니다.",
+	"jumbofurnace.advancements.story.assemble_jumbo_furnace.title": "점보 화로",
+	"jumbofurnace.advancements.story.assemble_jumbo_furnace.description": "27개의 화로를 3x3x3 정육면체에 넣어 점보 화로를 만듭니다.",
+	"jumbofurnace.advancements.story.obtain_jumbo_furnace.title": "겉모습이 더 작음",
+	"jumbofurnace.advancements.story.obtain_jumbo_furnace.description": "점보 화로 아이템을 만듭니다(점보 화로에서 27개의 화로를 제련).",
+	"jumbofurnace.advancements.story.obtain_orthodimensional_hyperfurnace.title": "더 큰 내부",
+	"jumbofurnace.advancements.story.obtain_orthodimensional_hyperfurnace.description": "표준차원 하이퍼화로를 만듭니다(점보 화로 8개를 엔더 진주로 제련).",
+	"jumbofurnace.advancements.story.fully_upgrade_jumbo_furnace_with_hyperfurnaces.title": "화로 전체 아래로",
+	"jumbofurnace.advancements.story.fully_upgrade_jumbo_furnace_with_hyperfurnaces.description": "64개의 표준차원 하이퍼화로로 구성된 전체 스택으로 점보 화로를 업그레이드하십시오."
+}
