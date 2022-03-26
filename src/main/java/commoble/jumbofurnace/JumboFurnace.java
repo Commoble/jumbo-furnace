@@ -2,6 +2,8 @@ package commoble.jumbofurnace;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -9,14 +11,14 @@ import com.mojang.datafixers.util.Pair;
 
 import commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger;
 import commoble.jumbofurnace.advancements.UpgradeJumboFurnaceTrigger;
-import commoble.jumbofurnace.client.ClientEvents;
+import commoble.jumbofurnace.client.ClientProxy;
 import commoble.jumbofurnace.client.OrthodimensionalHyperfurnaceRenderer;
 import commoble.jumbofurnace.config.ConfigHelper;
 import commoble.jumbofurnace.config.ServerConfig;
 import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceBlock;
-import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
-import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceCoreTileEntity;
-import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorTileEntity;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenuType;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceCoreBlockEntity;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorBlockEntity;
 import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceItem;
 import commoble.jumbofurnace.jumbo_furnace.MultiBlockHelper;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
@@ -24,35 +26,36 @@ import commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
 import commoble.jumbofurnace.recipes.RecipeSorter;
 import commoble.jumbofurnace.recipes.TagStackIngredient;
 import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ITag;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
+import net.minecraft.tags.Tag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
@@ -77,71 +80,101 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import net.minecraftforge.registries.ObjectHolder;
+import net.minecraftforge.registries.RegistryObject;
 
 @Mod(JumboFurnace.MODID)
 public class JumboFurnace
 {
-	public static final String MODID = "jumbofurnace";
-	public static final IRecipeType<JumboFurnaceRecipe> JUMBO_SMELTING_RECIPE_TYPE = IRecipeType.register("jumbofurnace:jumbo_smelting");
-	public static final ITag<Block> JUMBOFURNACEABLE_TAG = BlockTags.makeWrapperTag(MODID + ":" + "jumbofurnaceable");
-	public static final ITag<Item> MULTIPROCESSING_UPGRADE_TAG = ItemTags.makeWrapperTag(MODID+":" + "multiprocessing_upgrade");
+	private static JumboFurnace instance;
+	public static JumboFurnace get() { return instance; }
 	
-	public static ServerConfig SERVER_CONFIG;
+	public static final String MODID = "jumbofurnace";
+	public static final RecipeType<JumboFurnaceRecipe> JUMBO_SMELTING_RECIPE_TYPE = RecipeType.register("jumbofurnace:jumbo_smelting");
+	public static final Tag<Block> JUMBOFURNACEABLE_TAG = BlockTags.bind(MODID + ":" + "jumbofurnaceable");
+	public static final Tag<Item> MULTIPROCESSING_UPGRADE_TAG = ItemTags.bind(MODID+":" + "multiprocessing_upgrade");
+	
+	public final ServerConfig serverConfig;
+	public final RegistryObject<JumboFurnaceBlock> jumboFurnaceBlock;
+	public final RegistryObject<JumboFurnaceItem> jumboFurnaceItem;
+	public final RegistryObject<Item> jumboFurnaceJeiDummy;
+	public final RegistryObject<OrthodimensionalHyperfurnaceItem> orthodimensionalHyperFurnaceItem;
+	public final RegistryObject<BlockEntityType<JumboFurnaceCoreBlockEntity>> jumboFurnaceCoreBlockEntityType;
+	public final RegistryObject<BlockEntityType<JumboFurnaceExteriorBlockEntity>> jumboFurnaceExteriorBlockEntityType;
+	public final RegistryObject<MenuType<JumboFurnaceMenuType>> jumboFurnaceMenuType;
+	public final RegistryObject<RecipeSerializer<JumboFurnaceRecipe>> jumboSmeltingRecipeSerializer;
+	
+	public final Supplier<RecipeType<JumboFurnaceRecipe>> jumboSmeltingRecipeType;
 	
 	public JumboFurnace()
 	{
+		if (instance != null)
+			throw new IllegalStateException("Jumbo Furnace initialized twice!");
+		instance = this;
+		
 		IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 		IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 		
-		SERVER_CONFIG = ConfigHelper.register(ModConfig.Type.SERVER, ServerConfig::new);
+		this.serverConfig = ConfigHelper.register(ModConfig.Type.SERVER, ServerConfig::create);
 		
-		this.addModListeners(modBus);
-		this.addForgeListeners(forgeBus);
-		
-		if (FMLEnvironment.dist == Dist.CLIENT)
-		{
-			ClientEvents.addClientListeners(modBus, forgeBus);
-		}
-	}
-	
-	private void addModListeners(IEventBus modBus)
-	{
 		// register forge objects
 		DeferredRegister<Block> blocks = this.makeDeferredRegister(modBus, ForgeRegistries.BLOCKS);
 		DeferredRegister<Item> items = this.makeDeferredRegister(modBus, ForgeRegistries.ITEMS);
-		DeferredRegister<TileEntityType<?>> tileEntities = this.makeDeferredRegister(modBus, ForgeRegistries.TILE_ENTITIES);
-		DeferredRegister<ContainerType<?>> containers = this.makeDeferredRegister(modBus, ForgeRegistries.CONTAINERS);
-		DeferredRegister<IRecipeSerializer<?>> recipeSerializers = this.makeDeferredRegister(modBus, ForgeRegistries.RECIPE_SERIALIZERS);
+		DeferredRegister<BlockEntityType<?>> blockEntities = this.makeDeferredRegister(modBus, ForgeRegistries.BLOCK_ENTITIES);
+		DeferredRegister<MenuType<?>> menus = this.makeDeferredRegister(modBus, ForgeRegistries.CONTAINERS);
+		DeferredRegister<RecipeSerializer<?>> recipeSerializers = this.makeDeferredRegister(modBus, ForgeRegistries.RECIPE_SERIALIZERS);
 		
-		blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.from(Blocks.FURNACE)));
+		this.jumboFurnaceBlock = blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.copy(Blocks.FURNACE)));
 		
-		items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)));
-		items.register(Names.ORTHODIMENSIONAL_HYPERFURNACE, () -> new OrthodimensionalHyperfurnaceItem(new Item.Properties().group(ItemGroup.MISC).setISTER(() -> OrthodimensionalHyperfurnaceRenderer::new)));
+		this.jumboFurnaceItem = items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
+		this.orthodimensionalHyperFurnaceItem = items.register(Names.ORTHODIMENSIONAL_HYPERFURNACE, () -> new OrthodimensionalHyperfurnaceItem(new Item.Properties().tab(CreativeModeTab.TAB_MISC)));
 		
-		items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties())
+		this.jumboFurnaceJeiDummy = items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties())
 		{
 			/**
 			 * allows items to add custom lines of information to the mouseover description
 			 */
 			@Override
 			@OnlyIn(Dist.CLIENT)
-			public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
+			public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn)
 			{
-				tooltip.add(new TranslationTextComponent("jumbofurnace.jumbo_furnace_info_tooltip"));
+				tooltip.add(new TranslatableComponent("jumbofurnace.jumbo_furnace_info_tooltip"));
 			}
 		});
 		
-		tileEntities.register(Names.JUMBO_FURNACE_CORE,
-			() -> TileEntityType.Builder.create(JumboFurnaceCoreTileEntity::new, JumboFurnaceObjects.BLOCK).build(null));
-		tileEntities.register(Names.JUMBO_FURNACE_EXTERIOR,
-			() -> TileEntityType.Builder.create(JumboFurnaceExteriorTileEntity::new, JumboFurnaceObjects.BLOCK).build(null));
+		this.jumboFurnaceCoreBlockEntityType = blockEntities.register(Names.JUMBO_FURNACE_CORE,
+			() -> BlockEntityType.Builder.of(JumboFurnaceCoreBlockEntity::create, this.jumboFurnaceBlock.get()).build(null));
+		this.jumboFurnaceExteriorBlockEntityType = blockEntities.register(Names.JUMBO_FURNACE_EXTERIOR,
+			() -> BlockEntityType.Builder.of(JumboFurnaceExteriorBlockEntity::create, this.jumboFurnaceBlock.get()).build(null));
 		
-		containers.register(Names.JUMBO_FURNACE, () -> new ContainerType<>(JumboFurnaceContainer::getClientContainer));
+		this.jumboFurnaceMenuType = menus.register(Names.JUMBO_FURNACE, () -> new MenuType<>(JumboFurnaceMenuType::getClientContainer));
 		
-		recipeSerializers.register(Names.JUMBO_SMELTING, () -> new JumboFurnaceRecipeSerializer(JUMBO_SMELTING_RECIPE_TYPE));
+		this.jumboSmeltingRecipeSerializer = recipeSerializers.register(Names.JUMBO_SMELTING, () -> new JumboFurnaceRecipeSerializer(JUMBO_SMELTING_RECIPE_TYPE));
 		
-		modBus.addGenericListener(IRecipeSerializer.class, this::onRegisterRecipeStuff);
-		modBus.addListener(this::onCommonSetup);
+		// register to vanilla registries
+		List<Runnable> commonSetupRunnables = new ArrayList<>();
+		this.jumboSmeltingRecipeType = VanillaRegistryObject.create(commonSetupRunnables, new ResourceLocation(MODID, "jumbo_smelting"),
+			id -> Registry.register(Registry.RECIPE_TYPE, id, new RecipeType<JumboFurnaceRecipe>()
+				{
+					@Override
+					public String toString()
+					{
+						return id.toString();
+					}
+				}));
+		
+		modBus.addGenericListener(RecipeSerializer.class, this::onRegisterRecipeStuff);
+		Consumer<FMLCommonSetupEvent> onCommonSetup = event -> this.onCommonSetup(event, commonSetupRunnables);
+		modBus.addListener(onCommonSetup);
+
+		forgeBus.addListener(this::onAddServerReloadListeners);
+		forgeBus.addListener(this::onEntityPlaceBlock);
+		forgeBus.addListener(EventPriority.LOW, this::onRightClickBlockLow);
+		
+		if (FMLEnvironment.dist == Dist.CLIENT)
+		{
+			ClientProxy.addClientListeners(modBus, forgeBus);
+		}
 	}
 	
 	private <T extends IForgeRegistryEntry<T>> DeferredRegister<T> makeDeferredRegister(IEventBus modBus, IForgeRegistry<T> registry)
@@ -149,13 +182,6 @@ public class JumboFurnace
 		DeferredRegister<T> register = DeferredRegister.create(registry, MODID);
 		register.register(modBus);
 		return register;
-	}
-	
-	private void addForgeListeners(IEventBus forgeBus)
-	{
-		forgeBus.addListener(this::onAddServerReloadListeners);
-		forgeBus.addListener(this::onEntityPlaceBlock);
-		forgeBus.addListener(EventPriority.LOW, this::onRightClickBlockLow);
 	}
 	
 	private void onAddServerReloadListeners(AddReloadListenerEvent event)
@@ -166,8 +192,8 @@ public class JumboFurnace
 	private void onEntityPlaceBlock(EntityPlaceEvent event)
 	{
 		Block block = event.getPlacedBlock().getBlock();
-		IWorld world = event.getWorld();
-		if (!(event instanceof EntityMultiPlaceEvent) && JumboFurnace.JUMBOFURNACEABLE_TAG.contains(block) && world instanceof World)
+		LevelAccessor world = event.getWorld();
+		if (!(event instanceof EntityMultiPlaceEvent) && JumboFurnace.JUMBOFURNACEABLE_TAG.contains(block) && world instanceof Level)
 		{
 			BlockPos pos = event.getPos();
 			BlockState againstState = event.getPlacedAgainst();
@@ -175,14 +201,14 @@ public class JumboFurnace
 			List<ItemStack> stacks = new ArrayList<>();
 			
 			// returns a non-empty list if we can make furnace
-			List<Pair<BlockPos, BlockState>> pairs = MultiBlockHelper.getJumboFurnaceStates(((World)world).getDimensionKey(), world, pos, againstState, entity);
+			List<Pair<BlockPos, BlockState>> pairs = MultiBlockHelper.getJumboFurnaceStates(((Level)world).dimension(), world, pos, againstState, entity);
 			if (pairs.size() > 0)
 			{
 				for (Pair<BlockPos, BlockState> pair : pairs)
 				{
 					BlockPos newPos = pair.getFirst();
 					BlockState newState = pair.getSecond();
-					TileEntity te = world.getTileEntity(newPos);
+					BlockEntity te = world.getBlockEntity(newPos);
 					// attempt to remove items from existing itemhandlers if possible
 					if (te != null)
 					{
@@ -192,20 +218,20 @@ public class JumboFurnace
 						}
 						te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).ifPresent(handler -> addItemsToList(stacks, handler));
 					}
-					world.setBlockState(newPos, newState, 3);
+					world.setBlock(newPos, newState, 3);
 				}
-				if (entity instanceof ServerPlayerEntity)
+				if (entity instanceof ServerPlayer)
 				{
-					AssembleJumboFurnaceTrigger.INSTANCE.trigger((ServerPlayerEntity)entity);
+					AssembleJumboFurnaceTrigger.INSTANCE.trigger((ServerPlayer)entity);
 				}
 			}
 			if (!stacks.isEmpty())
 			{
-				if (entity instanceof PlayerEntity)
+				if (entity instanceof Player)
 				{
 					for (ItemStack stack : stacks)
 					{
-						((PlayerEntity)entity).addItemStackToInventory(stack);
+						((Player)entity).addItem(stack);
 					}
 				}
 				else
@@ -213,7 +239,7 @@ public class JumboFurnace
 
 					for (ItemStack stack : stacks)
 					{
-						entity.entityDropItem(stack);
+						entity.spawnAtLocation(stack);
 					}
 				}
 			}
@@ -229,58 +255,59 @@ public class JumboFurnace
 	private void onRightClickBlockLow(RightClickBlock event)
 	{
 		// if block or item usage is denied, do nothing
-		if (SERVER_CONFIG.allowShearing.get() && event.getUseItem() != Result.DENY && event.getUseBlock() != Result.DENY)
+		if (this.serverConfig.allowShearing().get() && event.getUseItem() != Result.DENY && event.getUseBlock() != Result.DENY)
 		{
-			PlayerEntity player = event.getPlayer();
+			Player player = event.getPlayer();
 			ItemStack stack = event.getItemStack();
 			if (player.isSecondaryUseActive() && Tags.Items.SHEARS.contains(stack.getItem()))
 			{
-				World world = event.getWorld();
+				Level world = event.getWorld();
 				BlockPos pos = event.getPos();
 				BlockState state = world.getBlockState(pos);
-				if (state.getBlock() == JumboFurnaceObjects.BLOCK)
+				if (state.getBlock() == this.jumboFurnaceBlock.get())
 				{
 					// we used shears on a jumbo furnace while sneaking -- event will now be cancelled/overridden
 					
 					// only make changes to world on server (blocks, itemstacks, entities, etc)
-					if (!world.isRemote)
+					if (!world.isClientSide)
 					{
 						BlockPos corePos = JumboFurnaceBlock.getCorePos(state, pos);
 						// forge fires a RightClickBlock event before this is called, we can assume that this would fail if the player didn't have
 						// permission to use items on the block
-			            Block.spawnAsEntity(world, pos, new ItemStack(JumboFurnaceObjects.ITEM));
-			            Hand hand = event.getHand();
-			            stack.damageItem(1, player, (playerEntity) -> {
-			               playerEntity.sendBreakAnimation(hand);
+			            Block.popResource(world, pos, new ItemStack(this.jumboFurnaceItem.get()));
+			            InteractionHand hand = event.getHand();
+			            stack.hurtAndBreak(1, player, (playerEntity) -> {
+			               playerEntity.broadcastBreakEvent(hand);
 			            });
 						
 						MultiBlockHelper.get3x3CubeAround(corePos)
 							.forEach(componentPos ->
 								world.removeBlock(componentPos, true));	// use isMoving flag to prevent recursive destruction from occurring or dropping blocks
 					}
-					world.playSound(player, player.getPosX(), player.getPosY(), player.getPosZ(), SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+					world.playSound(player, player.getX(), player.getY(), player.getZ(), SoundEvents.SHEEP_SHEAR, SoundSource.NEUTRAL, 1.0F, 1.0F);
 									
 					event.setCanceled(true);
-					event.setCancellationResult(ActionResultType.SUCCESS);
+					event.setCancellationResult(InteractionResult.SUCCESS);
 				}
 			}
 		}
 	}
 	
-	private void onCommonSetup(FMLCommonSetupEvent event)
+	private void onCommonSetup(FMLCommonSetupEvent event, List<Runnable> runnables)
 	{
-		event.enqueueWork(this::afterCommonSetup);
+		event.enqueueWork(() -> this.afterCommonSetup(runnables));
 	}
 	
 	// runs on main thread after common setup event
 	// adding things to unsynchronized registries (i.e. most vanilla registries) can be done here
-	private void afterCommonSetup()
+	private void afterCommonSetup(List<Runnable> runnables)
 	{
+		runnables.forEach(Runnable::run); // register suppliers that we need to save in final fields
 		CriteriaTriggers.register(AssembleJumboFurnaceTrigger.INSTANCE);
 		CriteriaTriggers.register(UpgradeJumboFurnaceTrigger.INSTANCE);
 	}
 	
-	private void onRegisterRecipeStuff(RegistryEvent.Register<IRecipeSerializer<?>> event)
+	private void onRegisterRecipeStuff(RegistryEvent.Register<RecipeSerializer<?>> event)
 	{
 		// forge registers ingredient serializers here for some reason, might as well do it here too
 		CraftingHelper.register(new ResourceLocation("jumbofurnace:tag_stack"), TagStackIngredient.SERIALIZER);

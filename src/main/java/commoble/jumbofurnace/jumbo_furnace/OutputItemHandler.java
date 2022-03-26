@@ -1,23 +1,23 @@
 package commoble.jumbofurnace.jumbo_furnace;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.FloatNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
 
 public class OutputItemHandler extends ItemStackHandler
 {
 	public static final String EXPERIENCE = "xp";
 	
-	public final JumboFurnaceCoreTileEntity te;
+	public final JumboFurnaceCoreBlockEntity te;
 	public boolean forcingInserts = false;
 	public final float[] storedExperience;
 	
-	public OutputItemHandler(JumboFurnaceCoreTileEntity te)
+	public OutputItemHandler(JumboFurnaceCoreBlockEntity te)
 	{
-		super(JumboFurnaceContainer.INPUT_SLOTS);
+		super(JumboFurnaceMenuType.INPUT_SLOTS);
 		this.te = te;
 		this.storedExperience = new float[9];
 	}
@@ -45,7 +45,7 @@ public class OutputItemHandler extends ItemStackHandler
 	protected void onContentsChanged(int slot)
 	{
 		super.onContentsChanged(slot);
-		this.te.markDirty();
+		this.te.setChanged();
 		this.te.onOutputInventoryChanged();
 	}
 	
@@ -57,23 +57,23 @@ public class OutputItemHandler extends ItemStackHandler
 	}
 
 	@Override
-	public CompoundNBT serializeNBT()
+	public CompoundTag serializeNBT()
 	{
-		CompoundNBT result = super.serializeNBT();
-		ListNBT list = new ListNBT();
+		CompoundTag result = super.serializeNBT();
+		ListTag list = new ListTag();
 		for (float experience : this.storedExperience)
 		{
-			list.add(FloatNBT.valueOf(experience));
+			list.add(FloatTag.valueOf(experience));
 		}
 		result.put(EXPERIENCE, list);
 		return result;
 	}
 
 	@Override
-	public void deserializeNBT(CompoundNBT nbt)
+	public void deserializeNBT(CompoundTag nbt)
 	{
 		super.deserializeNBT(nbt);
-		ListNBT list = nbt.getList(EXPERIENCE, Constants.NBT.TAG_FLOAT);
+		ListTag list = nbt.getList(EXPERIENCE, Tag.TAG_FLOAT);
 		int listSize = list.size();
 		int slotCount = this.storedExperience.length;
 		int slotsToRead = Math.min(listSize, slotCount);

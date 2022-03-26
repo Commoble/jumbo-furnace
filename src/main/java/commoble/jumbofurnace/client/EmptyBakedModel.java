@@ -5,14 +5,14 @@ import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemOverrideList;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 
-public class EmptyBakedModel implements IBakedModel
+public class EmptyBakedModel implements BakedModel
 {
 	private static final List<BakedQuad> NO_QUADS = ImmutableList.of();
 	
@@ -30,7 +30,7 @@ public class EmptyBakedModel implements IBakedModel
 	}
 
 	@Override
-	public boolean isAmbientOcclusion()
+	public boolean useAmbientOcclusion()
 	{
 		return false;
 	}
@@ -42,27 +42,27 @@ public class EmptyBakedModel implements IBakedModel
 	}
 
 	@Override
-	public boolean isSideLit()
+	public boolean usesBlockLight()
 	{
 		return false;
 	}
 
 	@Override
-	public boolean isBuiltInRenderer()
+	public boolean isCustomRenderer()
 	{
 		return true;
 	}
 
 	@Override
-	public TextureAtlasSprite getParticleTexture()
+	public TextureAtlasSprite getParticleIcon()
 	{
 		return this.oarticleTexture;
 	}
 
 	@Override
-	public ItemOverrideList getOverrides()
+	public ItemOverrides getOverrides()
 	{
-		return ItemOverrideList.EMPTY;
+		return ItemOverrides.EMPTY;
 	}
 	
 }

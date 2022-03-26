@@ -1,6 +1,6 @@
 package commoble.jumbofurnace.jumbo_furnace;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 
 public class ExternalItemHandler implements IItemHandler

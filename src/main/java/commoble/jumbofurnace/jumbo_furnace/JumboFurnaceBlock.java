@@ -9,42 +9,43 @@ import javax.annotation.Nullable;
 
 import com.mojang.datafixers.util.Pair;
 
-import commoble.jumbofurnace.JumboFurnaceObjects;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.RedstoneTorchBlock;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.inventory.container.IContainerProvider;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.inventory.container.SimpleNamedContainerProvider;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.IntegerProperty;
-import net.minecraft.state.StateContainer.Builder;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
+import commoble.jumbofurnace.JumboFurnace;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MenuConstructor;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.RedstoneTorchBlock;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition.Builder;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.Tags;
-import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.network.NetworkHooks;
 
-public class JumboFurnaceBlock extends Block
+public class JumboFurnaceBlock extends Block implements EntityBlock
 {
 	public static final IntegerProperty X = IntegerProperty.create("x", 0, 2);
 	public static final IntegerProperty Y = IntegerProperty.create("y", 0, 2);
@@ -54,83 +55,71 @@ public class JumboFurnaceBlock extends Block
 	public JumboFurnaceBlock(Properties properties)
 	{
 		super(properties);
-		this.setDefaultState(this.stateContainer.getBaseState()
-			.with(X, 0)
-			.with(Y, 0)
-			.with(Z, 0)
-			.with(LIT, false)
+		this.registerDefaultState(this.stateDefinition.any()
+			.setValue(X, 0)
+			.setValue(Y, 0)
+			.setValue(Z, 0)
+			.setValue(LIT, false)
 			);
 	}
 
 	@Override
-	protected void fillStateContainer(Builder<Block, BlockState> builder)
+	protected void createBlockStateDefinition(Builder<Block, BlockState> builder)
 	{
-		super.fillStateContainer(builder);
+		super.createBlockStateDefinition(builder);
 		builder.add(X, Y, Z, LIT);
 	}
 
 	@Override
-	public boolean hasTileEntity(BlockState state)
-	{
-		return true;
-	}
-
-	@Override
-	public TileEntity createTileEntity(BlockState state, IBlockReader world)
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
 	{
 		return this.isCore(state)
-			? JumboFurnaceObjects.CORE_TE_TYPE.create()
-			: JumboFurnaceObjects.EXTERIOR_TE_TYPE.create();
+			? JumboFurnace.get().jumboFurnaceCoreBlockEntityType.get().create(pos,state)
+			: JumboFurnace.get().jumboFurnaceExteriorBlockEntityType.get().create(pos,state);
 	}
 	
 	@Deprecated
 	@Override
-	public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit)
+	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit)
 	{
 		// if player uses shears on block, drop a whole jumbo furnace instead
-		ItemStack stack = player.getHeldItem(handIn);
-		if (player.isSneaking() && handIn != null && Tags.Items.SHEARS.contains(stack.getItem()))
+		ItemStack stack = player.getItemInHand(handIn);
+		if (player.isShiftKeyDown() && handIn != null && Tags.Items.SHEARS.contains(stack.getItem()))
 		{
-			if (!world.isRemote)
-			{
-			}
-			return ActionResultType.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 		BlockPos corePos = JumboFurnaceBlock.getCorePos(state, pos);
-		TileEntity te = world.getTileEntity(corePos);
-		if (te instanceof JumboFurnaceCoreTileEntity)
+		BlockEntity be = level.getBlockEntity(corePos);
+		if (be instanceof JumboFurnaceCoreBlockEntity core)
 		{
-			if (player instanceof ServerPlayerEntity)
+			if (player instanceof ServerPlayer serverPlayer)
 			{
-				ServerPlayerEntity serverPlayer = (ServerPlayerEntity)player;
-				JumboFurnaceCoreTileEntity core = (JumboFurnaceCoreTileEntity)te;
-				IContainerProvider provider = JumboFurnaceContainer.getServerContainerProvider(core, pos);
-				INamedContainerProvider namedProvider = new SimpleNamedContainerProvider(provider, JumboFurnaceContainer.TITLE);
+				MenuConstructor provider = JumboFurnaceMenuType.getServerContainerProvider(core, pos);
+				MenuProvider namedProvider = new SimpleMenuProvider(provider, JumboFurnaceMenuType.TITLE);
 				NetworkHooks.openGui(serverPlayer, namedProvider);
 			}
 			
-			return ActionResultType.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 		
-		return super.onBlockActivated(state, world, corePos, player, handIn, hit);
+		return super.use(state, level, corePos, player, handIn, hit);
 	}
 
 	@Override
 	@Deprecated
-	public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving)
 	{
 		if (state.getBlock() != newState.getBlock())
 		{
-			TileEntity te = world.getTileEntity(pos);
-			if (te instanceof JumboFurnaceCoreTileEntity)
+			BlockEntity be = level.getBlockEntity(pos);
+			if (be instanceof JumboFurnaceCoreBlockEntity core)
 			{
-				JumboFurnaceCoreTileEntity core = (JumboFurnaceCoreTileEntity)te;
 				List<ItemStack> drops = new ArrayList<>();
 				double x = pos.getX() + 0.5D;
 				double y = pos.getY() + 0.5D;
 				double z = pos.getZ() + 0.5D;
 				float experience = 0;
-				for (int i=0; i<JumboFurnaceContainer.INPUT_SLOTS; i++)
+				for (int i=0; i<JumboFurnaceMenuType.INPUT_SLOTS; i++)
 				{
 					drops.add(core.input.getStackInSlot(i));
 					drops.add(core.fuel.getStackInSlot(i));
@@ -140,9 +129,9 @@ public class JumboFurnaceBlock extends Block
 				drops.add(core.multiprocessUpgradeHandler.getStackInSlot(0));
 				for (ItemStack drop : drops)
 				{
-					InventoryHelper.spawnItemStack(world, x, y, z, drop);
+					Containers.dropItemStack(level, x, y, z, drop);
 				}
-				PlayerEntity player = world.getClosestPlayer(x, y, z, 16D, null);
+				Player player = level.getNearestPlayer(x, y, z, 16D, null);
 				if (player != null)
 				{
 					JumboFurnaceOutputSlot.spawnExpOrbs(player, experience);
@@ -155,30 +144,30 @@ public class JumboFurnaceBlock extends Block
 			// (block flag 64 or 1<<6 or Constants.BlockFlags.IS_MOVING)
 			if (!isMoving)
 			{
-				this.destroyNextBlockPos(world, state, pos);
+				this.destroyNextBlockPos(level, state, pos);
 			}
 
-			super.onReplaced(state, world, pos, newState, isMoving);
+			super.onRemove(state, level, pos, newState, isMoving);
 		}
 	}
 	
-	public void destroyNextBlockPos(World world, BlockState state, BlockPos pos)
+	public void destroyNextBlockPos(Level level, BlockState state, BlockPos pos)
 	{
 		if (state.hasProperty(X) && state.hasProperty(Y) && state.hasProperty(Z))
 		{
-			int xIndex = state.get(X);
-			int yIndex = state.get(Y);
-			int zIndex = state.get(Z);
+			int xIndex = state.getValue(X);
+			int yIndex = state.getValue(Y);
+			int zIndex = state.getValue(Z);
 			
 			int nextXIndex = (xIndex + 1) % 3;
 			int nextYIndex = (xIndex == 2) ? (yIndex + 1) % 3 : yIndex;
 			int nextZIndex = (xIndex == 2 && yIndex == 2) ? (zIndex + 1) % 3 : zIndex;
 			
-			BlockPos nextPos = pos.add(nextXIndex - xIndex, nextYIndex - yIndex, nextZIndex - zIndex);
-			BlockState nextState = world.getBlockState(nextPos);
+			BlockPos nextPos = pos.offset(nextXIndex - xIndex, nextYIndex - yIndex, nextZIndex - zIndex);
+			BlockState nextState = level.getBlockState(nextPos);
 			if (nextState.getBlock() == this)
 			{
-				world.destroyBlock(nextPos, true);
+				level.destroyBlock(nextPos, true);
 			}
 		}
 	}
@@ -192,21 +181,21 @@ public class JumboFurnaceBlock extends Block
 	 */
 	public static BlockPos getCorePos(BlockState exteriorState, BlockPos exteriorPos)
 	{
-		int xOff = exteriorState.hasProperty(X) ? 1 - exteriorState.get(X) : 0;
-		int yOff = exteriorState.hasProperty(Y) ? 1 - exteriorState.get(Y) : 0;
-		int zOff = exteriorState.hasProperty(Z) ? 1 - exteriorState.get(Z) : 0;
-		return exteriorPos.add(xOff, yOff, zOff);
+		int xOff = exteriorState.hasProperty(X) ? 1 - exteriorState.getValue(X) : 0;
+		int yOff = exteriorState.hasProperty(Y) ? 1 - exteriorState.getValue(Y) : 0;
+		int zOff = exteriorState.hasProperty(Z) ? 1 - exteriorState.getValue(Z) : 0;
+		return exteriorPos.offset(xOff, yOff, zOff);
 	}
 
 	public boolean isCore(BlockState state)
 	{
 		return state.hasProperty(X) && state.hasProperty(Y) && state.hasProperty(Z)
-			&& state.get(X) == 1
-			&& state.get(Y) == 1
-			&& state.get(Z) == 1;
+			&& state.getValue(X) == 1
+			&& state.getValue(Y) == 1
+			&& state.getValue(Z) == 1;
 	}
 	
-	public List<Pair<BlockPos, BlockState>> getStatesForFurnace(IWorld world, BlockPos corePos)
+	public List<Pair<BlockPos, BlockState>> getStatesForFurnace(BlockPos corePos)
 	{
 		List<Pair<BlockPos, BlockState>> pairs = new ArrayList<>(27);
 		
@@ -216,12 +205,11 @@ public class JumboFurnaceBlock extends Block
 			{
 				for (int z=0; z<3; z++)
 				{
-					BlockState state = this.getDefaultState()
-						.with(X, x)
-						.with(Y, y)
-						.with(Z, z);
-					BlockPos pos = corePos.add(x-1, y-1, z-1);
-//					BlockSnapshot snapshot = BlockSnapshot.create(key, world, pos);
+					BlockState state = this.defaultBlockState()
+						.setValue(X, x)
+						.setValue(Y, y)
+						.setValue(Z, z);
+					BlockPos pos = corePos.offset(x-1, y-1, z-1);
 					pairs.add(Pair.of(pos, state));
 				}
 			}
@@ -238,28 +226,28 @@ public class JumboFurnaceBlock extends Block
 	 */
 	@Override
 	@OnlyIn(Dist.CLIENT)
-	public void animateTick(BlockState state, World worldIn, BlockPos pos, Random rand)
+	public void animateTick(BlockState state, Level level, BlockPos pos, Random rand)
 	{
-		if (state.get(LIT))
+		if (state.getValue(LIT))
 		{
 			double x = pos.getX() + 0.5D;
 			double y = pos.getY();
 			double z = pos.getZ() + 0.5D;
 			if (rand.nextDouble() < 0.1D)
 			{
-				worldIn.playSound(x, y, z, SoundEvents.BLOCK_FURNACE_FIRE_CRACKLE, SoundCategory.BLOCKS, 1.0F, 1.0F, false);
+				level.playLocalSound(x, y, z, SoundEvents.FURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0F, 1.0F, false);
 			}
 
 			Direction direction = this.getSmelterHoleDirection(state);
 			if (direction != null)
 			{
-				Direction.Axis direction$axis = direction.getAxis();
+				Direction.Axis axis = direction.getAxis();
 				double orthagonalOffset = rand.nextDouble() * 0.6D - 0.3D;
-				double xOff = direction$axis == Direction.Axis.X ? direction.getXOffset() * 0.52D : orthagonalOffset;
+				double xOff = axis == Direction.Axis.X ? direction.getStepX() * 0.52D : orthagonalOffset;
 				double yOff = rand.nextDouble() * 6.0D / 16.0D;
-				double zOff = direction$axis == Direction.Axis.Z ? direction.getZOffset() * 0.52D : orthagonalOffset;
-				worldIn.addParticle(ParticleTypes.SMOKE, x + xOff, y + yOff, z + zOff, 0.0D, 0.0D, 0.0D);
-				worldIn.addParticle(ParticleTypes.FLAME, x + xOff, y + yOff, z + zOff, 0.0D, 0.0D, 0.0D);
+				double zOff = axis == Direction.Axis.Z ? direction.getStepZ() * 0.52D : orthagonalOffset;
+				level.addParticle(ParticleTypes.SMOKE, x + xOff, y + yOff, z + zOff, 0.0D, 0.0D, 0.0D);
+				level.addParticle(ParticleTypes.FLAME, x + xOff, y + yOff, z + zOff, 0.0D, 0.0D, 0.0D);
 			}
 		}
 	}
@@ -268,38 +256,30 @@ public class JumboFurnaceBlock extends Block
 	@Nullable
 	public Direction getSmelterHoleDirection(BlockState state)
 	{
-		if (state.hasProperty(X) && state.hasProperty(Y) && state.hasProperty(Z))
+		if (!state.hasProperty(X) || !state.hasProperty(Y) || !state.hasProperty(Z))
+			return null;
+		
+		int y = state.getValue(Y);
+		if (y != 1)
+			return null;
+		
+		int x = state.getValue(X);
+		int z = state.getValue(Z);
+		if (x == 1 && z == 0)
 		{
-			int y = state.get(Y);
-			if (y == 1)
-			{
-				int x = state.get(X);
-				int z = state.get(Z);
-				if (x == 1 && z == 0)
-				{
-					return Direction.NORTH;
-				}
-				else if (x == 1 && z == 2)
-				{
-					return Direction.SOUTH;
-				}
-				else if (x == 0 && z == 1)
-				{
-					return Direction.WEST;
-				}
-				else if (x == 2 && z == 1)
-				{
-					return Direction.EAST;
-				}
-				else
-				{
-					return null;
-				}
-			}
-			else
-			{
-				return null;
-			}
+			return Direction.NORTH;
+		}
+		else if (x == 1 && z == 2)
+		{
+			return Direction.SOUTH;
+		}
+		else if (x == 0 && z == 1)
+		{
+			return Direction.WEST;
+		}
+		else if (x == 2 && z == 1)
+		{
+			return Direction.EAST;
 		}
 		else
 		{
@@ -309,25 +289,24 @@ public class JumboFurnaceBlock extends Block
 	
 	@Override
 	@Deprecated
-	public boolean hasComparatorInputOverride(BlockState state)
+	public boolean hasAnalogOutputSignal(BlockState state)
 	{
 		return true;
 	}
 
 	@Override
 	@Deprecated
-	public int getComparatorInputOverride(BlockState state, World world, BlockPos pos)
+	public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos)
 	{
 		BlockPos corePos = getCorePos(state, pos);
-		TileEntity te = world.getTileEntity(corePos);
-		if (!(te instanceof JumboFurnaceCoreTileEntity) || !state.hasProperty(Y))
+		BlockEntity be = level.getBlockEntity(corePos);
+		if (!(be instanceof JumboFurnaceCoreBlockEntity core) || !state.hasProperty(Y))
 		{
 			// if we are in an invalid state, return 0
 			return 0;
 		}
 		
-		JumboFurnaceCoreTileEntity core = (JumboFurnaceCoreTileEntity)te;
-		int y = state.get(Y);
+		int y = state.getValue(Y);
 
 		// top layer of blocks: comparator output is input inventory
 		// middle layer of blocks: comparator output is fuel inventory
@@ -359,11 +338,9 @@ public class JumboFurnaceBlock extends Block
 			}
 		}
 
-		float averageItemValue = totalItemValue = totalItemValue / slots;
-		return MathHelper.floor(averageItemValue * 14.0F) + (nonEmptySlots > 0 ? 1 : 0);
+		float averageItemValue = totalItemValue / slots;
+		return Mth.floor(averageItemValue * 14.0F) + (nonEmptySlots > 0 ? 1 : 0);
 	}
-	
-	
 
 	/**
 	 * Returns the blockstate with the given rotation from the passed blockstate. If
@@ -375,18 +352,18 @@ public class JumboFurnaceBlock extends Block
 	{
 		if (state.hasProperty(X) && state.hasProperty(Z))
 		{
-			int x = state.get(X);
-			int z = state.get(Z);
+			int x = state.getValue(X);
+			int z = state.getValue(Z);
 			switch(rot)
 			{
 				case NONE:
 					return state;
 				case CLOCKWISE_90:
-					return state.with(X, 2-z).with(Z, x);
+					return state.setValue(X, 2-z).setValue(Z, x);
 				case CLOCKWISE_180:
-					return state.with(X, 2-x).with(Z, 2-z);
+					return state.setValue(X, 2-x).setValue(Z, 2-z);
 				case COUNTERCLOCKWISE_90:
-					return state.with(X, z).with(Z, 2-x);
+					return state.setValue(X, z).setValue(Z, 2-x);
 				default:
 					return state;
 			}
@@ -412,9 +389,9 @@ public class JumboFurnaceBlock extends Block
 				case NONE:
 					return state;
 				case LEFT_RIGHT: // mirror across the x-axis (flip Z)
-					return state.with(Z, 2 - state.get(Z));
+					return state.setValue(Z, 2 - state.getValue(Z));
 				case FRONT_BACK: // mirror across the z-axis (flip X)
-					return state.with(X, 2 - state.get(X));
+					return state.setValue(X, 2 - state.getValue(X));
 				default:
 					return state;
 			}
@@ -422,4 +399,15 @@ public class JumboFurnaceBlock extends Block
 		else
 			return super.mirror(state, mirror);
 	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type)
+	{
+		return type == JumboFurnace.get().jumboFurnaceCoreBlockEntityType.get() && !level.isClientSide
+			? (BlockEntityTicker<T>)JumboFurnaceCoreBlockEntity.SERVER_TICKER
+			: null;
+	}
+	
+	
 }

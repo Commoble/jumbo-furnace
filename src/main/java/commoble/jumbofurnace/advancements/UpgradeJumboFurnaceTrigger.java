@@ -4,16 +4,16 @@ import com.google.gson.JsonObject;
 
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.advancements.UpgradeJumboFurnaceTrigger.UpgradeJumboFurnaceCriterion;
-import net.minecraft.advancements.criterion.AbstractCriterionTrigger;
-import net.minecraft.advancements.criterion.CriterionInstance;
-import net.minecraft.advancements.criterion.EntityPredicate.AndPredicate;
-import net.minecraft.advancements.criterion.ItemPredicate;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.ConditionArrayParser;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
+import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
+import net.minecraft.advancements.critereon.EntityPredicate.Composite;
+import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.advancements.critereon.DeserializationContext;
+import net.minecraft.resources.ResourceLocation;
 
-public class UpgradeJumboFurnaceTrigger extends AbstractCriterionTrigger<UpgradeJumboFurnaceCriterion>
+public class UpgradeJumboFurnaceTrigger extends SimpleCriterionTrigger<UpgradeJumboFurnaceCriterion>
 {
 	public static final ResourceLocation ID = new ResourceLocation(JumboFurnace.MODID, "upgrade_jumbo_furnace");
 	public static final UpgradeJumboFurnaceTrigger INSTANCE = new UpgradeJumboFurnaceTrigger();
@@ -25,22 +25,22 @@ public class UpgradeJumboFurnaceTrigger extends AbstractCriterionTrigger<Upgrade
 	}
 
 	@Override
-	protected UpgradeJumboFurnaceCriterion deserializeTrigger(JsonObject json, AndPredicate entityPredicate, ConditionArrayParser conditionsParser)
+	protected UpgradeJumboFurnaceCriterion createInstance(JsonObject json, Composite entityPredicate, DeserializationContext conditionsParser)
 	{
-		ItemPredicate itemPredicate = ItemPredicate.deserialize(json.get("item"));
+		ItemPredicate itemPredicate = ItemPredicate.fromJson(json.get("item"));
 		return new UpgradeJumboFurnaceCriterion(entityPredicate, itemPredicate);
 	}
 	
-	public void test(ServerPlayerEntity player, ItemStack stack)
+	public void test(ServerPlayer player, ItemStack stack)
 	{
-		this.triggerListeners(player, criterion -> criterion.test(stack));
+		this.trigger(player, criterion -> criterion.test(stack));
 	}
 	
-	public static class UpgradeJumboFurnaceCriterion extends CriterionInstance
+	public static class UpgradeJumboFurnaceCriterion extends AbstractCriterionTriggerInstance
 	{
 		private final ItemPredicate itemPredicate;
 
-		public UpgradeJumboFurnaceCriterion( AndPredicate playerCondition, ItemPredicate itemPredicate)
+		public UpgradeJumboFurnaceCriterion( Composite playerCondition, ItemPredicate itemPredicate)
 		{
 			super(ID, playerCondition);
 			this.itemPredicate = itemPredicate;
@@ -48,7 +48,7 @@ public class UpgradeJumboFurnaceTrigger extends AbstractCriterionTrigger<Upgrade
 		
 		public boolean test(ItemStack stack)
 		{
-			return this.itemPredicate.test(stack);
+			return this.itemPredicate.matches(stack);
 		}
 	}
 }

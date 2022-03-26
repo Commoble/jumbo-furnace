@@ -4,44 +4,44 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
-import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceContainer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.item.crafting.ShapedRecipe;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenuType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
-public class JumboFurnaceRecipeSerializer extends ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<JumboFurnaceRecipe>
+public class JumboFurnaceRecipeSerializer extends ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<JumboFurnaceRecipe>
 {
-	public final IRecipeType<JumboFurnaceRecipe> recipeType;
+	public final RecipeType<JumboFurnaceRecipe> recipeType;
 	
-	public JumboFurnaceRecipeSerializer(IRecipeType<JumboFurnaceRecipe> recipeType)
+	public JumboFurnaceRecipeSerializer(RecipeType<JumboFurnaceRecipe> recipeType)
 	{
 		this.recipeType = recipeType;
 	}
 
 	@Override
-	public JumboFurnaceRecipe read(ResourceLocation recipeId, JsonObject json)
+	public JumboFurnaceRecipe fromJson(ResourceLocation recipeId, JsonObject json)
 	{
-		String groupName = JSONUtils.getString(json, "group", "");
-		NonNullList<Ingredient> ingredients = readIngredients(JSONUtils.getJsonArray(json, "ingredients"));
+		String groupName = GsonHelper.getAsString(json, "group", "");
+		NonNullList<Ingredient> ingredients = readIngredients(GsonHelper.getAsJsonArray(json, "ingredients"));
 		if (ingredients.isEmpty())
 		{
 			throw new JsonParseException("No ingredients for jumbo furnace recipe");
 		}
-		else if (ingredients.size() > JumboFurnaceContainer.INPUT_SLOTS)
+		else if (ingredients.size() > JumboFurnaceMenuType.INPUT_SLOTS)
 		{
-			throw new JsonParseException("Too many ingredients for jumbo furnace recipe! the max is " + (JumboFurnaceContainer.INPUT_SLOTS));
+			throw new JsonParseException("Too many ingredients for jumbo furnace recipe! the max is " + (JumboFurnaceMenuType.INPUT_SLOTS));
 		}
 		else
 		{
-			ItemStack result = ShapedRecipe.deserializeItem(JSONUtils.getJsonObject(json, "result"));
-			float experience = JSONUtils.getFloat(json, "experience", 0.0F);
+			ItemStack result = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "result"));
+			float experience = GsonHelper.getAsFloat(json, "experience", 0.0F);
 			return new JumboFurnaceRecipe(this.recipeType, recipeId, groupName, ingredients, result, experience);
 		}
 	}
@@ -52,8 +52,8 @@ public class JumboFurnaceRecipeSerializer extends ForgeRegistryEntry<IRecipeSeri
 
 		for (int i = 0; i < p_199568_0_.size(); ++i)
 		{
-			Ingredient ingredient = Ingredient.deserialize(p_199568_0_.get(i));
-			if (!ingredient.hasNoMatchingItems())
+			Ingredient ingredient = Ingredient.fromJson(p_199568_0_.get(i));
+			if (!ingredient.isEmpty())
 			{
 				nonnulllist.add(ingredient);
 			}
@@ -63,33 +63,33 @@ public class JumboFurnaceRecipeSerializer extends ForgeRegistryEntry<IRecipeSeri
 	}
 
 	@Override
-	public JumboFurnaceRecipe read(ResourceLocation recipeId, PacketBuffer buffer)
+	public JumboFurnaceRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer)
 	{
-        String groupName = buffer.readString(32767);
+        String groupName = buffer.readUtf(32767);
         int ingredientCount = buffer.readVarInt();
         NonNullList<Ingredient> ingredients = NonNullList.withSize(ingredientCount, Ingredient.EMPTY);
 
 		for (int slot = 0; slot < ingredients.size(); ++slot)
 		{
-			ingredients.set(slot, Ingredient.read(buffer));
+			ingredients.set(slot, Ingredient.fromNetwork(buffer));
 		}
 
-        ItemStack result = buffer.readItemStack();
+        ItemStack result = buffer.readItem();
         float experience = buffer.readFloat();
 		return new JumboFurnaceRecipe(this.recipeType, recipeId, groupName, ingredients, result, experience);
 	}
 
 	@Override
-	public void write(PacketBuffer buffer, JumboFurnaceRecipe recipe)
+	public void toNetwork(FriendlyByteBuf buffer, JumboFurnaceRecipe recipe)
 	{
-        buffer.writeString(recipe.group);
+        buffer.writeUtf(recipe.group);
         buffer.writeVarInt(recipe.ingredients.size());
 
         for(Ingredient ingredient : recipe.ingredients) {
-           ingredient.write(buffer);
+           ingredient.toNetwork(buffer);
         }
 
-        buffer.writeItemStack(recipe.result);
+        buffer.writeItem(recipe.result);
         buffer.writeFloat(recipe.experience);
 	}
 

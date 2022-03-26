@@ -1,67 +1,79 @@
 package commoble.jumbofurnace.client;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import java.util.function.Supplier;
 
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.model.RenderMaterial;
-import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.util.Lazy;
 
 // see https://en.wikipedia.org/wiki/Hypercube
-public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRenderer
+public class OrthodimensionalHyperfurnaceRenderer extends BlockEntityWithoutLevelRenderer
 {
+	public static final Supplier<OrthodimensionalHyperfurnaceRenderer> INSTANCE = Lazy.of(() ->
+	{
+		Minecraft mc = Minecraft.getInstance();
+		return new OrthodimensionalHyperfurnaceRenderer(mc.getBlockEntityRenderDispatcher(), mc.getEntityModels());
+	});
+	
 	@SuppressWarnings("deprecation")
-	private static final RenderMaterial MATERIAL = new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation("minecraft:block/furnace_front"));
+	private static final Material MATERIAL = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation("minecraft:block/furnace_front"));
 
 	// hypercube has 16 vertices, 32 edges, 24 faces
 	
-	public static final Vector3d[] VERTICES = {
+	public static final Vec3[] VERTICES = {
 		// "outer" vertices
 		// rendering vertices in clockwise order looking inward renders an outward-facing face
 		
 		// front
-		new Vector3d(0D,0D,0D),	//0
-		new Vector3d(0D,1D,0D),	//1
-		new Vector3d(1D,1D,0D),	//2
-		new Vector3d(1D,0D,0D),	//3
+		new Vec3(0D,0D,0D),	//0
+		new Vec3(0D,1D,0D),	//1
+		new Vec3(1D,1D,0D),	//2
+		new Vec3(1D,0D,0D),	//3
 		
 		// back
-		new Vector3d(1D,0D,1D),	//4
-		new Vector3d(1D,1D,1D),	//5
-		new Vector3d(0D,1D,1D),	//6
-		new Vector3d(0D,0D,1D),	//7
+		new Vec3(1D,0D,1D),	//4
+		new Vec3(1D,1D,1D),	//5
+		new Vec3(0D,1D,1D),	//6
+		new Vec3(0D,0D,1D),	//7
 		
 		// "inner" vertices
 		// front
-		new Vector3d(0.25D,0.25D,0.25D),	//8
-		new Vector3d(0.25D,0.75D,0.25D),	//9
-		new Vector3d(0.75D,0.75D,0.25D),	//10
-		new Vector3d(0.75D,0.25D,0.25D),	//11
+		new Vec3(0.25D,0.25D,0.25D),	//8
+		new Vec3(0.25D,0.75D,0.25D),	//9
+		new Vec3(0.75D,0.75D,0.25D),	//10
+		new Vec3(0.75D,0.25D,0.25D),	//11
 		
 		// back
-		new Vector3d(0.75D,0.25D,0.75D),	//12
-		new Vector3d(0.75D,0.75D,0.75D),	//13
-		new Vector3d(0.25D,0.75D,0.75D),	//14
-		new Vector3d(0.25D,0.25D,0.75D)		//15
+		new Vec3(0.75D,0.25D,0.75D),	//12
+		new Vec3(0.75D,0.75D,0.75D),	//13
+		new Vec3(0.25D,0.75D,0.75D),	//14
+		new Vec3(0.25D,0.25D,0.75D)		//15
 	};
 	
 	public static class Face
 	{
-		public final Vector3d[] vertices;
-		public final Vector3d normal;
-		public final Vector3d reverseNormal;
+		public final Vec3[] vertices;
+		public final Vec3 normal;
+		public final Vec3 reverseNormal;
 		
-		public Face(Vector3d a, Vector3d b, Vector3d c, Vector3d d)
+		public Face(Vec3 a, Vec3 b, Vec3 c, Vec3 d)
 		{
 			// can't do this.vertices = {a,b,c,d} because java
-			Vector3d[] tempVertices = {a,b,c,d};
+			Vec3[] tempVertices = {a,b,c,d};
 			this.vertices = tempVertices;
 
 			// need to calculate normals so vertex can have sided lighting
@@ -70,8 +82,8 @@ public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRen
 			// for a given quad, all four vertices should have the same normal, so we only need to calculate one of them
 			// and reverse it for the reverse quad
 			
-			this.normal = this.vertices[1].subtract(this.vertices[0]).crossProduct(this.vertices[3].subtract(this.vertices[0]));
-			this.reverseNormal = this.normal.mul(-1,-1,-1);
+			this.normal = this.vertices[1].subtract(this.vertices[0]).cross(this.vertices[3].subtract(this.vertices[0]));
+			this.reverseNormal = this.normal.multiply(-1,-1,-1);
 		}
 	}
 	
@@ -119,30 +131,35 @@ public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRen
 		face(4,12,11,3)	//+x
 		
 	};
+
+	public OrthodimensionalHyperfurnaceRenderer(BlockEntityRenderDispatcher dispatcher, EntityModelSet models)
+	{
+		super(dispatcher, models);
+	}
 	
 	//render
 	@Override
-	public void func_239207_a_(ItemStack stack, TransformType transformType, MatrixStack matrixStack, IRenderTypeBuffer buffer, int combinedLight, int combinedOverlay)
+	public void renderByItem(ItemStack stack, TransformType transformType, PoseStack matrixStack, MultiBufferSource buffer, int combinedLight, int combinedOverlay)
 	{		
-		TextureAtlasSprite texture = MATERIAL.getSprite();
-		IVertexBuilder vertexBuilder = MATERIAL.getItemRendererBuffer(buffer, RenderType::getEntitySolid, stack.hasEffect());
+		TextureAtlasSprite texture = MATERIAL.sprite();
+		VertexConsumer vertexBuilder = MATERIAL.buffer(buffer, RenderType::entitySolid, stack.hasFoil());
 		
-		float minU = texture.getMinU();
-		float maxU = texture.getMaxU();
-		float minV = texture.getMinV();
-		float maxV = texture.getMaxV();
+		float minU = texture.getU0();
+		float maxU = texture.getU1();
+		float minV = texture.getV0();
+		float maxV = texture.getV1();
 		
-		matrixStack.push();
+		matrixStack.pushPose();
 		
-		MatrixStack.Entry matrixEntry = matrixStack.getLast();
+		PoseStack.Pose matrixEntry = matrixStack.last();
 		
 		int faces = FACES.length;
 		for (int i=0; i<faces; i++)
 		{
 			Face face = FACES[i];
-			Vector3d[] vertices = face.vertices;
-			Vector3d normal = face.normal;
-			Vector3d reverseNormal = face.reverseNormal;
+			Vec3[] vertices = face.vertices;
+			Vec3 normal = face.normal;
+			Vec3 reverseNormal = face.reverseNormal;
 			
 			putVertex(matrixEntry, vertexBuilder, vertices[0], minU, maxV, combinedLight, normal);
 			putVertex(matrixEntry, vertexBuilder, vertices[1], minU, minV, combinedLight, normal);
@@ -156,17 +173,17 @@ public class OrthodimensionalHyperfurnaceRenderer extends ItemStackTileEntityRen
 			putVertex(matrixEntry, vertexBuilder, vertices[0], minU, maxV, combinedLight, reverseNormal);
 		}
 		
-		matrixStack.pop();
+		matrixStack.popPose();
 	}
 	
-	private static void putVertex(MatrixStack.Entry matrixEntryIn, IVertexBuilder bufferIn, Vector3d pos, float texU, float texV, int packedLight, Vector3d normal)
+	private static void putVertex(PoseStack.Pose matrixEntryIn, VertexConsumer bufferIn, Vec3 pos, float texU, float texV, int packedLight, Vec3 normal)
 	{
-		bufferIn.pos(matrixEntryIn.getMatrix(), (float)pos.getX(), (float)pos.getY(), (float)pos.getZ())
+		bufferIn.vertex(matrixEntryIn.pose(), (float)pos.x(), (float)pos.y(), (float)pos.z())
 			.color(1F, 1F, 1F, 1F)
-			.tex(texU, texV)
-			.overlay(0, 10)
-			.lightmap(packedLight)
-			.normal(matrixEntryIn.getNormal(), (float)normal.x, (float)normal.y, (float)normal.z)
+			.uv(texU, texV)
+			.overlayCoords(0, 10)
+			.uv2(packedLight)
+			.normal(matrixEntryIn.normal(), (float)normal.x, (float)normal.y, (float)normal.z)
 			.endVertex();
 	}
 	

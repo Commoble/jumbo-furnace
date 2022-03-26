@@ -1,0 +1,5 @@
+## 1.18.1-3.0.0.0
+* Updated Jumbo Furnace to Minecraft 1.18.1
+* This is a save-compatibility-breaking update. Jumbo Furnaces in old worlds may lose their data or disappear entirely!
+* Mods using forge's burn time api for their fuel items can now specify a burn type for the "jumbofurnace:jumbo_smelting" recipe type, which will take precedence over normal furnace fuel values when used as fuel for a jumbo furnace.
+ 

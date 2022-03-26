@@ -1,29 +1,29 @@
 package commoble.jumbofurnace.jumbo_furnace;
 
-import net.minecraft.entity.item.ExperienceOrbEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class JumboFurnaceOutputSlot extends SlotItemHandler
 {
 	private int removeCount = 0;
-	private final PlayerEntity player;
+	private final Player player;
 
-	public JumboFurnaceOutputSlot(PlayerEntity player, IItemHandler itemHandler, int index, int xPosition, int yPosition)
+	public JumboFurnaceOutputSlot(Player player, IItemHandler itemHandler, int index, int xPosition, int yPosition)
 	{
 		super(itemHandler, index, xPosition, yPosition);
 		this.player = player;
 	}
 
 	@Override
-	public ItemStack onTake(PlayerEntity thePlayer, ItemStack stack)
+	public void onTake(Player thePlayer, ItemStack stack)
 	{
-		this.onCrafting(stack);
+		this.checkTakeAchievements(stack);
 		super.onTake(thePlayer, stack);
-		return stack;
 	}
 
 	/**
@@ -32,10 +32,10 @@ public class JumboFurnaceOutputSlot extends SlotItemHandler
 	 * onCrafting(item).
 	 */
 	@Override
-	protected void onCrafting(ItemStack stack, int amount)
+	protected void onQuickCraft(ItemStack stack, int amount)
 	{
 		this.removeCount += amount;
-		this.onCrafting(stack);
+		this.checkTakeAchievements(stack);
 	}
 
 	/**
@@ -43,32 +43,32 @@ public class JumboFurnaceOutputSlot extends SlotItemHandler
 	 * ore and wood.
 	 */
 	@Override
-	protected void onCrafting(ItemStack stack)
+	protected void checkTakeAchievements(ItemStack stack)
 	{
-		stack.onCrafting(this.player.world, this.player, this.removeCount);
+		stack.onCraftedBy(this.player.level, this.player, this.removeCount);
 		this.removeCount = 0;
 		
-		if (!this.player.world.isRemote && this.getItemHandler() instanceof OutputItemHandler)
+		if (!this.player.level.isClientSide && this.getItemHandler() instanceof OutputItemHandler outputHandler)
 		{
-			spawnExpOrbs(this.player, ((OutputItemHandler)this.getItemHandler()).getAndConsumeExperience(this.getSlotIndex()));
+			spawnExpOrbs(this.player, outputHandler.getAndConsumeExperience(this.getSlotIndex()));
 		}
 		
-		net.minecraftforge.fml.hooks.BasicEventHooks.firePlayerSmeltedEvent(this.player, stack);
+		ForgeEventFactory.firePlayerSmeltedEvent(this.player, stack);
 	}
 
-	public static void spawnExpOrbs(PlayerEntity player, float experience)
+	public static void spawnExpOrbs(Player player, float experience)
 	{
-		int orbs = MathHelper.floor(experience);
-		if (orbs < MathHelper.ceil(experience) && Math.random() < experience - orbs)
+		int orbs = Mth.floor(experience);
+		if (orbs < Mth.ceil(experience) && Math.random() < experience - orbs)
 		{
 			++orbs;
 		}
 
 		while (orbs > 0)
 		{
-			int amount = ExperienceOrbEntity.getXPSplit(orbs);
+			int amount = ExperienceOrb.getExperienceValue(orbs);
 			orbs -= amount;
-			player.world.addEntity(new ExperienceOrbEntity(player.world, player.getPosX(), player.getPosY() + 0.5D, player.getPosZ() + 0.5D, amount));
+			player.level.addFreshEntity(new ExperienceOrb(player.level, player.getX(), player.getY() + 0.5D, player.getZ() + 0.5D, amount));
 		}
 
 	}

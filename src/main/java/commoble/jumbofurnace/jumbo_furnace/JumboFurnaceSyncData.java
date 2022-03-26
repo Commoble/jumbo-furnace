@@ -1,12 +1,12 @@
 package commoble.jumbofurnace.jumbo_furnace;
 
-import net.minecraft.util.IIntArray;
+import net.minecraft.world.inventory.ContainerData;
 
-public class JumboFurnaceSyncData implements IIntArray
+public class JumboFurnaceSyncData implements ContainerData
 {
-	private final JumboFurnaceCoreTileEntity te;
+	private final JumboFurnaceCoreBlockEntity te;
 	
-	public JumboFurnaceSyncData(JumboFurnaceCoreTileEntity te)
+	public JumboFurnaceSyncData(JumboFurnaceCoreBlockEntity te)
 	{
 		this.te = te;
 	}
@@ -47,7 +47,7 @@ public class JumboFurnaceSyncData implements IIntArray
 	}
 
 	@Override
-	public int size()
+	public int getCount()
 	{
 		return 3;
 	}

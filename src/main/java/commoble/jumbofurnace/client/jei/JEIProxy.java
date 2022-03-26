@@ -7,7 +7,6 @@ import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableList;
 
 import commoble.jumbofurnace.JumboFurnace;
-import commoble.jumbofurnace.JumboFurnaceObjects;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import commoble.jumbofurnace.recipes.RecipeSorter;
 import mezz.jei.api.IModPlugin;
@@ -16,10 +15,10 @@ import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.RecipeManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeManager;
 
 @JeiPlugin
 public class JEIProxy implements IModPlugin
@@ -55,7 +54,7 @@ public class JEIProxy implements IModPlugin
 	@Override
 	public void registerRecipeCatalysts(IRecipeCatalystRegistration registration)
 	{
-		registration.addRecipeCatalyst(new ItemStack(JumboFurnaceObjects.JEI_DUMMY), JumboSmeltingCategory.ID);
+		registration.addRecipeCatalyst(new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()), JumboSmeltingCategory.ID);
 	}
 
 	/**
@@ -74,7 +73,7 @@ public class JEIProxy implements IModPlugin
 	public List<JumboFurnaceRecipe> getRecipes()
 	{
 		@SuppressWarnings("resource")
-		ClientWorld world = Minecraft.getInstance().world;
+		ClientLevel world = Minecraft.getInstance().level;
 		if (world != null)
 		{
 			RecipeManager manager = world.getRecipeManager();

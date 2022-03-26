@@ -5,14 +5,14 @@ import com.google.gson.JsonObject;
 
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger.AssembleJumboFurnaceCriterion;
-import net.minecraft.advancements.criterion.AbstractCriterionTrigger;
-import net.minecraft.advancements.criterion.CriterionInstance;
-import net.minecraft.advancements.criterion.EntityPredicate.AndPredicate;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.loot.ConditionArrayParser;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
+import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
+import net.minecraft.advancements.critereon.EntityPredicate.Composite;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.advancements.critereon.DeserializationContext;
+import net.minecraft.resources.ResourceLocation;
 
-public class AssembleJumboFurnaceTrigger extends AbstractCriterionTrigger<AssembleJumboFurnaceCriterion>
+public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<AssembleJumboFurnaceCriterion>
 {
 	public static final ResourceLocation ID = new ResourceLocation(JumboFurnace.MODID, "assemble_jumbo_furnace");
 	public static final AssembleJumboFurnaceTrigger INSTANCE = new AssembleJumboFurnaceTrigger();
@@ -24,20 +24,20 @@ public class AssembleJumboFurnaceTrigger extends AbstractCriterionTrigger<Assemb
 	}
 
 	@Override
-	protected AssembleJumboFurnaceCriterion deserializeTrigger(JsonObject json, AndPredicate entityPredicate, ConditionArrayParser conditionsParser)
+	protected AssembleJumboFurnaceCriterion createInstance(JsonObject json, Composite entityPredicate, DeserializationContext conditionsParser)
 	{
 		return new AssembleJumboFurnaceCriterion(entityPredicate);
 	}
 	
-	public void trigger(ServerPlayerEntity player)
+	public void trigger(ServerPlayer player)
 	{
-		this.triggerListeners(player, Predicates.alwaysTrue());
+		this.trigger(player, Predicates.alwaysTrue());
 	}
 	
-	public static class AssembleJumboFurnaceCriterion extends CriterionInstance
+	public static class AssembleJumboFurnaceCriterion extends AbstractCriterionTriggerInstance
 	{
 
-		public AssembleJumboFurnaceCriterion( AndPredicate playerCondition)
+		public AssembleJumboFurnaceCriterion( Composite playerCondition)
 		{
 			super(ID, playerCondition);
 		}

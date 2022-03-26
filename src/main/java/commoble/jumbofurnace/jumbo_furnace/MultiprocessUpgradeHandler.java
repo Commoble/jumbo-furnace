@@ -1,16 +1,16 @@
 package commoble.jumbofurnace.jumbo_furnace;
 
 import commoble.jumbofurnace.JumboFurnace;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class MultiprocessUpgradeHandler extends ItemStackHandler
 {	
-	private final JumboFurnaceCoreTileEntity te;
+	private final JumboFurnaceCoreBlockEntity te;
 	
-	public MultiprocessUpgradeHandler(JumboFurnaceCoreTileEntity te)
+	public MultiprocessUpgradeHandler(JumboFurnaceCoreBlockEntity te)
 	{
 		super(1);
 		this.te = te;
@@ -27,7 +27,7 @@ public class MultiprocessUpgradeHandler extends ItemStackHandler
 	{
 		super.onContentsChanged(slot);
 		this.te.onInputInventoryChanged();
-		this.te.markDirty();
+		this.te.setChanged();
 	}
 	
 	// need a handler for the slot as well
@@ -42,7 +42,7 @@ public class MultiprocessUpgradeHandler extends ItemStackHandler
 		}
 
 		@Override
-		public boolean isItemValid(ItemStack stack)
+		public boolean mayPlace(ItemStack stack)
 		{
 			return JumboFurnace.MULTIPROCESSING_UPGRADE_TAG.contains(stack.getItem());
 		}

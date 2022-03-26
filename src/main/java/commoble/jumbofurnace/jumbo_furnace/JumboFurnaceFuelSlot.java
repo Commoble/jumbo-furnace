@@ -1,7 +1,7 @@
 package commoble.jumbofurnace.jumbo_furnace;
 
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.common.ForgeHooks;
+import commoble.jumbofurnace.JumboFurnaceUtils;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -14,9 +14,12 @@ public class JumboFurnaceFuelSlot extends SlotItemHandler
 	}
 
 	@Override
-	public boolean isItemValid(ItemStack stack)
+	public boolean mayPlace(ItemStack stack)
 	{
-		return ForgeHooks.getBurnTime(stack) > 0;
+		// items ought to be able to provide burn values for jumbo smelting specifically
+		// check jumbo smelting burn time first, otherwise use regular furnace smelting
+		
+		return JumboFurnaceUtils.getJumboSmeltingBurnTime(stack) > 0;
 	}
 
 	

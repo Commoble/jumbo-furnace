@@ -3,11 +3,11 @@ package commoble.jumbofurnace.recipes;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.util.NonNullList;
-import net.minecraft.world.World;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemStackHandler;
@@ -17,7 +17,7 @@ public class ClaimableRecipeWrapper extends RecipeWrapper
 {
 	private final IItemHandler unusedInputs;
 	private final IItemHandler inputsBeingSmelted;
-	private List<IRecipe<ClaimableRecipeWrapper>> recipes = new ArrayList<>();
+	private List<Recipe<ClaimableRecipeWrapper>> recipes = new ArrayList<>();
 
 	public ClaimableRecipeWrapper(IItemHandlerModifiable inv)
 	{
@@ -38,7 +38,7 @@ public class ClaimableRecipeWrapper extends RecipeWrapper
 		
 	}
 	
-	public List<IRecipe<ClaimableRecipeWrapper>> getRecipes()
+	public List<Recipe<ClaimableRecipeWrapper>> getRecipes()
 	{
 		return this.recipes;
 	}
@@ -82,7 +82,7 @@ public class ClaimableRecipeWrapper extends RecipeWrapper
 		return result;
 	}
 	
-	public boolean matchAndClaimInputs(IRecipe<ClaimableRecipeWrapper> recipe, World world)
+	public boolean matchAndClaimInputs(Recipe<ClaimableRecipeWrapper> recipe, Level world)
 	{
 		boolean matched = recipe.matches(this, world);
 		
@@ -91,7 +91,7 @@ public class ClaimableRecipeWrapper extends RecipeWrapper
 			NonNullList<Ingredient> ingredients = recipe.getIngredients();
 			for (Ingredient ingredient : ingredients)
 			{
-				int amountOfIngredient = ingredient.getMatchingStacks()[0].getCount();
+				int amountOfIngredient = ingredient.getItems()[0].getCount();
 				int slots = this.unusedInputs.getSlots();
 				for (int slot=0; slot < slots && amountOfIngredient > 0; slot++)
 				{

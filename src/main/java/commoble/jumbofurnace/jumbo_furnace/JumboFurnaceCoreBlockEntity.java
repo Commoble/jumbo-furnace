@@ -4,26 +4,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 import commoble.jumbofurnace.JumboFurnace;
-import commoble.jumbofurnace.JumboFurnaceObjects;
+import commoble.jumbofurnace.JumboFurnaceUtils;
 import commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import commoble.jumbofurnace.recipes.RecipeSorter;
-import net.minecraft.block.BlockState;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.Containers;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
-public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableTileEntity
+public class JumboFurnaceCoreBlockEntity extends BlockEntity
 {
 	public static final String INPUT = "input";
 	public static final String FUEL = "fuel";
@@ -32,6 +33,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	public static final String COOK_PROGRESS = "cook_progress";
 	public static final String BURN_TIME = "burn_time";
 	public static final String BURN_VALUE = "burn_value";
+	public static final BlockEntityTicker<JumboFurnaceCoreBlockEntity> SERVER_TICKER = (level,pos,state,core)->core.serverTick();
 	
 	public final InputItemHandler input = new InputItemHandler(this);
 	public final ItemStackHandler fuel = new FuelItemHandler(this);
@@ -53,9 +55,14 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	public boolean needsOutputUpdate = false;
 	public boolean needsFuelUpdate = false;
 	
-	public JumboFurnaceCoreTileEntity()
+	public static JumboFurnaceCoreBlockEntity create(BlockPos pos, BlockState state)
 	{
-		super(JumboFurnaceObjects.CORE_TE_TYPE);
+		return new JumboFurnaceCoreBlockEntity(JumboFurnace.get().jumboFurnaceCoreBlockEntityType.get(), pos, state);
+	}
+	
+	protected JumboFurnaceCoreBlockEntity(BlockEntityType<? extends JumboFurnaceCoreBlockEntity> type, BlockPos pos, BlockState state)
+	{
+		super(type, pos, state);
 	}
 
 	@Override
@@ -67,9 +74,9 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	}
 
 	@Override
-	public void read(BlockState state, CompoundNBT compound)
+	public void load(CompoundTag compound)
 	{
-		super.read(state, compound);
+		super.load(compound);
 		this.input.deserializeNBT(compound.getCompound(INPUT));
 		this.fuel.deserializeNBT(compound.getCompound(FUEL));
 		this.output.deserializeNBT(compound.getCompound(OUTPUT));
@@ -83,9 +90,9 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	}
 
 	@Override
-	public CompoundNBT write(CompoundNBT compound)
+	public void saveAdditional(CompoundTag compound)
 	{
-		super.write(compound);
+		super.saveAdditional(compound);
 		compound.put(INPUT, this.input.serializeNBT());
 		compound.put(FUEL, this.fuel.serializeNBT());
 		compound.put(OUTPUT, this.output.serializeNBT());
@@ -93,7 +100,6 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		compound.putInt(COOK_PROGRESS, this.cookProgress);
 		compound.putInt(BURN_TIME, this.burnTimeRemaining);
 		compound.putInt(BURN_VALUE, this.lastItemBurnedValue);
-		return compound;
 	}
 	
 	public int getBurnConsumption()
@@ -110,18 +116,18 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	{
 		for (Direction direction : Direction.Plane.HORIZONTAL)
 		{
-			BlockPos adjacentPos = this.pos.offset(direction);
-			BlockState state = this.world.getBlockState(adjacentPos);
+			BlockPos adjacentPos = this.worldPosition.relative(direction);
+			BlockState state = this.level.getBlockState(adjacentPos);
 			if (state.getBlock() instanceof JumboFurnaceBlock)
 			{
-				this.world.setBlockState(adjacentPos, state.with(JumboFurnaceBlock.LIT, burning));
+				this.level.setBlockAndUpdate(adjacentPos, state.setValue(JumboFurnaceBlock.LIT, burning));
 			}
 		}
 	}
 	
 	public void markFuelInventoryChanged()
 	{
-		this.markDirty();
+		this.setChanged();
 		this.onFuelInventoryChanged();
 	}
 	
@@ -132,7 +138,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	
 	public void markInputInventoryChanged()
 	{
-		this.markDirty();
+		this.setChanged();
 		this.onInputInventoryChanged();
 	}
 	
@@ -143,7 +149,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 	
 	public void markOutputInventoryCHanged()
 	{
-		this.markDirty();
+		this.setChanged();
 		this.onOutputInventoryChanged();
 	}
 	
@@ -164,12 +170,12 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		// get all recipes allowed by furnace or jumbo furnace
 		// sort them by specificity (can we do this on recipe reload?)
 		// recipes requiring multiple ingredients = most important, ingredients with more matching items (tags) = less important
-		List<JumboFurnaceRecipe> recipes = RecipeSorter.INSTANCE.getSortedFurnaceRecipes(this.world.getRecipeManager());
+		List<JumboFurnaceRecipe> recipes = RecipeSorter.INSTANCE.getSortedFurnaceRecipes(this.level.getRecipeManager());
 		// start assigning input slots to usable recipes as they are found
 		for (JumboFurnaceRecipe recipe : recipes)
 		{
 			// loop recipe over inputs until it can't match or we have no unused inputs left
-			while (wrapper.getRecipeCount() < this.getMaxSimultaneousRecipes() && wrapper.matchAndClaimInputs(recipe, this.world) && wrapper.hasUnusedInputsLeft());
+			while (wrapper.getRecipeCount() < this.getMaxSimultaneousRecipes() && wrapper.matchAndClaimInputs(recipe, this.level) && wrapper.hasUnusedInputsLeft());
 		}
 		// when all input slots are claimed or the recipe list is exhausted, set the new recipe cache
 		this.cachedRecipes = wrapper;
@@ -198,9 +204,9 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		// items with container items almost always have a stack size of 1
 		// we can generally assume that they can be placed back into the input slots
 		// so we only need to be concerned with the canonical output
-		for (IRecipe<ClaimableRecipeWrapper> recipe : this.cachedRecipes.getRecipes())
+		for (Recipe<ClaimableRecipeWrapper> recipe : this.cachedRecipes.getRecipes())
 		{
-			ItemStack result = recipe.getCraftingResult(this.cachedRecipes).copy();
+			ItemStack result = recipe.assemble(this.cachedRecipes).copy();
 			for (int slot=0; slot < slots && !result.isEmpty(); slot++)
 			{
 				result = outputSimulator.insertItem(slot, result, false);
@@ -227,7 +233,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		int slots = this.fuel.getSlots();
 		for (int slot=0; slot<slots; slot++)
 		{
-			if (ForgeHooks.getBurnTime(this.fuel.getStackInSlot(slot)) > 0)
+			if (JumboFurnaceUtils.getJumboSmeltingBurnTime(this.fuel.getStackInSlot(slot)) > 0)
 			{
 				return true;
 			}
@@ -235,9 +241,8 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		
 		return false;
 	}
-
-	@Override
-	public void tick()
+	
+	protected void serverTick()
 	{
 		// if burning, decrement burn time
 		boolean dirty = false;
@@ -248,7 +253,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 			dirty = true;
 		}
 		
-		if (!this.world.isRemote)
+		if (!this.level.isClientSide)
 		{
 			// reinform self of own state if inventories have changed
 			if (this.needsRecipeUpdate)
@@ -284,7 +289,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 					this.cookProgress++;
 					
 					// if cook progress is complete, reset cook progress and do crafting
-					if (this.cookProgress >= JumboFurnace.SERVER_CONFIG.jumboFurnaceCookTime.get())
+					if (this.cookProgress >= JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get())
 					{
 						this.cookProgress = 0;
 						this.craft();
@@ -321,11 +326,11 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 			
 			if (dirty)
 			{
-				this.markDirty();
-				BlockPos.getAllInBox(this.getPos().add(-1,-1,-1), this.getPos().add(1,1,1)).forEach(subPos ->
+				this.setChanged();
+				BlockPos.betweenClosedStream(this.getBlockPos().offset(-1,-1,-1), this.getBlockPos().offset(1,1,1)).forEach(subPos ->
 				{
-					BlockState state = this.world.getBlockState(subPos);
-					this.world.notifyNeighborsOfStateChange(subPos, state.getBlock());
+					BlockState state = this.level.getBlockState(subPos);
+					this.level.updateNeighborsAt(subPos, state.getBlock());
 				});
 					
 			}
@@ -340,7 +345,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		for (int slot=0; slot<slots; slot++)
 		{
 			ItemStack stackInSlot = this.fuel.extractItem(slot, 1, true);
-			int burnTime = ForgeHooks.getBurnTime(stackInSlot);
+			int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot);
 			if (burnTime > 0)
 			{
 				this.lastItemBurnedValue = burnTime;
@@ -364,12 +369,12 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		// and eject them instead of just deleting them
 		List<ItemStack> extraItems = new ArrayList<>();
 		// put results in output
-		List<IRecipe<ClaimableRecipeWrapper>> recipes = this.cachedRecipes.getRecipes();
+		List<Recipe<ClaimableRecipeWrapper>> recipes = this.cachedRecipes.getRecipes();
 		IItemHandler unusedInputs = this.cachedRecipes.getUnusedInputs();
 		int unusedInputSlots = unusedInputs.getSlots();
-		for (IRecipe<ClaimableRecipeWrapper> recipe : recipes)
+		for (Recipe<ClaimableRecipeWrapper> recipe : recipes)
 		{
-			ItemStack result = recipe.getCraftingResult(this.cachedRecipes);
+			ItemStack result = recipe.assemble(this.cachedRecipes);
 			int outputSlots = this.output.getSlots();
 			int resultCount = result.getCount();
 			for (int slot=0; slot<outputSlots && !result.isEmpty(); slot++)
@@ -378,7 +383,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 				result = this.output.insertCraftResult(slot, result, false);
 				int newCount = result.getCount();
 				int itemsInserted = oldCount - newCount;
-				float experience = ((float)itemsInserted / (float)resultCount) * (recipe instanceof JumboFurnaceRecipe ? ((JumboFurnaceRecipe)recipe).experience : 0F);
+				float experience = ((float)itemsInserted / (float)resultCount) * (recipe instanceof JumboFurnaceRecipe jumboFurnaceRecipe ? jumboFurnaceRecipe.experience : 0F);
 				this.output.addExperience(slot, experience);
 			}
 			if (!result.isEmpty())
@@ -408,7 +413,7 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 		
 		// if we didn't have room for items, just yeet them
 		// check for possible hoppers, etc first though
-		TileEntity te = this.world.getTileEntity(this.pos.down(2));
+		BlockEntity te = this.level.getBlockEntity(this.worldPosition.below(2));
 		
 		for (ItemStack stack : extraItems)
 		{
@@ -429,20 +434,20 @@ public class JumboFurnaceCoreTileEntity extends TileEntity implements ITickableT
 			}
 			if (!stackCopy.isEmpty())
 			{
-				InventoryHelper.spawnItemStack(this.world, this.pos.getX()+0.5, this.pos.getY() - 1, this.pos.getZ() + 0.5, stack);
+				Containers.dropItemStack(this.level, this.worldPosition.getX()+0.5, this.worldPosition.getY() - 1.0, this.worldPosition.getZ() + 0.5, stack);
 			}
 		}
 	}
 
 	@Override
-	public void markDirty()
+	public void setChanged()
 	{
-		super.markDirty();
+		super.setChanged();
 		
 		// make sure comparators reading from exterior blocks are updated as well
-		MultiBlockHelper.get3x3CubeAround(this.pos)
-			.filter(exteriorPos -> !exteriorPos.equals(this.pos))
-			.forEach(exteriorPos -> this.world.updateComparatorOutputLevel(exteriorPos, this.getBlockState().getBlock()));
+		MultiBlockHelper.get3x3CubeAround(this.worldPosition)
+			.filter(exteriorPos -> !exteriorPos.equals(this.worldPosition))
+			.forEach(exteriorPos -> this.level.updateNeighbourForOutputSignal(exteriorPos, this.getBlockState().getBlock()));
 	}
 	
 

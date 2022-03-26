@@ -3,29 +3,28 @@ package commoble.jumbofurnace.jumbo_furnace;
 import java.util.Optional;
 
 import commoble.jumbofurnace.JumboFurnace;
-import commoble.jumbofurnace.JumboFurnaceObjects;
+import commoble.jumbofurnace.JumboFurnaceUtils;
 import commoble.jumbofurnace.advancements.UpgradeJumboFurnaceTrigger;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.IContainerProvider;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIntArray;
-import net.minecraft.util.IWorldPosCallable;
-import net.minecraft.util.IntArray;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.common.ForgeHooks;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuConstructor;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class JumboFurnaceContainer extends Container
+public class JumboFurnaceMenuType extends AbstractContainerMenu
 {
-	public static final ITextComponent TITLE = new TranslationTextComponent("container.jumbofurnace.jumbo_furnace");
+	public static final Component TITLE = new TranslatableComponent("container.jumbofurnace.jumbo_furnace");
 	
 	// slot positions
 	public static final int SLOT_SPACING = 18;
@@ -65,15 +64,15 @@ public class JumboFurnaceContainer extends Container
 	public static final int END_PLAYER_SLOTS = FIRST_BACKPACK_SLOT + BACKPACK_SLOTS;
 	
 	/** Used by the Server to determine whether the player is close enough to use the Container **/
-	private final IWorldPosCallable usabilityTest;
-	private final IIntArray furnaceData;
-	private final Optional<JumboFurnaceCoreTileEntity> serverFurnace;
+	private final ContainerLevelAccess usabilityTest;
+	private final ContainerData furnaceData;
+	private final Optional<JumboFurnaceCoreBlockEntity> serverFurnace;
 
 	/** Container factory for opening the container clientside **/
-	public static JumboFurnaceContainer getClientContainer(int id, PlayerInventory playerInventory)
+	public static JumboFurnaceMenuType getClientContainer(int id, Inventory playerInventory)
 	{
 		// init client inventory with dummy slots
-		return new JumboFurnaceContainer(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new ItemStackHandler(1), new IntArray(4), Optional.empty());
+		return new JumboFurnaceMenuType(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new ItemStackHandler(1), new SimpleContainerData(4), Optional.empty());
 	}
 	
 	/**
@@ -82,17 +81,17 @@ public class JumboFurnaceContainer extends Container
 	 * @param activationPos The position of the block that the player actually activated to open the container (may be different than te.getPos)
 	 * @return
 	 */
-	public static IContainerProvider getServerContainerProvider(JumboFurnaceCoreTileEntity te, BlockPos activationPos)
+	public static MenuConstructor getServerContainerProvider(JumboFurnaceCoreBlockEntity te, BlockPos activationPos)
 	{
-		return (id, playerInventory, serverPlayer) -> new JumboFurnaceContainer(id, playerInventory, activationPos, te.input, te.fuel, te.output, te.multiprocessUpgradeHandler, new JumboFurnaceSyncData(te), Optional.of(te));
+		return (id, playerInventory, serverPlayer) -> new JumboFurnaceMenuType(id, playerInventory, activationPos, te.input, te.fuel, te.output, te.multiprocessUpgradeHandler, new JumboFurnaceSyncData(te), Optional.of(te));
 	}
 	
-	protected JumboFurnaceContainer(int id, PlayerInventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IItemHandler multiprocessUpgrades, IIntArray furnaceData, Optional<JumboFurnaceCoreTileEntity> serverFurnace)
+	protected JumboFurnaceMenuType(int id, Inventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IItemHandler multiprocessUpgrades, ContainerData furnaceData, Optional<JumboFurnaceCoreBlockEntity> serverFurnace)
 	{
-		super(JumboFurnaceObjects.CONTAINER_TYPE, id);
+		super(JumboFurnace.get().jumboFurnaceMenuType.get(), id);
 		
-		PlayerEntity player = playerInventory.player;
-		this.usabilityTest = IWorldPosCallable.of(player.world, pos);
+		Player player = playerInventory.player;
+		this.usabilityTest = ContainerLevelAccess.create(player.level, pos);
 		this.furnaceData = furnaceData;
 		this.serverFurnace = serverFurnace;
 		
@@ -154,43 +153,43 @@ public class JumboFurnaceContainer extends Container
 			}
 		}
 
-		this.trackIntArray(furnaceData);
+		this.addDataSlots(furnaceData);
 	}
 
 	@Override
-	public void onContainerClosed(PlayerEntity player)
+	public void removed(Player player)
 	{
-		if (player instanceof ServerPlayerEntity)
+		if (player instanceof ServerPlayer serverPlayer)
 		{
-			ItemStack finalUpgradeStack = this.getSlot(ORTHOFURNACE_SLOT).getStack();
-			UpgradeJumboFurnaceTrigger.INSTANCE.test((ServerPlayerEntity)player, finalUpgradeStack);
+			ItemStack finalUpgradeStack = this.getSlot(ORTHOFURNACE_SLOT).getItem();
+			UpgradeJumboFurnaceTrigger.INSTANCE.test(serverPlayer, finalUpgradeStack);
 		}
 		
 		
-		super.onContainerClosed(player);
+		super.removed(player);
 	}
 
 	@Override
-	public boolean canInteractWith(PlayerEntity arg0)
+	public boolean stillValid(Player player)
 	{
-		return isWithinUsableDistance(this.usabilityTest, arg0, JumboFurnaceObjects.BLOCK);
+		return stillValid(this.usabilityTest, player, JumboFurnace.get().jumboFurnaceBlock.get());
 	}
 
 	@Override
-	public ItemStack transferStackInSlot(PlayerEntity player, int index)
+	public ItemStack quickMoveStack(Player player, int index)
 	{
 		ItemStack slotStackCopy = ItemStack.EMPTY;
-		Slot slot = this.inventorySlots.get(index);
+		Slot slot = this.slots.get(index);
 		
-		if (slot != null && slot.getHasStack())
+		if (slot != null && slot.hasItem())
 		{
-			ItemStack stackInSlot = slot.getStack();
+			ItemStack stackInSlot = slot.getItem();
 			slotStackCopy = stackInSlot.copy();
 			
 			// if this is an input/fuel/output/upgrade slot, try to put the item in the player slots
 			if (index < FIRST_PLAYER_SLOT)
 			{
-				if (!this.mergeItemStack(stackInSlot, FIRST_PLAYER_SLOT, END_PLAYER_SLOTS, true))
+				if (!this.moveItemStackTo(stackInSlot, FIRST_PLAYER_SLOT, END_PLAYER_SLOTS, true))
 				{
 					return ItemStack.EMPTY;
 				}
@@ -203,9 +202,9 @@ public class JumboFurnaceContainer extends Container
 				if (JumboFurnace.MULTIPROCESSING_UPGRADE_TAG.contains(stackInSlot.getItem()))
 				{
 					// if we altered any input slots
-					if (this.mergeItemStack(stackInSlot, ORTHOFURNACE_SLOT, ORTHOFURNACE_SLOT+1, false))
+					if (this.moveItemStackTo(stackInSlot, ORTHOFURNACE_SLOT, ORTHOFURNACE_SLOT+1, false))
 					{
-						this.serverFurnace.ifPresent(JumboFurnaceCoreTileEntity::markInputInventoryChanged);
+						this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markInputInventoryChanged);
 					}
 					else
 					{
@@ -213,12 +212,12 @@ public class JumboFurnaceContainer extends Container
 					}
 				}
 				// if we can burn the item, try to put it in the fuel slots first
-				if (ForgeHooks.getBurnTime(stackInSlot) > 0)
+				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot) > 0)
 				{
 					// if we changed any fuel item slots
-					if (this.mergeItemStack(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))
+					if (this.moveItemStackTo(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))
 					{
-						this.serverFurnace.ifPresent(JumboFurnaceCoreTileEntity::markFuelInventoryChanged);
+						this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markFuelInventoryChanged);
 					}
 					else
 					{
@@ -226,9 +225,9 @@ public class JumboFurnaceContainer extends Container
 					}
 				}
 				// otherwise, try to put it in the input slots
-				if (this.mergeItemStack(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
+				if (this.moveItemStackTo(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
 				{
-					this.serverFurnace.ifPresent(JumboFurnaceCoreTileEntity::markInputInventoryChanged);
+					this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markInputInventoryChanged);
 				}
 				else
 				{
@@ -238,11 +237,11 @@ public class JumboFurnaceContainer extends Container
 			
 			if (stackInSlot.isEmpty())
 			{
-				slot.putStack(ItemStack.EMPTY);
+				slot.set(ItemStack.EMPTY);
 			}
 			else
 			{
-				slot.onSlotChanged();
+				slot.setChanged();
 			}
 			
 			if (stackInSlot.getCount() == slotStackCopy.getCount())
@@ -275,7 +274,7 @@ public class JumboFurnaceContainer extends Container
 	public int getCookProgressionScaled()
 	{
 		int cookProgress = this.getCookProgress();
-		int cookTimeForRecipe = JumboFurnace.SERVER_CONFIG.jumboFurnaceCookTime.get();
+		int cookTimeForRecipe = JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get();
 		return cookTimeForRecipe != 0 && cookProgress != 0 ? cookProgress * 24 / cookTimeForRecipe : 0;
 	}
 

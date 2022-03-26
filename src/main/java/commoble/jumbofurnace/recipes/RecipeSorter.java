@@ -8,14 +8,14 @@ import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 
 import commoble.jumbofurnace.JumboFurnace;
-import net.minecraft.client.resources.ReloadListener;
-import net.minecraft.item.crafting.FurnaceRecipe;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.item.crafting.RecipeManager;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.resources.IResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.server.packs.resources.ResourceManager;
 
-public class RecipeSorter extends ReloadListener<Void>
+public class RecipeSorter extends SimplePreparableReloadListener<Void>
 {
 	public static final RecipeSorter INSTANCE = new RecipeSorter();
 	
@@ -37,10 +37,10 @@ public class RecipeSorter extends ReloadListener<Void>
 	
 	private List<JumboFurnaceRecipe> sortFurnaceRecipes(RecipeManager manager)
 	{
-		Stream<JumboFurnaceRecipe> basicRecipes = manager.getRecipes(IRecipeType.SMELTING).values().stream()
-			.filter(recipe -> recipe instanceof FurnaceRecipe)
-			.map(recipe -> new JumboFurnaceRecipe((FurnaceRecipe)recipe));
-		Stream<JumboFurnaceRecipe> advancedRecipes = manager.getRecipes(JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE).values().stream()
+		Stream<JumboFurnaceRecipe> basicRecipes = manager.byType(RecipeType.SMELTING).values().stream()
+			.filter(recipe -> recipe instanceof SmeltingRecipe)
+			.map(recipe -> new JumboFurnaceRecipe((SmeltingRecipe)recipe));
+		Stream<JumboFurnaceRecipe> advancedRecipes = manager.byType(JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE).values().stream()
 			.filter(recipe -> recipe instanceof JumboFurnaceRecipe)
 			.map(recipe -> (JumboFurnaceRecipe)recipe);
 		
@@ -60,13 +60,13 @@ public class RecipeSorter extends ReloadListener<Void>
 	}
 
 	@Override
-	protected Void prepare(IResourceManager resourceManagerIn, IProfiler profilerIn)
+	protected Void prepare(ResourceManager resourceManagerIn, ProfilerFiller profilerIn)
 	{
 		return null;
 	}
 
 	@Override
-	protected void apply(Void objectIn, IResourceManager resourceManagerIn, IProfiler profilerIn)
+	protected void apply(Void objectIn, ResourceManager resourceManagerIn, ProfilerFiller profilerIn)
 	{
 		this.currentGeneration++;
 	}

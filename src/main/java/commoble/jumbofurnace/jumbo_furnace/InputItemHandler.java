@@ -5,9 +5,9 @@ import net.minecraftforge.items.ItemStackHandler;
 
 public class InputItemHandler extends ItemStackHandler
 {
-	public final JumboFurnaceCoreTileEntity te;
+	public final JumboFurnaceCoreBlockEntity te;
 	
-	public InputItemHandler(JumboFurnaceCoreTileEntity te)
+	public InputItemHandler(JumboFurnaceCoreBlockEntity te)
 	{
 		super(9);
 		this.te = te;
@@ -22,7 +22,7 @@ public class InputItemHandler extends ItemStackHandler
 	protected void onContentsChanged(int slot)
 	{
 		super.onContentsChanged(slot);
-		this.te.markDirty();
+		this.te.setChanged();
 		this.te.onInputInventoryChanged();
 	}
 }

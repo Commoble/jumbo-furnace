@@ -1,6 +1,6 @@
 package commoble.jumbofurnace.client.jei;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.JumboFurnaceObjects;
@@ -17,10 +17,12 @@ import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.ingredients.IIngredients;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
 
 public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe>
 {
@@ -29,7 +31,6 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	
 	private final IDrawable background;
 	private final IDrawable icon;
-	private final String localizedName;
 	private final IDrawableAnimated arrow;
 	private final IDrawableStatic staticFlame;
 	private final IDrawableAnimated animatedFlame;
@@ -37,11 +38,10 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	
 	public JumboSmeltingCategory(IGuiHelper helper)
 	{
-		this.icon = helper.createDrawableIngredient(new ItemStack(JumboFurnaceObjects.JEI_DUMMY));
+		this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM, new ItemStack(JumboFurnaceObjects.JEI_DUMMY));
 		this.background = helper.createDrawable(JEI_RECIPE_TEXTURE, 0, 60, 116, 54);
-		this.localizedName = I18n.format("gui.jumbofurnace.category.jumbo_smelting");
 		this.arrow = helper.drawableBuilder(JEI_RECIPE_TEXTURE, 82, 128, 24, 17)
-			.buildAnimated(JumboFurnace.SERVER_CONFIG.jumboFurnaceCookTime.get(), IDrawableAnimated.StartDirection.LEFT, false);
+			.buildAnimated(JumboFurnace.serverConfig.jumboFurnaceCookTime().get(), IDrawableAnimated.StartDirection.LEFT, false);
 		this.staticFlame = helper.createDrawable(JEI_RECIPE_TEXTURE, 82, 114, 14, 14);
 		this.animatedFlame = helper.createAnimatedDrawable(this.staticFlame, 300, IDrawableAnimated.StartDirection.TOP, true);
 		this.backgroundFlame = helper.createDrawable(JEI_RECIPE_TEXTURE, 1, 134, 14, 14);
@@ -60,9 +60,9 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	}
 
 	@Override
-	public String getTitle()
+	public Component getTitle()
 	{
-		return this.localizedName;
+		return new TranslatableComponent("gui.jumbofurnace.category.jumbo_smelting");
 	}
 
 	@Override
@@ -81,11 +81,11 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	public void setIngredients(JumboFurnaceRecipe recipe, IIngredients ingredients)
 	{
 		ingredients.setInputIngredients(recipe.getIngredients());
-		ingredients.setOutput(VanillaTypes.ITEM, recipe.getRecipeOutput());
+		ingredients.setOutput(VanillaTypes.ITEM, recipe.getResultItem());
 	}
 
 	@Override
-	public void draw(JumboFurnaceRecipe recipe, MatrixStack stack, double mouseX, double mouseY)
+	public void draw(JumboFurnaceRecipe recipe, PoseStack stack, double mouseX, double mouseY)
 	{
 		this.backgroundFlame.draw(stack, 66, 38);
 		this.animatedFlame.draw(stack, 66, 38);
@@ -94,11 +94,11 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 		float experience = recipe.experience;
 		if (experience > 0)
 		{
-			String experienceString = I18n.format("gui.jei.category.smelting.experience", experience);
+			String experienceString = I18n.get("gui.jei.category.smelting.experience", experience);
 			Minecraft minecraft = Minecraft.getInstance();
-			FontRenderer fontRenderer = minecraft.fontRenderer;
-			int stringWidth = fontRenderer.getStringWidth(experienceString);
-			fontRenderer.drawString(stack, experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080);
+			Font fontRenderer = minecraft.font;
+			int stringWidth = fontRenderer.width(experienceString);
+			fontRenderer.draw(stack, experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080);
 		}
 	}
 

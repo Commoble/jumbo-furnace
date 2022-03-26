@@ -8,16 +8,15 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 
 import commoble.jumbofurnace.JumboFurnace;
-import commoble.jumbofurnace.JumboFurnaceObjects;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
@@ -34,7 +33,7 @@ public class MultiBlockHelper
 	 * @param placePos
 	 * @return
 	 */
-	public static List<Pair<BlockPos, BlockState>> getJumboFurnaceStates(RegistryKey<World> key, IWorld world, BlockPos placePos, BlockState againstState, Entity entity)
+	public static List<Pair<BlockPos, BlockState>> getJumboFurnaceStates(ResourceKey<Level> key, LevelAccessor world, BlockPos placePos, BlockState againstState, Entity entity)
 	{
 		return get3x3CubeAround(placePos)
 			.filter(pos -> canJumboFurnaceFormAt(world, pos, placePos))
@@ -51,7 +50,7 @@ public class MultiBlockHelper
 	 * @param placePos The position that a furnace block is about to be placed at
 	 * @return
 	 */
-	public static boolean canJumboFurnaceFormAt(IWorld world, BlockPos corePos, BlockPos placePos)
+	public static boolean canJumboFurnaceFormAt(LevelAccessor world, BlockPos corePos, BlockPos placePos)
 	{
 		return get3x3CubeAround(corePos)
 			.allMatch(pos -> pos.equals(placePos) || JumboFurnace.JUMBOFURNACEABLE_TAG.contains(world.getBlockState(pos).getBlock()));
@@ -63,31 +62,31 @@ public class MultiBlockHelper
 	 * @param corePos
 	 * @return true if the 3x3 cube around the position contains replaceable blockstates (air, plants, etc)
 	 */
-	public static boolean canJumboFurnacePlaceAt(IWorld world, BlockPos corePos, BlockItemUseContext useContext)
+	public static boolean canJumboFurnacePlaceAt(LevelAccessor world, BlockPos corePos, BlockPlaceContext useContext)
 	{
 		// the two-blockpos constructor for AABB is [inclusive, exclusive)
 		// so we have to add 2 to the second arg
-		boolean noEntitiesInArea = world.getEntitiesWithinAABB(LivingEntity.class, new AxisAlignedBB(corePos.add(-1,-1,-1), corePos.add(2,2,2))).isEmpty();
+		boolean noEntitiesInArea = world.getEntitiesOfClass(LivingEntity.class, new AABB(corePos.offset(-1,-1,-1), corePos.offset(2,2,2))).isEmpty();
 		return noEntitiesInArea && get3x3CubeAround(corePos)
 			.allMatch(pos ->
 				world.getBlockState(pos)
-				.isReplaceable(useContext));
+				.canBeReplaced(useContext));
 	}
 	
 	public static Stream<BlockPos> get3x3CubeAround(BlockPos pos)
 	{
-		return BlockPos.getAllInBox(pos.add(-1, -1, -1), pos.add(1,1,1));
+		return BlockPos.betweenClosedStream(pos.offset(-1, -1, -1), pos.offset(1,1,1));
 	}
 	
-	public static List<Pair<BlockPos, BlockState>> getStatesForPlacementIfPermitted(RegistryKey<World> key, IWorld world, BlockPos corePos, BlockState againstState, Entity placer)
+	public static List<Pair<BlockPos, BlockState>> getStatesForPlacementIfPermitted(ResourceKey<Level> key, LevelAccessor world, BlockPos corePos, BlockState againstState, Entity placer)
 	{
-		List<Pair<BlockPos, BlockState>> pairs = JumboFurnaceObjects.BLOCK.getStatesForFurnace(world, corePos);
+		List<Pair<BlockPos, BlockState>> pairs = JumboFurnace.get().jumboFurnaceBlock.get().getStatesForFurnace(corePos);
 		return doesPlayerHavePermissionToMakeJumboFurnace(key, world, pairs, againstState, placer)
 			? pairs
 			: NO_SNAPSHOTS;
 	}
 	
-	public static boolean doesPlayerHavePermissionToMakeJumboFurnace(RegistryKey<World> key, IWorld world, List<Pair<BlockPos, BlockState>> pairs, BlockState placedAgainst, Entity entity)
+	public static boolean doesPlayerHavePermissionToMakeJumboFurnace(ResourceKey<Level> key, LevelAccessor world, List<Pair<BlockPos, BlockState>> pairs, BlockState placedAgainst, Entity entity)
 	{
 		List<BlockSnapshot> snapshots = pairs.stream()
 			.map(pair -> BlockSnapshot.create(key, world, pair.getFirst()))
