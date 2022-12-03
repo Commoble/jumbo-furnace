@@ -38,9 +38,9 @@ public class RecipeSorter extends SimplePreparableReloadListener<Void>
 	private List<JumboFurnaceRecipe> sortFurnaceRecipes(RecipeManager manager)
 	{
 		Stream<JumboFurnaceRecipe> basicRecipes = manager.byType(RecipeType.SMELTING).values().stream()
-			.filter(recipe -> recipe instanceof SmeltingRecipe)
+			.filter(recipe -> recipe instanceof SmeltingRecipe && ((SmeltingRecipe)recipe).getCookingTime() <= JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get())
 			.map(recipe -> new JumboFurnaceRecipe((SmeltingRecipe)recipe));
-		Stream<JumboFurnaceRecipe> advancedRecipes = manager.byType(JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE).values().stream()
+		Stream<JumboFurnaceRecipe> advancedRecipes = manager.byType(JumboFurnace.get().jumboSmeltingRecipeType.get()).values().stream()
 			.filter(recipe -> recipe instanceof JumboFurnaceRecipe)
 			.map(recipe -> (JumboFurnaceRecipe)recipe);
 		

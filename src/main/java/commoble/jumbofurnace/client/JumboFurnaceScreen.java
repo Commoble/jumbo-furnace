@@ -3,14 +3,14 @@ package commoble.jumbofurnace.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 
-import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenuType;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 
-public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenuType>
+public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu>
 {
 	public static final ResourceLocation GUI_TEXTURE = new ResourceLocation("jumbofurnace:textures/gui/jumbo_furnace.png");
 	
@@ -31,7 +31,7 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 	public static final int COOK_METER_TO_X = 79;
 	public static final int COOK_METER_TO_Y = 72;
 
-	public JumboFurnaceScreen(JumboFurnaceMenuType screenContainer, Inventory inv, Component titleIn)
+	public JumboFurnaceScreen(JumboFurnaceMenu screenContainer, Inventory inv, Component titleIn)
 	{
 		super(screenContainer, inv, titleIn);
 		this.imageWidth = 176;

@@ -19,7 +19,7 @@ public class MultiprocessUpgradeHandler extends ItemStackHandler
 	@Override
 	public boolean isItemValid(int slot, ItemStack stack)
 	{
-		return JumboFurnace.MULTIPROCESSING_UPGRADE_TAG.contains(stack.getItem());
+		return stack.is(JumboFurnace.MULTIPROCESSING_UPGRADE_TAG);
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class MultiprocessUpgradeHandler extends ItemStackHandler
 		@Override
 		public boolean mayPlace(ItemStack stack)
 		{
-			return JumboFurnace.MULTIPROCESSING_UPGRADE_TAG.contains(stack.getItem());
+			return stack.is(JumboFurnace.MULTIPROCESSING_UPGRADE_TAG);
 		}
 	}
 }

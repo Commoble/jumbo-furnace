@@ -1,19 +1,19 @@
 package commoble.jumbofurnace.recipes;
 
+import java.util.Collection;
 import java.util.stream.Stream;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.SerializationTags;
-import net.minecraft.tags.Tag;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Ingredient.TagValue;
 import net.minecraftforge.common.crafting.IIngredientSerializer;
 
 public class TagStackIngredient
@@ -43,13 +43,39 @@ public class TagStackIngredient
 		{
 			ResourceLocation tagID = new ResourceLocation(GsonHelper.getAsString(json, "tag")); // throws JsonSyntaxException if no tag field
 			int count = GsonHelper.getAsInt(json, "count", 1);
-			Tag<Item> tag = SerializationTags.getInstance().getTagOrThrow(Registry.ITEM_REGISTRY, tagID, id->
-			{
-				throw new JsonSyntaxException("Unknown item tag '" + id + "'"); // will get caught and logged during data loading
-			});
-			return Ingredient.fromValues(tag.getValues().stream().map(item -> new Ingredient.ItemValue(new ItemStack(item, count))));
+			TagCountValue value = new TagCountValue(TagKey.create(Registry.ITEM_REGISTRY, tagID), count);
+			return Ingredient.fromValues(Stream.of(value));
 		}
 
 	};
+	
+	public static class TagCountValue extends TagValue
+	{
+		private final int count;
+		public int count() { return this.count; }
+
+		public TagCountValue(TagKey<Item> tag, int count)
+		{
+			super(tag);
+			this.count = count;
+		}
+
+		@Override
+		public Collection<ItemStack> getItems()
+		{
+			var items = super.getItems();
+			items.forEach(stack -> stack.setCount(this.count));
+			return items;
+		}
+
+		@Override
+		public JsonObject serialize()
+		{
+			JsonObject obj = super.serialize();
+			obj.addProperty("count", this.count());
+			return obj;
+		}
+	}
+
 
 }

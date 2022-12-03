@@ -25,7 +25,7 @@
 				"items": 
 				[
 					{
-						"item": "jumbofurnace:jumbo_furnace"
+						"items": ["jumbofurnace:jumbo_furnace"]
 					}
 				]
 			}

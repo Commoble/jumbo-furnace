@@ -11,6 +11,8 @@ import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import commoble.jumbofurnace.recipes.RecipeSorter;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.ModIds;
+import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
@@ -23,9 +25,13 @@ import net.minecraft.world.item.crafting.RecipeManager;
 @JeiPlugin
 public class JEIProxy implements IModPlugin
 {
+	public static final ResourceLocation JEI_RECIPE_TEXTURE = new ResourceLocation(ModIds.JEI_ID, "textures/gui/gui_vanilla.png");
 	
 	@Nullable
 	private JumboSmeltingCategory jumboSmeltingCategory;
+	
+	@Nullable
+	private JumboFurnaceUpgradeCategory jumboFurnaceUpgradeCategory;
 
 	public static final ResourceLocation ID = new ResourceLocation(JumboFurnace.MODID, JumboFurnace.MODID);
 	
@@ -42,8 +48,10 @@ public class JEIProxy implements IModPlugin
 	@Override
 	public void registerCategories(IRecipeCategoryRegistration registration)
 	{
-		this.jumboSmeltingCategory = new JumboSmeltingCategory(registration.getJeiHelpers().getGuiHelper());
-		registration.addRecipeCategories(this.jumboSmeltingCategory);
+		IGuiHelper helper = registration.getJeiHelpers().getGuiHelper();
+		this.jumboSmeltingCategory = new JumboSmeltingCategory(helper);
+		this.jumboFurnaceUpgradeCategory = new JumboFurnaceUpgradeCategory(helper);
+		registration.addRecipeCategories(this.jumboSmeltingCategory, this.jumboFurnaceUpgradeCategory);
 	}
 
 	/**
@@ -54,7 +62,7 @@ public class JEIProxy implements IModPlugin
 	@Override
 	public void registerRecipeCatalysts(IRecipeCatalystRegistration registration)
 	{
-		registration.addRecipeCatalyst(new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()), JumboSmeltingCategory.ID);
+		registration.addRecipeCatalyst(new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()), JumboSmeltingCategory.TYPE, JumboFurnaceUpgradeCategory.TYPE);
 	}
 
 	/**
@@ -63,11 +71,12 @@ public class JEIProxy implements IModPlugin
 	@Override
 	public void registerRecipes(IRecipeRegistration registration)
 	{
-		if (this.jumboSmeltingCategory == null)
+		if (this.jumboSmeltingCategory == null || this.jumboFurnaceUpgradeCategory == null)
 		{
-			throw new NullPointerException("Jumbo Furnace's Jumbo Smelting JEI category failed to register! Notify the developer for assistance https://github.com/Commoble/jumbo-furnace/issues");
+			throw new NullPointerException("Jumbo Furnace's Jumbo Smelting JEI categories failed to register! Notify the developer for assistance https://github.com/Commoble/jumbo-furnace/issues");
 		}
-		registration.addRecipes(this.getRecipes(), JumboSmeltingCategory.ID);
+		registration.addRecipes(JumboSmeltingCategory.TYPE, this.getRecipes());
+		registration.addRecipes(JumboFurnaceUpgradeCategory.TYPE, List.of(JumboFurnaceUpgradeCategory.JumboFurnaceUpgrade.INSTANCE));
 	}
 	
 	public List<JumboFurnaceRecipe> getRecipes()

@@ -1,0 +1,37 @@
+{
+	"parent": "jumbofurnace:obtain_jumbo_furnace",
+	"display":
+	{
+		"icon": 
+		{
+			"item": "jumbofurnace:jumbo_furnace"
+		},
+		"title":
+		{
+			"translate": "jumbofurnace.advancements.story.upgrade_jumbo_furnace.title"
+		},
+		"description":
+		{
+			"translate": "jumbofurnace.advancements.story.upgrade_jumbo_furnace.description"
+		},
+		"frame": "task"
+	},
+	"criteria": 
+	{
+		"upgrade_jumbo_furnace": 
+		{
+			"trigger": "jumbofurnace:upgrade_jumbo_furnace",
+			"conditions": 
+			{
+				"item": 
+				{
+					"tag": "jumbofurnace:multiprocessing_upgrade",
+					"count":
+					{
+						"min": 1
+					}
+				}
+			}
+		}
+	}
+}

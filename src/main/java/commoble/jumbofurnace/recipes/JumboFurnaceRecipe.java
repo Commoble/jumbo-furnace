@@ -25,7 +25,7 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 	/** Wrapper around regular furnace recipes to make single-input jumbo furnace recipes **/
 	public JumboFurnaceRecipe(SmeltingRecipe baseRecipe)
 	{
-		this(JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE, baseRecipe.getId(), baseRecipe.getGroup(), baseRecipe.getIngredients(), baseRecipe.getResultItem().copy(), baseRecipe.getExperience());
+		this(JumboFurnace.get().jumboSmeltingRecipeType.get(), baseRecipe.getId(), baseRecipe.getGroup(), baseRecipe.getIngredients(), baseRecipe.getResultItem().copy(), baseRecipe.getExperience());
 	}
 	
 	public JumboFurnaceRecipe(RecipeType<?> type, ResourceLocation id, String group, NonNullList<Ingredient> ingredients, ItemStack result, float experience)
@@ -141,9 +141,9 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 		for (int slot=0; slot<slots; slot++)
 		{
 			ItemStack stackInSlot = items.getStackInSlot(slot);
-			if (stackInSlot.hasContainerItem())
+			if (stackInSlot.hasCraftingRemainingItem())
 			{
-				containerItems.set(slot, stackInSlot.getContainerItem());
+				containerItems.set(slot, stackInSlot.getCraftingRemainingItem());
 			}
 		}
 		

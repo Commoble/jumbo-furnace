@@ -8,18 +8,18 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 
 import commoble.jumbofurnace.JumboFurnace;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.event.world.BlockEvent.EntityMultiPlaceEvent;
+import net.minecraftforge.event.level.BlockEvent.EntityMultiPlaceEvent;
 
 public class MultiBlockHelper
 {
@@ -53,7 +53,7 @@ public class MultiBlockHelper
 	public static boolean canJumboFurnaceFormAt(LevelAccessor world, BlockPos corePos, BlockPos placePos)
 	{
 		return get3x3CubeAround(corePos)
-			.allMatch(pos -> pos.equals(placePos) || JumboFurnace.JUMBOFURNACEABLE_TAG.contains(world.getBlockState(pos).getBlock()));
+			.allMatch(pos -> pos.equals(placePos) || world.getBlockState(pos).is(JumboFurnace.JUMBOFURNACEABLE_TAG));
 	}
 	
 	/**

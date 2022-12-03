@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
-import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenuType;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -14,9 +14,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 
-public class JumboFurnaceRecipeSerializer extends ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<JumboFurnaceRecipe>
+public class JumboFurnaceRecipeSerializer implements RecipeSerializer<JumboFurnaceRecipe>
 {
 	public final RecipeType<JumboFurnaceRecipe> recipeType;
 	
@@ -34,9 +33,9 @@ public class JumboFurnaceRecipeSerializer extends ForgeRegistryEntry<RecipeSeria
 		{
 			throw new JsonParseException("No ingredients for jumbo furnace recipe");
 		}
-		else if (ingredients.size() > JumboFurnaceMenuType.INPUT_SLOTS)
+		else if (ingredients.size() > JumboFurnaceMenu.INPUT_SLOTS)
 		{
-			throw new JsonParseException("Too many ingredients for jumbo furnace recipe! the max is " + (JumboFurnaceMenuType.INPUT_SLOTS));
+			throw new JsonParseException("Too many ingredients for jumbo furnace recipe! the max is " + (JumboFurnaceMenu.INPUT_SLOTS));
 		}
 		else
 		{

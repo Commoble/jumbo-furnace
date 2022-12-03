@@ -17,7 +17,7 @@ public class OutputItemHandler extends ItemStackHandler
 	
 	public OutputItemHandler(JumboFurnaceCoreBlockEntity te)
 	{
-		super(JumboFurnaceMenuType.INPUT_SLOTS);
+		super(JumboFurnaceMenu.INPUT_SLOTS);
 		this.te = te;
 		this.storedExperience = new float[9];
 	}

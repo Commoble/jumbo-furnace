@@ -18,7 +18,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -353,9 +352,9 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				this.burnTimeRemaining += burnTime;
 				// setStackInSlot ignores isItemValidForSlot, so we won't lose the container item here
 				// TODO we'd lose a stack if someone makes a stackable item with a container item, though
-				if (stackInSlot.hasContainerItem())
+				if (stackInSlot.hasCraftingRemainingItem())
 				{
-					this.fuel.setStackInSlot(slot, stackInSlot.getContainerItem());
+					this.fuel.setStackInSlot(slot, stackInSlot.getCraftingRemainingItem());
 				}
 				break;
 			}

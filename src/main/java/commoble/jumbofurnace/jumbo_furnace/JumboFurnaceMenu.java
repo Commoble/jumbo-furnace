@@ -5,26 +5,26 @@ import java.util.Optional;
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.JumboFurnaceUtils;
 import commoble.jumbofurnace.advancements.UpgradeJumboFurnaceTrigger;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.MenuConstructor;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class JumboFurnaceMenuType extends AbstractContainerMenu
+public class JumboFurnaceMenu extends AbstractContainerMenu
 {
-	public static final Component TITLE = new TranslatableComponent("container.jumbofurnace.jumbo_furnace");
+	public static final String TITLE = "container.jumbofurnace.jumbo_furnace";
 	
 	// slot positions
 	public static final int SLOT_SPACING = 18;
@@ -69,10 +69,10 @@ public class JumboFurnaceMenuType extends AbstractContainerMenu
 	private final Optional<JumboFurnaceCoreBlockEntity> serverFurnace;
 
 	/** Container factory for opening the container clientside **/
-	public static JumboFurnaceMenuType getClientContainer(int id, Inventory playerInventory)
+	public static JumboFurnaceMenu getClientMenu(int id, Inventory playerInventory)
 	{
 		// init client inventory with dummy slots
-		return new JumboFurnaceMenuType(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new ItemStackHandler(1), new SimpleContainerData(4), Optional.empty());
+		return new JumboFurnaceMenu(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new ItemStackHandler(1), new SimpleContainerData(4), Optional.empty());
 	}
 	
 	/**
@@ -81,12 +81,13 @@ public class JumboFurnaceMenuType extends AbstractContainerMenu
 	 * @param activationPos The position of the block that the player actually activated to open the container (may be different than te.getPos)
 	 * @return
 	 */
-	public static MenuConstructor getServerContainerProvider(JumboFurnaceCoreBlockEntity te, BlockPos activationPos)
+	public static MenuProvider getServerMenuProvider(JumboFurnaceCoreBlockEntity te, BlockPos activationPos)
 	{
-		return (id, playerInventory, serverPlayer) -> new JumboFurnaceMenuType(id, playerInventory, activationPos, te.input, te.fuel, te.output, te.multiprocessUpgradeHandler, new JumboFurnaceSyncData(te), Optional.of(te));
+		return new SimpleMenuProvider((id, playerInventory, serverPlayer) -> new JumboFurnaceMenu(id, playerInventory, activationPos, te.input, te.fuel, te.output, te.multiprocessUpgradeHandler, new JumboFurnaceSyncData(te), Optional.of(te)),
+			Component.translatable(TITLE));
 	}
 	
-	protected JumboFurnaceMenuType(int id, Inventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IItemHandler multiprocessUpgrades, ContainerData furnaceData, Optional<JumboFurnaceCoreBlockEntity> serverFurnace)
+	protected JumboFurnaceMenu(int id, Inventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IItemHandler multiprocessUpgrades, ContainerData furnaceData, Optional<JumboFurnaceCoreBlockEntity> serverFurnace)
 	{
 		super(JumboFurnace.get().jumboFurnaceMenuType.get(), id);
 		
@@ -199,7 +200,7 @@ public class JumboFurnaceMenuType extends AbstractContainerMenu
 			{
 				// note: mergeItemStack returns true if any slot contents were changed
 				// if this is an upgrade item, try to put it in the upgrade slot first
-				if (JumboFurnace.MULTIPROCESSING_UPGRADE_TAG.contains(stackInSlot.getItem()))
+				if (stackInSlot.is(JumboFurnace.MULTIPROCESSING_UPGRADE_TAG))
 				{
 					// if we altered any input slots
 					if (this.moveItemStackTo(stackInSlot, ORTHOFURNACE_SLOT, ORTHOFURNACE_SLOT+1, false))
