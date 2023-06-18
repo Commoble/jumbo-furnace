@@ -8,6 +8,7 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.items.IItemHandler;
@@ -25,7 +26,7 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 	/** Wrapper around regular furnace recipes to make single-input jumbo furnace recipes **/
 	public JumboFurnaceRecipe(SmeltingRecipe baseRecipe)
 	{
-		this(JumboFurnace.get().jumboSmeltingRecipeType.get(), baseRecipe.getId(), baseRecipe.getGroup(), baseRecipe.getIngredients(), baseRecipe.getResultItem().copy(), baseRecipe.getExperience());
+		this(JumboFurnace.get().jumboSmeltingRecipeType.get(), baseRecipe.getId(), baseRecipe.getGroup(), baseRecipe.getIngredients(), baseRecipe.result.copy(), baseRecipe.getExperience());
 	}
 	
 	public JumboFurnaceRecipe(RecipeType<?> type, ResourceLocation id, String group, NonNullList<Ingredient> ingredients, ItemStack result, float experience)
@@ -74,7 +75,7 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 	}
 
 	@Override
-	public ItemStack assemble(ClaimableRecipeWrapper inv)
+	public ItemStack assemble(ClaimableRecipeWrapper inv, RegistryAccess registries)
 	{
 		return this.result.copy();
 	}
@@ -86,7 +87,7 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 	}
 
 	@Override
-	public ItemStack getResultItem()
+	public ItemStack getResultItem(RegistryAccess registries)
 	{
 		return this.result;
 	}

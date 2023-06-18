@@ -92,7 +92,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		super(JumboFurnace.get().jumboFurnaceMenuType.get(), id);
 		
 		Player player = playerInventory.player;
-		this.usabilityTest = ContainerLevelAccess.create(player.level, pos);
+		this.usabilityTest = ContainerLevelAccess.create(player.level(), pos);
 		this.furnaceData = furnaceData;
 		this.serverFurnace = serverFurnace;
 		

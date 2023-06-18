@@ -26,6 +26,7 @@ import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -37,8 +38,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -55,8 +57,10 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.Tags;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.level.BlockEvent.EntityMultiPlaceEvent;
 import net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent;
@@ -68,7 +72,6 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
@@ -80,8 +83,8 @@ public class JumboFurnace
 	public static JumboFurnace get() { return instance; }
 	
 	public static final String MODID = "jumbofurnace";
-	public static final TagKey<Block> JUMBOFURNACEABLE_TAG = TagKey.create(Registry.BLOCK_REGISTRY, new ResourceLocation(MODID, "jumbofurnaceable"));
-	public static final TagKey<Item> MULTIPROCESSING_UPGRADE_TAG = TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation(MODID, "multiprocessing_upgrade"));
+	public static final TagKey<Block> JUMBOFURNACEABLE_TAG = TagKey.create(Registries.BLOCK, new ResourceLocation(MODID, "jumbofurnaceable"));
+	public static final TagKey<Item> MULTIPROCESSING_UPGRADE_TAG = TagKey.create(Registries.ITEM, new ResourceLocation(MODID, "multiprocessing_upgrade"));
 	
 	public final ServerConfig serverConfig;
 	public final RegistryObject<JumboFurnaceBlock> jumboFurnaceBlock;
@@ -105,16 +108,16 @@ public class JumboFurnace
 		this.serverConfig = ConfigHelper.register(ModConfig.Type.SERVER, ServerConfig::create);
 		
 		// register forge objects
-		DeferredRegister<Block> blocks = this.makeDeferredRegister(modBus, Registry.BLOCK_REGISTRY);
-		DeferredRegister<Item> items = this.makeDeferredRegister(modBus, Registry.ITEM_REGISTRY);
-		DeferredRegister<BlockEntityType<?>> blockEntities = this.makeDeferredRegister(modBus, Registry.BLOCK_ENTITY_TYPE_REGISTRY);
-		DeferredRegister<MenuType<?>> menus = this.makeDeferredRegister(modBus, Registry.MENU_REGISTRY);
-		DeferredRegister<RecipeType<?>> recipeTypes = this.makeDeferredRegister(modBus, Registry.RECIPE_TYPE_REGISTRY);
-		DeferredRegister<RecipeSerializer<?>> recipeSerializers = this.makeDeferredRegister(modBus, Registry.RECIPE_SERIALIZER_REGISTRY);
+		DeferredRegister<Block> blocks = this.makeDeferredRegister(modBus, Registries.BLOCK);
+		DeferredRegister<Item> items = this.makeDeferredRegister(modBus, Registries.ITEM);
+		DeferredRegister<BlockEntityType<?>> blockEntities = this.makeDeferredRegister(modBus, Registries.BLOCK_ENTITY_TYPE);
+		DeferredRegister<MenuType<?>> menus = this.makeDeferredRegister(modBus, Registries.MENU);
+		DeferredRegister<RecipeType<?>> recipeTypes = this.makeDeferredRegister(modBus, Registries.RECIPE_TYPE);
+		DeferredRegister<RecipeSerializer<?>> recipeSerializers = this.makeDeferredRegister(modBus, Registries.RECIPE_SERIALIZER);
 		
 		this.jumboFurnaceBlock = blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.copy(Blocks.FURNACE)));
 		
-		this.jumboFurnaceItem = items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
+		this.jumboFurnaceItem = items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties()));
 		
 		this.jumboFurnaceJeiDummy = items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties())
 		{
@@ -134,12 +137,13 @@ public class JumboFurnace
 		this.jumboFurnaceExteriorBlockEntityType = blockEntities.register(Names.JUMBO_FURNACE_EXTERIOR,
 			() -> BlockEntityType.Builder.of(JumboFurnaceExteriorBlockEntity::create, this.jumboFurnaceBlock.get()).build(null));
 		
-		this.jumboFurnaceMenuType = menus.register(Names.JUMBO_FURNACE, () -> new MenuType<>(JumboFurnaceMenu::getClientMenu));
+		this.jumboFurnaceMenuType = menus.register(Names.JUMBO_FURNACE, () -> new MenuType<>(JumboFurnaceMenu::getClientMenu, FeatureFlags.VANILLA_SET));
 		
 		this.jumboSmeltingRecipeType = recipeTypes.register(Names.JUMBO_SMELTING, () -> RecipeType.simple(new ResourceLocation(MODID, Names.JUMBO_SMELTING)));
 		
 		this.jumboSmeltingRecipeSerializer = recipeSerializers.register(Names.JUMBO_SMELTING, () -> new JumboFurnaceRecipeSerializer(this.jumboSmeltingRecipeType.get()));
 		
+		modBus.addListener(this::onBuildCreativeTabs);
 		modBus.addListener(this::onCommonSetup);
 
 		forgeBus.addListener(this::onAddServerReloadListeners);
@@ -189,9 +193,9 @@ public class JumboFurnace
 					{
 						for (Direction dir : Direction.values())
 						{
-							te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, dir).ifPresent(handler -> addItemsToList(stacks, handler));
+							te.getCapability(ForgeCapabilities.ITEM_HANDLER, dir).ifPresent(handler -> addItemsToList(stacks, handler));
 						}
-						te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).ifPresent(handler -> addItemsToList(stacks, handler));
+						te.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(handler -> addItemsToList(stacks, handler));
 					}
 					levelAccess.setBlock(newPos, newState, 3);
 				}
@@ -265,6 +269,14 @@ public class JumboFurnace
 					event.setCancellationResult(InteractionResult.SUCCESS);
 				}
 			}
+		}
+	}
+	
+	private void onBuildCreativeTabs(BuildCreativeModeTabContentsEvent event)
+	{
+		if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS)
+		{
+			event.accept(this.jumboFurnaceItem);
 		}
 	}
 	

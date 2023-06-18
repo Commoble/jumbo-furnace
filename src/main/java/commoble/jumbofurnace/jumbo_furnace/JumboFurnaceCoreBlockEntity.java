@@ -18,8 +18,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
@@ -205,7 +205,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		// so we only need to be concerned with the canonical output
 		for (Recipe<ClaimableRecipeWrapper> recipe : this.cachedRecipes.getRecipes())
 		{
-			ItemStack result = recipe.assemble(this.cachedRecipes).copy();
+			ItemStack result = recipe.assemble(this.cachedRecipes, this.level.registryAccess()).copy();
 			for (int slot=0; slot < slots && !result.isEmpty(); slot++)
 			{
 				result = outputSimulator.insertItem(slot, result, false);
@@ -373,7 +373,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		int unusedInputSlots = unusedInputs.getSlots();
 		for (Recipe<ClaimableRecipeWrapper> recipe : recipes)
 		{
-			ItemStack result = recipe.assemble(this.cachedRecipes);
+			ItemStack result = recipe.assemble(this.cachedRecipes, this.level.registryAccess());
 			int outputSlots = this.output.getSlots();
 			int resultCount = result.getCount();
 			for (int slot=0; slot<outputSlots && !result.isEmpty(); slot++)
@@ -419,7 +419,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			ItemStack stackCopy = stack.copy();
 			if (te != null)
 			{
-				stackCopy = te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP).map(handler ->
+				stackCopy = te.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).map(handler ->
 				{
 					ItemStack innerStackCopy = stack.copy();
 					int slots = handler.getSlots();

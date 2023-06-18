@@ -3,7 +3,6 @@ package commoble.jumbofurnace.client.jei;
 import java.util.List;
 
 import com.google.common.collect.Streams;
-import com.mojang.blaze3d.vertex.PoseStack;
 
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.client.jei.JumboFurnaceUpgradeCategory.JumboFurnaceUpgrade;
@@ -18,7 +17,8 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.core.Registry;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
@@ -66,7 +66,7 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 	}
 
 	@Override
-	public void draw(JumboFurnaceUpgrade recipe, IRecipeSlotsView recipeSlotsView, PoseStack stack, double mouseX, double mouseY)
+	public void draw(JumboFurnaceUpgrade recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY)
 	{
 		Minecraft minecraft = Minecraft.getInstance();
 		Font fontRenderer = minecraft.font;
@@ -75,11 +75,8 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 		int lineCount = lines.size();
 		for (int i=0; i<lineCount; i++)
 		{
-			fontRenderer.draw(stack, lines.get(i), 0, 27 + i*9, 0xFF808080);
+			graphics.drawString(fontRenderer, lines.get(i), 0, 27 + i*9, 0xFF808080);
 		}
-//			0, 0, this.background.getWi.
-//		dth(), 0xFF808080);
-//		fontRenderer.draw(stack, info, this.background.getWidth() - stringWidth, 0, 0xFF808080);
 	}
 
 	@SuppressWarnings("deprecation")
@@ -87,7 +84,7 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 	public void setRecipe(IRecipeLayoutBuilder builder, JumboFurnaceUpgrade recipe, IFocusGroup focuses)
 	{
 		builder.addSlot(RecipeIngredientRole.CATALYST, 50, 5)
-			.addItemStacks(Streams.stream(Registry.ITEM.getTagOrEmpty(JumboFurnace.MULTIPROCESSING_UPGRADE_TAG))
+			.addItemStacks(Streams.stream(BuiltInRegistries.ITEM.getTagOrEmpty(JumboFurnace.MULTIPROCESSING_UPGRADE_TAG))
 				.map(ItemStack::new)
 				.toList());
 	}

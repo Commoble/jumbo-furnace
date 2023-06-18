@@ -10,6 +10,7 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
+apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
@@ -76,6 +77,12 @@ dependencies {
 
 }
 
+java
+{
+	withSourcesJar()
+	withJavadocJar()
+}
+
 // Example for how to get properties into the manifest for reading by the runtime..
 jar {
     manifest {
@@ -91,17 +98,26 @@ jar {
     }
 }
 
-jar.finalizedBy('reobfJar') 
+jar.finalizedBy('reobfJar')
+
+artifacts {
+	archives javadocJar
+	archives sourcesJar
+}
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
+			artifactId project.archivesBaseName
             artifact jar
+			artifact sourcesJar
+			artifact javadocJar
         }
     }
     repositories {
         maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
+			name="localMaven"
+            url "file:///${project.projectDir}/maven"
         }
     }
 }

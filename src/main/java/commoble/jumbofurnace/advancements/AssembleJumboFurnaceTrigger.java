@@ -5,12 +5,12 @@ import com.google.gson.JsonObject;
 
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger.AssembleJumboFurnaceCriterion;
-import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
 import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
-import net.minecraft.advancements.critereon.EntityPredicate.Composite;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.DeserializationContext;
+import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 
 public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<AssembleJumboFurnaceCriterion>
 {
@@ -24,9 +24,9 @@ public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<Assemble
 	}
 
 	@Override
-	protected AssembleJumboFurnaceCriterion createInstance(JsonObject json, Composite entityPredicate, DeserializationContext conditionsParser)
+	protected AssembleJumboFurnaceCriterion createInstance(JsonObject json, ContextAwarePredicate predicate, DeserializationContext conditionsParser)
 	{
-		return new AssembleJumboFurnaceCriterion(entityPredicate);
+		return new AssembleJumboFurnaceCriterion(predicate);
 	}
 	
 	public void trigger(ServerPlayer player)
@@ -37,9 +37,9 @@ public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<Assemble
 	public static class AssembleJumboFurnaceCriterion extends AbstractCriterionTriggerInstance
 	{
 
-		public AssembleJumboFurnaceCriterion( Composite playerCondition)
+		public AssembleJumboFurnaceCriterion(ContextAwarePredicate predicate)
 		{
-			super(ID, playerCondition);
+			super(ID, predicate);
 		}
 		
 	}

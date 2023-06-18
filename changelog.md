@@ -1,3 +1,6 @@
+## 1.20.1-4.0.0.0
+* Updated Jumbo Furnace to Minecraft 1.20.1 (requires forge 47.0.3 or higher)
+
 ## 1.19.2-3.0.0.0
 * Updated Jumbo Furnace to Minecraft 1.19.2 (requires forge 43.1.0 or higher)
 * This is a save-compatibility-breaking update. Jumbo Furnaces in old worlds may lose their data or disappear entirely.

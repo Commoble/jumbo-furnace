@@ -45,10 +45,10 @@ public class JumboFurnaceOutputSlot extends SlotItemHandler
 	@Override
 	protected void checkTakeAchievements(ItemStack stack)
 	{
-		stack.onCraftedBy(this.player.level, this.player, this.removeCount);
+		stack.onCraftedBy(this.player.level(), this.player, this.removeCount);
 		this.removeCount = 0;
 		
-		if (!this.player.level.isClientSide && this.getItemHandler() instanceof OutputItemHandler outputHandler)
+		if (!this.player.level().isClientSide() && this.getItemHandler() instanceof OutputItemHandler outputHandler)
 		{
 			spawnExpOrbs(this.player, outputHandler.getAndConsumeExperience(this.getSlotIndex()));
 		}
@@ -68,7 +68,7 @@ public class JumboFurnaceOutputSlot extends SlotItemHandler
 		{
 			int amount = ExperienceOrb.getExperienceValue(orbs);
 			orbs -= amount;
-			player.level.addFreshEntity(new ExperienceOrb(player.level, player.getX(), player.getY() + 0.5D, player.getZ() + 0.5D, amount));
+			player.level().addFreshEntity(new ExperienceOrb(player.level(), player.getX(), player.getY() + 0.5D, player.getZ() + 0.5D, amount));
 		}
 
 	}

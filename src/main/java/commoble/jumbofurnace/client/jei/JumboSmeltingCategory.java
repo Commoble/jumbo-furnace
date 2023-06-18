@@ -1,7 +1,5 @@
 package commoble.jumbofurnace.client.jei;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.Names;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
@@ -18,6 +16,7 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
@@ -71,11 +70,11 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	}
 
 	@Override
-	public void draw(JumboFurnaceRecipe recipe, IRecipeSlotsView slots, PoseStack stack, double mouseX, double mouseY)
+	public void draw(JumboFurnaceRecipe recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY)
 	{
-		this.backgroundFlame.draw(stack, 66, 38);
-		this.animatedFlame.draw(stack, 66, 38);
-		this.arrow.draw(stack, 60, 18);
+		this.backgroundFlame.draw(graphics, 66, 38);
+		this.animatedFlame.draw(graphics, 66, 38);
+		this.arrow.draw(graphics, 60, 18);
 
 		float experience = recipe.experience;
 		if (experience > 0)
@@ -84,7 +83,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 			Minecraft minecraft = Minecraft.getInstance();
 			Font fontRenderer = minecraft.font;
 			int stringWidth = fontRenderer.width(experienceString);
-			fontRenderer.draw(stack, experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080);
+			graphics.drawString(fontRenderer, experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080);
 		}
 	}
 
@@ -95,7 +94,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 		
 		// output slot
 		recipeLayout.addSlot(RecipeIngredientRole.OUTPUT, 94, 18)
-			.addItemStack(recipe.getResultItem());
+			.addItemStack(recipe.result);
 
 		// input slots
 		NonNullList<Ingredient> ingredients = recipe.getIngredients();
