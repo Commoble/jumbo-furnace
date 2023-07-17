@@ -83,7 +83,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 			Minecraft minecraft = Minecraft.getInstance();
 			Font fontRenderer = minecraft.font;
 			int stringWidth = fontRenderer.width(experienceString);
-			graphics.drawString(fontRenderer, experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080);
+			graphics.drawString(fontRenderer, experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080, false);
 		}
 	}
 

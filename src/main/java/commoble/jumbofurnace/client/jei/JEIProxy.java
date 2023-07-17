@@ -25,7 +25,7 @@ import net.minecraft.world.item.crafting.RecipeManager;
 @JeiPlugin
 public class JEIProxy implements IModPlugin
 {
-	public static final ResourceLocation JEI_RECIPE_TEXTURE = new ResourceLocation(ModIds.JEI_ID, "textures/gui/gui_vanilla.png");
+	public static final ResourceLocation JEI_RECIPE_TEXTURE = new ResourceLocation(ModIds.JEI_ID, "textures/jei/gui/gui_vanilla.png");
 	
 	@Nullable
 	private JumboSmeltingCategory jumboSmeltingCategory;

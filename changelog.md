@@ -1,3 +1,6 @@
+## 1.20.1-4.0.0.1
+* Fix broken textures in JEI recipe viewer for jumbo smelting
+
 ## 1.20.1-4.0.0.0
 * Updated Jumbo Furnace to Minecraft 1.20.1 (requires forge 47.0.3 or higher)
 
