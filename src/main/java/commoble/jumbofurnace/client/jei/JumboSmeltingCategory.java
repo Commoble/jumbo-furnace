@@ -93,7 +93,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 		recipeLayout.setShapeless(60,0);
 		
 		// output slot
-		recipeLayout.addSlot(RecipeIngredientRole.OUTPUT, 94, 18)
+		recipeLayout.addSlot(RecipeIngredientRole.OUTPUT, 95, 19)
 			.addItemStack(recipe.result);
 
 		// input slots
@@ -104,7 +104,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 			for (int column = 0; column < 3; column++)
 			{
 				int inputID = row * 3 + column;
-				var slot = recipeLayout.addSlot(RecipeIngredientRole.INPUT, column * 18, row * 18);
+				var slot = recipeLayout.addSlot(RecipeIngredientRole.INPUT, column*18 + 1, row*18 + 1);
 				if (inputID < ingredientCount)
 				{
 					slot.addIngredients(ingredients.get(inputID));
