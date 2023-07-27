@@ -165,6 +165,13 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	/** Called at the start of a tick when the input inventory has changed **/
 	public void updateRecipes()
 	{
+		// make copy of output slots
+		int slots = this.output.getSlots();
+		ItemStackHandler outputSimulator = new ItemStackHandler(slots);
+		for (int slot=0; slot<slots; slot++)
+		{
+			outputSimulator.setStackInSlot(slot, this.output.getStackInSlot(slot).copy());
+		}
 		ClaimableRecipeWrapper wrapper = this.input.getFreshRecipeInput();
 		// get all recipes allowed by furnace or jumbo furnace
 		// sort them by specificity (can we do this on recipe reload?)
@@ -174,7 +181,9 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		for (JumboFurnaceRecipe recipe : recipes)
 		{
 			// loop recipe over inputs until it can't match or we have no unused inputs left
-			while (wrapper.getRecipeCount() < this.getMaxSimultaneousRecipes() && wrapper.matchAndClaimInputs(recipe, this.level) && wrapper.hasUnusedInputsLeft());
+			while (wrapper.getRecipeCount() < this.getMaxSimultaneousRecipes()
+				&& wrapper.matchAndClaimInputs(recipe, this.level, outputSimulator)
+				&& wrapper.hasUnusedInputsLeft());
 		}
 		// when all input slots are claimed or the recipe list is exhausted, set the new recipe cache
 		this.cachedRecipes = wrapper;

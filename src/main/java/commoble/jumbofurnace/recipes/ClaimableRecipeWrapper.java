@@ -10,6 +10,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.wrapper.RecipeWrapper;
 
@@ -82,8 +83,13 @@ public class ClaimableRecipeWrapper extends RecipeWrapper
 		return result;
 	}
 	
-	public boolean matchAndClaimInputs(Recipe<ClaimableRecipeWrapper> recipe, Level world)
+	public boolean matchAndClaimInputs(Recipe<ClaimableRecipeWrapper> recipe, Level world, IItemHandler outputSimulator)
 	{
+		boolean hasRoomInOutput = ItemHandlerHelper.insertItem(outputSimulator, recipe.getResultItem(world.registryAccess()), true).isEmpty();
+		if (!hasRoomInOutput)
+		{
+			return false;
+		}
 		boolean matched = recipe.matches(this, world);
 		
 		if (matched)
@@ -109,6 +115,7 @@ public class ClaimableRecipeWrapper extends RecipeWrapper
 				}
 			}
 			this.recipes.add(recipe);
+			ItemHandlerHelper.insertItem(outputSimulator, recipe.getResultItem(world.registryAccess()), false);
 		}
 		
 		return matched;
