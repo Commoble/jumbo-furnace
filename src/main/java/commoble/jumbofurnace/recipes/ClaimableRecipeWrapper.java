@@ -85,7 +85,7 @@ public class ClaimableRecipeWrapper extends RecipeWrapper
 	
 	public boolean matchAndClaimInputs(Recipe<ClaimableRecipeWrapper> recipe, Level world, IItemHandler outputSimulator)
 	{
-		boolean hasRoomInOutput = ItemHandlerHelper.insertItem(outputSimulator, recipe.getResultItem(world.registryAccess()), true).isEmpty();
+		boolean hasRoomInOutput = ItemHandlerHelper.insertItem(outputSimulator, recipe.getResultItem(world.registryAccess()).copy(), true).isEmpty();
 		if (!hasRoomInOutput)
 		{
 			return false;
@@ -115,7 +115,7 @@ public class ClaimableRecipeWrapper extends RecipeWrapper
 				}
 			}
 			this.recipes.add(recipe);
-			ItemHandlerHelper.insertItem(outputSimulator, recipe.getResultItem(world.registryAccess()), false);
+			ItemHandlerHelper.insertItem(outputSimulator, recipe.getResultItem(world.registryAccess()).copy(), false);
 		}
 		
 		return matched;

@@ -1,3 +1,6 @@
+## 1.20.1-4.0.0.4
+* Fix jumbo furnace creating the wrong number of output items
+
 ## 1.20.1-4.0.0.3
 * Jumbo Furnace now stops furnacing when it runs out of output space
 
