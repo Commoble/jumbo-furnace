@@ -1,3 +1,6 @@
+## 1.20.1-4.0.0.5
+* Fix "unknown recipe category" log warnings for jumbo smelting recipes
+
 ## 1.20.1-4.0.0.4
 * Fix jumbo furnace creating the wrong number of output items
 

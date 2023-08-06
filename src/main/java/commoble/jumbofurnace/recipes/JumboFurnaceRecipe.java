@@ -110,6 +110,12 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 		return this.type;
 	}
 	
+	@Override
+	public boolean isSpecial()
+	{
+		return true;
+	}
+	
 	public int getSpecificity()
 	{
 		int specificity = (int)(this.experience*10);
