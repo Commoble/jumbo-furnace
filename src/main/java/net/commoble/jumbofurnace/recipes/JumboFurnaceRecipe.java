@@ -1,7 +1,9 @@
 package net.commoble.jumbofurnace.recipes;
 
+import java.util.List;
 import java.util.function.Function;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -22,13 +24,18 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.crafting.CraftingHelper;
 import net.neoforged.neoforge.items.IItemHandler;
 
-public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredients, ItemStack result, float experience) implements Recipe<ClaimableRecipeWrapper>
+public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredients, List<ItemStack> results, float experience) implements Recipe<ClaimableRecipeWrapper>
 {
 	public static final Codec<JumboFurnaceRecipe> CODEC = RecordCodecBuilder.create(builder -> builder.group(
 			ExtraCodecs.strictOptionalField(Codec.STRING, "group", "").forGetter(JumboFurnaceRecipe::group),
 			NonNullList.codecOf(Ingredient.CODEC_NONEMPTY)
 				.comapFlatMap(JumboFurnaceRecipe::validateIngredients, Function.identity()).fieldOf("ingredients").forGetter(JumboFurnaceRecipe::ingredients),
-			CraftingHelper.smeltingResultCodec().fieldOf("result").forGetter(JumboFurnaceRecipe::result),
+			// we accept either a "results" results list or a "result" single result
+			Codec.mapEither(
+					CraftingHelper.smeltingResultCodec().listOf().fieldOf("results"),
+					CraftingHelper.smeltingResultCodec().fieldOf("result"))
+				.flatXmap(JumboFurnaceRecipe::readResults, JumboFurnaceRecipe::writeResults)
+				.forGetter(JumboFurnaceRecipe::results),
 			Codec.FLOAT.fieldOf("experience").orElse(0.0F).forGetter(JumboFurnaceRecipe::experience)
 		).apply(builder, JumboFurnaceRecipe::new));
 	
@@ -37,29 +44,36 @@ public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredien
 		int size = ingredients.size();
 		if (size < 1)
 		{
-			return DataResult.error(() -> "No ingredients for jumbo furnace recipe");
+			return DataResult.error(() -> "No ingredients for jumbo smelting recipe");
 		}
 		if (size > JumboFurnaceMenu.INPUT_SLOTS)
 		{
-			return DataResult.error(() -> "Too many ingredients for jumbo furnace recipe! the max is " + (JumboFurnaceMenu.INPUT_SLOTS));
+			return DataResult.error(() -> "Too many ingredients for jumbo smelting recipe! the max is " + (JumboFurnaceMenu.INPUT_SLOTS));
 		}
 		return DataResult.success(ingredients);
+	}
+	
+	public static DataResult<List<ItemStack>> readResults(Either<List<ItemStack>,ItemStack> either)
+	{
+		return either.map(
+			list -> list.isEmpty() ? DataResult.error(() -> "Empty result list for jumbo smelting recipe") : DataResult.success(list),
+			itemStack -> DataResult.success(List.of(itemStack)));
+	}
+	
+	public static DataResult<Either<List<ItemStack>,ItemStack>> writeResults(List<ItemStack> results)
+	{
+		return results.isEmpty() ? DataResult.error(() -> "Empty result list for jumbo smelting recipe")
+			: results.size() == 1 ? DataResult.success(Either.right(results.get(0)))
+			: DataResult.success(Either.left(results));
+			
 	}
 	
 	/** Wrapper around regular furnace recipes to make single-input jumbo furnace recipes **/
 	public JumboFurnaceRecipe(SmeltingRecipe baseRecipe)
 	{
-		this(baseRecipe.getGroup(), baseRecipe.getIngredients(), baseRecipe.result.copy(), baseRecipe.getExperience());
+		this(baseRecipe.getGroup(), baseRecipe.getIngredients(), List.of(baseRecipe.result.copy()), baseRecipe.getExperience());
 	}
 	
-	public JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredients, ItemStack result, float experience)
-	{
-		this.group = group;
-		this.ingredients = ingredients;
-		this.result = result;
-		this.experience = experience;
-	}
-
 	@Override
 	public NonNullList<Ingredient> getIngredients()
 	{
@@ -98,7 +112,7 @@ public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredien
 	@Override
 	public ItemStack assemble(ClaimableRecipeWrapper inv, RegistryAccess registries)
 	{
-		return this.result.copy();
+		return this.results.get(0).copy();
 	}
 
 	@Override
@@ -110,7 +124,7 @@ public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredien
 	@Override
 	public ItemStack getResultItem(RegistryAccess registries)
 	{
-		return this.result;
+		return this.results.get(0);
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package net.commoble.jumbofurnace.client.jei;
 
+import java.util.List;
+
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -27,7 +29,9 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 {
 	public static final RecipeType<JumboFurnaceRecipe> TYPE = RecipeType.create(JumboFurnace.MODID, Names.JUMBO_SMELTING, JumboFurnaceRecipe.class);
 	
-	private final IDrawable background;
+	private final IDrawable backgroundInputs;
+	private final IDrawable staticArrow;
+	private final IDrawable xlBackgroundOutputs;
 	private final IDrawable icon;
 	private final IDrawableAnimated arrow;
 	private final IDrawableStatic staticFlame;
@@ -37,12 +41,20 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	public JumboSmeltingCategory(IGuiHelper helper)
 	{
 		this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
-		this.background = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 0, 60, 116, 54);
+		this.backgroundInputs = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 0, 60, 54, 54);
+		this.xlBackgroundOutputs = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 0, 60, 54, 54);
+		this.staticArrow = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 61, 60, 22, 54);
 		this.arrow = helper.drawableBuilder(JEIProxy.JEI_RECIPE_TEXTURE, 82, 128, 24, 17)
 			.buildAnimated(JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get(), IDrawableAnimated.StartDirection.LEFT, false);
 		this.staticFlame = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 82, 114, 14, 14);
 		this.animatedFlame = helper.createAnimatedDrawable(this.staticFlame, 300, IDrawableAnimated.StartDirection.TOP, true);
 		this.backgroundFlame = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 1, 134, 14, 14);
+	}
+
+	@Override
+	public int getWidth()
+	{
+		return backgroundInputs.getWidth() + 56 + xlBackgroundOutputs.getWidth();
 	}
 
 	@Override
@@ -60,7 +72,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	@Override
 	public IDrawable getBackground()
 	{
-		return this.background;
+		return this.backgroundInputs;
 	}
 
 	@Override
@@ -72,9 +84,11 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	@Override
 	public void draw(JumboFurnaceRecipe recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY)
 	{
-		this.backgroundFlame.draw(graphics, 66, 38);
-		this.animatedFlame.draw(graphics, 66, 38);
-		this.arrow.draw(graphics, 60, 18);
+		this.xlBackgroundOutputs.draw(graphics, 110, 0);
+		this.staticArrow.draw(graphics, 71, 0);
+		this.backgroundFlame.draw(graphics, 75, 38);
+		this.animatedFlame.draw(graphics, 75, 38);
+		this.arrow.draw(graphics, 70, 18);
 
 		float experience = recipe.experience();
 		if (experience > 0)
@@ -83,7 +97,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 			Minecraft minecraft = Minecraft.getInstance();
 			Font fontRenderer = minecraft.font;
 			int stringWidth = fontRenderer.width(experienceString);
-			graphics.drawString(fontRenderer, experienceString, this.background.getWidth() - stringWidth, 0, 0xFF808080, false);
+			graphics.drawString(fontRenderer, experienceString, this.getWidth() - this.xlBackgroundOutputs.getWidth() - stringWidth, 0, 0xFF808080, false);
 		}
 	}
 
@@ -91,10 +105,18 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	public void setRecipe(IRecipeLayoutBuilder recipeLayout, JumboFurnaceRecipe recipe, IFocusGroup focuses)
 	{
 		recipeLayout.setShapeless(60,0);
-		
-		// output slot
-		recipeLayout.addSlot(RecipeIngredientRole.OUTPUT, 95, 19)
-			.addItemStack(recipe.result());
+
+		List<ItemStack> results = recipe.results();
+		int resultCount = results.size();
+		for (int i=0; i<resultCount; i++)
+		{
+			int row = i / 3;
+			int column = i % 3;
+			int x = 111 + (column) * 18;
+			int y = row*18 + 1;
+			recipeLayout.addSlot(RecipeIngredientRole.OUTPUT, x, y)
+				.addItemStack(results.get(i));
+		}
 
 		// input slots
 		NonNullList<Ingredient> ingredients = recipe.getIngredients();
