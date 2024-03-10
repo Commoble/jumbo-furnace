@@ -26,28 +26,25 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.RedstoneTorchBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.network.NetworkHooks;
+import net.neoforged.neoforge.common.Tags;
+import net.neoforged.neoforge.items.IItemHandler;
 
 public class JumboFurnaceBlock extends Block implements EntityBlock
 {
 	public static final IntegerProperty X = IntegerProperty.create("x", 0, 2);
 	public static final IntegerProperty Y = IntegerProperty.create("y", 0, 2);
 	public static final IntegerProperty Z = IntegerProperty.create("z", 0, 2);
-	public static final BooleanProperty LIT = RedstoneTorchBlock.LIT;
+	public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
 	public JumboFurnaceBlock(Properties properties)
 	{
@@ -91,7 +88,7 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 		{
 			if (player instanceof ServerPlayer serverPlayer)
 			{
-				NetworkHooks.openScreen(serverPlayer, JumboFurnaceMenu.getServerMenuProvider(core, pos));
+				serverPlayer.openMenu(JumboFurnaceMenu.getServerMenuProvider(core, pos));
 			}
 			
 			return InteractionResult.SUCCESS;

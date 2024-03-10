@@ -1,46 +1,35 @@
 package commoble.jumbofurnace.advancements;
 
+import java.util.Optional;
+
 import com.google.common.base.Predicates;
-import com.google.gson.JsonObject;
+import com.mojang.serialization.Codec;
 
-import commoble.jumbofurnace.JumboFurnace;
-import commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger.AssembleJumboFurnaceCriterion;
-import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
+import commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger.Criterion;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
-import net.minecraft.advancements.critereon.DeserializationContext;
+import net.minecraft.advancements.critereon.EntityPredicate;
 import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ExtraCodecs;
 
-public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<AssembleJumboFurnaceCriterion>
+public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<Criterion>
 {
-	public static final ResourceLocation ID = new ResourceLocation(JumboFurnace.MODID, "assemble_jumbo_furnace");
-	public static final AssembleJumboFurnaceTrigger INSTANCE = new AssembleJumboFurnaceTrigger();
-	
 	@Override
-	public ResourceLocation getId()
+	public Codec<Criterion> codec()
 	{
-		return ID;
-	}
-
-	@Override
-	protected AssembleJumboFurnaceCriterion createInstance(JsonObject json, ContextAwarePredicate predicate, DeserializationContext conditionsParser)
-	{
-		return new AssembleJumboFurnaceCriterion(predicate);
+		return Criterion.CODEC;
 	}
 	
 	public void trigger(ServerPlayer player)
 	{
 		this.trigger(player, Predicates.alwaysTrue());
 	}
-	
-	public static class AssembleJumboFurnaceCriterion extends AbstractCriterionTriggerInstance
-	{
 
-		public AssembleJumboFurnaceCriterion(ContextAwarePredicate predicate)
-		{
-			super(ID, predicate);
-		}
-		
+	public static record Criterion(Optional<ContextAwarePredicate> player) implements SimpleCriterionTrigger.SimpleInstance
+	{
+		public static final Codec<Criterion> CODEC = ExtraCodecs.strictOptionalField(EntityPredicate.ADVANCEMENT_CODEC, "player")
+			.xmap(Criterion::new, Criterion::player)
+			.codec();
 	}
+
 }

@@ -2,8 +2,8 @@ package commoble.jumbofurnace.jumbo_furnace;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 public class FuelItemHandler extends ItemStackHandler
 {
@@ -18,7 +18,7 @@ public class FuelItemHandler extends ItemStackHandler
 	@Override
 	public boolean isItemValid(int slot, ItemStack stack)
 	{
-		return ForgeHooks.getBurnTime(stack, RecipeType.SMELTING) > 0;
+		return CommonHooks.getBurnTime(stack, RecipeType.SMELTING) > 0;
 	}
 
 	@Override

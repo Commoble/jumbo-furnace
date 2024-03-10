@@ -18,10 +18,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 public class JumboFurnaceCoreBlockEntity extends BlockEntity
 {
@@ -38,10 +37,6 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	public final ItemStackHandler fuel = new FuelItemHandler(this);
 	public final OutputItemHandler output = new OutputItemHandler(this);
 	public final MultiprocessUpgradeHandler multiprocessUpgradeHandler = new MultiprocessUpgradeHandler(this);
-	
-	public final LazyOptional<IItemHandler> inputOptional = LazyOptional.of(() -> this.input);
-	public final LazyOptional<IItemHandler> fuelOptional = LazyOptional.of(() -> this.fuel);
-	public final LazyOptional<IItemHandler> outputOptional = LazyOptional.of(() -> this.output);
 	// multiprocess upgrade slot isn't exposed, no need to cache a lazy wrapper
 	
 	public int burnTimeRemaining = 0;
@@ -62,14 +57,6 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	protected JumboFurnaceCoreBlockEntity(BlockEntityType<? extends JumboFurnaceCoreBlockEntity> type, BlockPos pos, BlockState state)
 	{
 		super(type, pos, state);
-	}
-
-	@Override
-	public void invalidateCaps()
-	{
-		this.inputOptional.invalidate();
-		this.fuelOptional.invalidate();
-		this.outputOptional.invalidate();
 	}
 
 	@Override
@@ -391,7 +378,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				result = this.output.insertCraftResult(slot, result, false);
 				int newCount = result.getCount();
 				int itemsInserted = oldCount - newCount;
-				float experience = ((float)itemsInserted / (float)resultCount) * (recipe instanceof JumboFurnaceRecipe jumboFurnaceRecipe ? jumboFurnaceRecipe.experience : 0F);
+				float experience = ((float)itemsInserted / (float)resultCount) * (recipe instanceof JumboFurnaceRecipe jumboFurnaceRecipe ? jumboFurnaceRecipe.experience() : 0F);
 				this.output.addExperience(slot, experience);
 			}
 			if (!result.isEmpty())
@@ -421,24 +408,18 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		
 		// if we didn't have room for items, just yeet them
 		// check for possible hoppers, etc first though
-		BlockEntity te = this.level.getBlockEntity(this.worldPosition.below(2));
+		IItemHandler belowHandler = this.level.getCapability(Capabilities.ItemHandler.BLOCK, this.worldPosition.below(2), Direction.UP);
 		
 		for (ItemStack stack : extraItems)
 		{
 			ItemStack stackCopy = stack.copy();
-			if (te != null)
+			if (belowHandler != null)
 			{
-				stackCopy = te.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).map(handler ->
+				int slots = belowHandler.getSlots();
+				for (int slot=0; slot<slots; slot++)
 				{
-					ItemStack innerStackCopy = stack.copy();
-					int slots = handler.getSlots();
-					for (int slot=0; slot<slots; slot++)
-					{
-						innerStackCopy = handler.insertItem(slot, innerStackCopy, false);
-					}
-					return innerStackCopy;
-				})
-				.orElse(stackCopy);
+					stackCopy = belowHandler.insertItem(slot, stackCopy, false);
+				}
 			}
 			if (!stackCopy.isEmpty())
 			{

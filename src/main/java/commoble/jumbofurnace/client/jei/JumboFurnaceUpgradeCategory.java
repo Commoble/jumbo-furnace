@@ -79,7 +79,6 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void setRecipe(IRecipeLayoutBuilder builder, JumboFurnaceUpgrade recipe, IFocusGroup focuses)
 	{

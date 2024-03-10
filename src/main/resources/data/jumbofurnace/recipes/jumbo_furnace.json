@@ -3,8 +3,8 @@
 	"ingredients":
 	[
 		{
-			"type": "forge:nbt",
-			"item": "minecraft:furnace",
+			"type": "jumbofurnace:tag_stack",
+			"tag": "forge:furnaces",
 			"count": 27
 		}
 	],

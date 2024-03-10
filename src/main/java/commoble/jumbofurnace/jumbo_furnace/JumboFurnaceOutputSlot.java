@@ -4,9 +4,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.SlotItemHandler;
+import net.neoforged.neoforge.event.EventHooks;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.SlotItemHandler;
 
 public class JumboFurnaceOutputSlot extends SlotItemHandler
 {
@@ -53,7 +53,7 @@ public class JumboFurnaceOutputSlot extends SlotItemHandler
 			spawnExpOrbs(this.player, outputHandler.getAndConsumeExperience(this.getSlotIndex()));
 		}
 		
-		ForgeEventFactory.firePlayerSmeltedEvent(this.player, stack);
+		EventHooks.firePlayerSmeltedEvent(this.player, stack);
 	}
 
 	public static void spawnExpOrbs(Player player, float experience)

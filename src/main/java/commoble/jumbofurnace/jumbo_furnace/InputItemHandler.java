@@ -1,7 +1,7 @@
 package commoble.jumbofurnace.jumbo_furnace;
 
 import commoble.jumbofurnace.recipes.ClaimableRecipeWrapper;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 public class InputItemHandler extends ItemStackHandler
 {

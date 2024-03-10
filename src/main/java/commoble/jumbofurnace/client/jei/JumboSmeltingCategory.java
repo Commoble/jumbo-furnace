@@ -76,7 +76,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 		this.animatedFlame.draw(graphics, 66, 38);
 		this.arrow.draw(graphics, 60, 18);
 
-		float experience = recipe.experience;
+		float experience = recipe.experience();
 		if (experience > 0)
 		{
 			String experienceString = I18n.get("gui.jei.category.smelting.experience", experience);
@@ -94,7 +94,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 		
 		// output slot
 		recipeLayout.addSlot(RecipeIngredientRole.OUTPUT, 95, 19)
-			.addItemStack(recipe.result);
+			.addItemStack(recipe.result());
 
 		// input slots
 		NonNullList<Ingredient> ingredients = recipe.getIngredients();

@@ -2,7 +2,7 @@ package commoble.jumbofurnace;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraftforge.common.ForgeHooks;
+import net.neoforged.neoforge.common.CommonHooks;
 
 public class JumboFurnaceUtils
 {
@@ -13,9 +13,9 @@ public class JumboFurnaceUtils
 	 */
 	public static int getJumboSmeltingBurnTime(ItemStack stack)
 	{
-		int jumboSmeltingBurnTime = ForgeHooks.getBurnTime(stack, JumboFurnace.get().jumboSmeltingRecipeType.get());
+		int jumboSmeltingBurnTime = CommonHooks.getBurnTime(stack, JumboFurnace.get().jumboSmeltingRecipeType.get());
 		return jumboSmeltingBurnTime >= 0
 			? jumboSmeltingBurnTime
-			: ForgeHooks.getBurnTime(stack, RecipeType.SMELTING);
+			: CommonHooks.getBurnTime(stack, RecipeType.SMELTING);
 	}
 }

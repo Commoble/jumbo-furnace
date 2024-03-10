@@ -1,12 +1,12 @@
 package commoble.jumbofurnace.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.common.ForgeConfigSpec.IntValue;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
+import net.neoforged.neoforge.common.ModConfigSpec.IntValue;
 
 public record ServerConfig(IntValue jumboFurnaceCookTime, BooleanValue allowShearing)
 {	
-	public static ServerConfig create(ForgeConfigSpec.Builder builder)
+	public static ServerConfig create(ModConfigSpec.Builder builder)
 	{
 		builder.push("Cooking Settings");
 		IntValue jumboFurnaceCookTime = builder

@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import commoble.jumbofurnace.JumboFurnace;
 import commoble.jumbofurnace.JumboFurnaceUtils;
-import commoble.jumbofurnace.advancements.UpgradeJumboFurnaceTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,9 +17,9 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.SlotItemHandler;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.SlotItemHandler;
 
 public class JumboFurnaceMenu extends AbstractContainerMenu
 {
@@ -163,7 +162,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		if (player instanceof ServerPlayer serverPlayer)
 		{
 			ItemStack finalUpgradeStack = this.getSlot(ORTHOFURNACE_SLOT).getItem();
-			UpgradeJumboFurnaceTrigger.INSTANCE.test(serverPlayer, finalUpgradeStack);
+			JumboFurnace.get().upgradeJumboFurnaceTrigger.get().test(serverPlayer, finalUpgradeStack);
 		}
 		
 		

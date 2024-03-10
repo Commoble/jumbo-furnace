@@ -2,18 +2,14 @@ package commoble.jumbofurnace.recipes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import com.google.common.collect.Streams;
 
 import commoble.jumbofurnace.JumboFurnace;
-import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
-import net.minecraft.world.item.crafting.SmeltingRecipe;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
 
 public class RecipeSorter extends SimplePreparableReloadListener<Void>
 {
@@ -37,16 +33,21 @@ public class RecipeSorter extends SimplePreparableReloadListener<Void>
 	
 	private List<JumboFurnaceRecipe> sortFurnaceRecipes(RecipeManager manager)
 	{
-		Stream<JumboFurnaceRecipe> basicRecipes = manager.byType(RecipeType.SMELTING).values().stream()
-			.filter(recipe -> recipe instanceof SmeltingRecipe && ((SmeltingRecipe)recipe).getCookingTime() <= JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get())
-			.map(recipe -> new JumboFurnaceRecipe((SmeltingRecipe)recipe));
-		Stream<JumboFurnaceRecipe> advancedRecipes = manager.byType(JumboFurnace.get().jumboSmeltingRecipeType.get()).values().stream()
-			.filter(recipe -> recipe instanceof JumboFurnaceRecipe)
-			.map(recipe -> (JumboFurnaceRecipe)recipe);
-		
-		return Streams.concat(basicRecipes, advancedRecipes)
-			.sorted(RecipeSorter::compareRecipes)
-			.collect(Collectors.toList());
+		List<JumboFurnaceRecipe> recipes = new ArrayList<>();
+		for (var holder : manager.getAllRecipesFor(RecipeType.SMELTING))
+		{
+			SmeltingRecipe recipe = holder.value();
+			if (recipe.getCookingTime() <= JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get())
+			{
+				recipes.add(new JumboFurnaceRecipe(recipe));
+			}
+		}
+		for (var holder : manager.getAllRecipesFor(JumboFurnace.get().jumboSmeltingRecipeType.get()))
+		{
+			recipes.add(holder.value());
+		}
+		recipes.sort(RecipeSorter::compareRecipes);
+		return recipes;
 	}
 	
 	/*

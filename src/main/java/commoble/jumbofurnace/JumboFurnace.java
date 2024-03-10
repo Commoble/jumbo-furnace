@@ -22,7 +22,7 @@ import commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
 import commoble.jumbofurnace.recipes.RecipeSorter;
 import commoble.jumbofurnace.recipes.TagStackIngredient;
-import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
@@ -50,31 +50,30 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
-import net.minecraftforge.event.level.BlockEvent.EntityMultiPlaceEvent;
-import net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent;
-import net.minecraftforge.eventbus.api.Event.Result;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.Event.Result;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.Tags;
+import net.neoforged.neoforge.common.crafting.IngredientType;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
+import net.neoforged.neoforge.event.level.BlockEvent.EntityMultiPlaceEvent;
+import net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 @Mod(JumboFurnace.MODID)
 public class JumboFurnace
@@ -87,35 +86,39 @@ public class JumboFurnace
 	public static final TagKey<Item> MULTIPROCESSING_UPGRADE_TAG = TagKey.create(Registries.ITEM, new ResourceLocation(MODID, "multiprocessing_upgrade"));
 	
 	public final ServerConfig serverConfig;
-	public final RegistryObject<JumboFurnaceBlock> jumboFurnaceBlock;
-	public final RegistryObject<JumboFurnaceItem> jumboFurnaceItem;
-	public final RegistryObject<Item> jumboFurnaceJeiDummy;
-	public final RegistryObject<BlockEntityType<JumboFurnaceCoreBlockEntity>> jumboFurnaceCoreBlockEntityType;
-	public final RegistryObject<BlockEntityType<JumboFurnaceExteriorBlockEntity>> jumboFurnaceExteriorBlockEntityType;
-	public final RegistryObject<MenuType<JumboFurnaceMenu>> jumboFurnaceMenuType;
-	public final RegistryObject<RecipeType<JumboFurnaceRecipe>> jumboSmeltingRecipeType;
-	public final RegistryObject<RecipeSerializer<JumboFurnaceRecipe>> jumboSmeltingRecipeSerializer;
+	public final DeferredHolder<Block, JumboFurnaceBlock> jumboFurnaceBlock;
+	public final DeferredHolder<Item, JumboFurnaceItem> jumboFurnaceItem;
+	public final DeferredHolder<Item, Item> jumboFurnaceJeiDummy;
+	public final DeferredHolder<BlockEntityType<?>, BlockEntityType<JumboFurnaceCoreBlockEntity>> jumboFurnaceCoreBlockEntityType;
+	public final DeferredHolder<BlockEntityType<?>, BlockEntityType<JumboFurnaceExteriorBlockEntity>> jumboFurnaceExteriorBlockEntityType;
+	public final DeferredHolder<MenuType<?>, MenuType<JumboFurnaceMenu>> jumboFurnaceMenuType;
+	public final DeferredHolder<RecipeType<?>, RecipeType<JumboFurnaceRecipe>> jumboSmeltingRecipeType;
+	public final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<JumboFurnaceRecipe>> jumboSmeltingRecipeSerializer;
+	public final DeferredHolder<IngredientType<?>, IngredientType<TagStackIngredient>> tagStackIngredient;
+	public final DeferredHolder<CriterionTrigger<?>, AssembleJumboFurnaceTrigger> assembleJumboFurnaceTrigger;
+	public final DeferredHolder<CriterionTrigger<?>, UpgradeJumboFurnaceTrigger> upgradeJumboFurnaceTrigger;
 	
-	public JumboFurnace()
+	public JumboFurnace(IEventBus modBus)
 	{
 		if (instance != null)
 			throw new IllegalStateException("Jumbo Furnace initialized twice!");
 		instance = this;
 		
-		IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-		IEventBus forgeBus = MinecraftForge.EVENT_BUS;
+		IEventBus forgeBus = NeoForge.EVENT_BUS;
 		
 		this.serverConfig = ConfigHelper.register(ModConfig.Type.SERVER, ServerConfig::create);
 		
 		// register forge objects
-		DeferredRegister<Block> blocks = this.makeDeferredRegister(modBus, Registries.BLOCK);
-		DeferredRegister<Item> items = this.makeDeferredRegister(modBus, Registries.ITEM);
-		DeferredRegister<BlockEntityType<?>> blockEntities = this.makeDeferredRegister(modBus, Registries.BLOCK_ENTITY_TYPE);
-		DeferredRegister<MenuType<?>> menus = this.makeDeferredRegister(modBus, Registries.MENU);
-		DeferredRegister<RecipeType<?>> recipeTypes = this.makeDeferredRegister(modBus, Registries.RECIPE_TYPE);
-		DeferredRegister<RecipeSerializer<?>> recipeSerializers = this.makeDeferredRegister(modBus, Registries.RECIPE_SERIALIZER);
+		DeferredRegister<Block> blocks = makeDeferredRegister(modBus, Registries.BLOCK);
+		DeferredRegister<Item> items = makeDeferredRegister(modBus, Registries.ITEM);
+		DeferredRegister<BlockEntityType<?>> blockEntities = makeDeferredRegister(modBus, Registries.BLOCK_ENTITY_TYPE);
+		DeferredRegister<MenuType<?>> menus = makeDeferredRegister(modBus, Registries.MENU);
+		DeferredRegister<RecipeType<?>> recipeTypes = makeDeferredRegister(modBus, Registries.RECIPE_TYPE);
+		DeferredRegister<RecipeSerializer<?>> recipeSerializers = makeDeferredRegister(modBus, Registries.RECIPE_SERIALIZER);
+		DeferredRegister<IngredientType<?>> ingredientTypes = makeDeferredRegister(modBus, NeoForgeRegistries.Keys.INGREDIENT_TYPES);
+		DeferredRegister<CriterionTrigger<?>> triggerTypes = makeDeferredRegister(modBus, Registries.TRIGGER_TYPE);
 		
-		this.jumboFurnaceBlock = blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.copy(Blocks.FURNACE)));
+		this.jumboFurnaceBlock = blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.ofFullCopy(Blocks.FURNACE)));
 		
 		this.jumboFurnaceItem = items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties()));
 		
@@ -143,8 +146,13 @@ public class JumboFurnace
 		
 		this.jumboSmeltingRecipeSerializer = recipeSerializers.register(Names.JUMBO_SMELTING, () -> new JumboFurnaceRecipeSerializer(this.jumboSmeltingRecipeType.get()));
 		
+		this.tagStackIngredient = ingredientTypes.register(Names.TAG_STACK, () -> new IngredientType<>(TagStackIngredient.CODEC));
+		
+		this.assembleJumboFurnaceTrigger = triggerTypes.register(Names.ASSEMBLE_JUMBO_FURNACE, AssembleJumboFurnaceTrigger::new);
+		this.upgradeJumboFurnaceTrigger = triggerTypes.register(Names.UPGRADE_JUMBO_FURNACE, UpgradeJumboFurnaceTrigger::new);
+		
 		modBus.addListener(this::onBuildCreativeTabs);
-		modBus.addListener(this::onCommonSetup);
+		modBus.addListener(this::onRegisterCapabilities);
 
 		forgeBus.addListener(this::onAddServerReloadListeners);
 		forgeBus.addListener(this::onEntityPlaceBlock);
@@ -156,11 +164,16 @@ public class JumboFurnace
 		}
 	}
 	
-	private <T> DeferredRegister<T> makeDeferredRegister(IEventBus modBus, ResourceKey<Registry<T>> registryKey)
+	private static <T> DeferredRegister<T> makeDeferredRegister(IEventBus modBus, ResourceKey<Registry<T>> registryKey)
 	{
 		DeferredRegister<T> register = DeferredRegister.create(registryKey, MODID);
 		register.register(modBus);
 		return register;
+	}
+	
+	private void onRegisterCapabilities(RegisterCapabilitiesEvent event)
+	{
+		event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, this.jumboFurnaceExteriorBlockEntityType.get(), (be, side) -> be.getItemHandler(side));
 	}
 	
 	private void onAddServerReloadListeners(AddReloadListenerEvent event)
@@ -172,7 +185,7 @@ public class JumboFurnace
 	{
 		BlockState state = event.getPlacedBlock();
 		LevelAccessor levelAccess = event.getLevel();
-		if (!(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof Level)
+		if (!(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof Level level)
 		{
 			BlockPos pos = event.getPos();
 			BlockState againstState = event.getPlacedAgainst();
@@ -187,21 +200,26 @@ public class JumboFurnace
 				{
 					BlockPos newPos = pair.getFirst();
 					BlockState newState = pair.getSecond();
-					BlockEntity te = levelAccess.getBlockEntity(newPos);
 					// attempt to remove items from existing itemhandlers if possible
-					if (te != null)
+
+					for (Direction dir : Direction.values())
 					{
-						for (Direction dir : Direction.values())
+						IItemHandler sideHandler = level.getCapability(Capabilities.ItemHandler.BLOCK, newPos, dir);
+						if (sideHandler != null)
 						{
-							te.getCapability(ForgeCapabilities.ITEM_HANDLER, dir).ifPresent(handler -> addItemsToList(stacks, handler));
+							addItemsToList(stacks, sideHandler);
 						}
-						te.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(handler -> addItemsToList(stacks, handler));
+					}
+					IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, newPos, null);
+					if (handler != null)
+					{
+						addItemsToList(stacks, handler);
 					}
 					levelAccess.setBlock(newPos, newState, 3);
 				}
 				if (entity instanceof ServerPlayer)
 				{
-					AssembleJumboFurnaceTrigger.INSTANCE.trigger((ServerPlayer)entity);
+					this.assembleJumboFurnaceTrigger.get().trigger((ServerPlayer)entity);
 				}
 			}
 			if (!stacks.isEmpty())
@@ -274,24 +292,10 @@ public class JumboFurnace
 	
 	private void onBuildCreativeTabs(BuildCreativeModeTabContentsEvent event)
 	{
-		if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS)
+		if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS)
 		{
-			event.accept(this.jumboFurnaceItem);
+			event.accept(this.jumboFurnaceItem.get());
 		}
-	}
-	
-	private void onCommonSetup(FMLCommonSetupEvent event)
-	{
-		event.enqueueWork(() -> this.afterCommonSetup());
-	}
-	
-	// runs on main thread after common setup event
-	// adding things to unsynchronized registries (i.e. most vanilla registries) can be done here
-	private void afterCommonSetup()
-	{
-		CriteriaTriggers.register(AssembleJumboFurnaceTrigger.INSTANCE);
-		CriteriaTriggers.register(UpgradeJumboFurnaceTrigger.INSTANCE);
-		CraftingHelper.register(new ResourceLocation("jumbofurnace:tag_stack"), TagStackIngredient.SERIALIZER);
 	}
 	
 	private static void addItemsToList(List<ItemStack> stacks, IItemHandler handler)

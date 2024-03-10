@@ -1,3 +1,8 @@
+## 1.20.4-5.0.0.0
+* Updated to MC 1.20.4 / Neoforge
+* Jumbo Furnace is now in the Functional Blocks creative tab (instead of Building Blocks)
+* The 27 furnace -> jumbo furnace jumbo smelting recipe now uses the forge:furnaces tag for the inputs
+
 ## 1.20.1-4.0.0.5
 * Fix "unknown recipe category" log warnings for jumbo smelting recipes
 

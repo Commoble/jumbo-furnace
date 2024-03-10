@@ -1,79 +1,54 @@
 package commoble.jumbofurnace.recipes;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-import com.google.gson.JsonObject;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import commoble.jumbofurnace.JumboFurnace;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Ingredient.TagValue;
-import net.minecraftforge.common.crafting.IIngredientSerializer;
+import net.minecraft.world.level.block.Blocks;
 
-public class TagStackIngredient
+public class TagStackIngredient extends Ingredient
 {
-	public static final IIngredientSerializer<Ingredient> SERIALIZER = new IIngredientSerializer<Ingredient>()
-	{
-
-		@Override
-		public void write(FriendlyByteBuf buffer, Ingredient ingredient)
-		{
-			ItemStack[] items = ingredient.getItems();
-			buffer.writeVarInt(items.length);	// tell the packet how long the array is
-			for (ItemStack stack : items)
-			{
-				buffer.writeItem(stack);
-			}
-		}
-
-		@Override
-		public Ingredient parse(FriendlyByteBuf buffer)
-		{
-			return Ingredient.fromValues(Stream.generate(() -> new Ingredient.ItemValue(buffer.readItem())).limit(buffer.readVarInt()));
-		}
-
-		@Override
-		public Ingredient parse(JsonObject json)
-		{
-			ResourceLocation tagID = new ResourceLocation(GsonHelper.getAsString(json, "tag")); // throws JsonSyntaxException if no tag field
-			int count = GsonHelper.getAsInt(json, "count", 1);
-			TagCountValue value = new TagCountValue(TagKey.create(Registries.ITEM, tagID), count);
-			return Ingredient.fromValues(Stream.of(value));
-		}
-
-	};
+	public static final Codec<TagStackIngredient> CODEC = RecordCodecBuilder.create(builder -> builder.group(
+		TagKey.codec(Registries.ITEM).fieldOf("tag").forGetter(TagStackIngredient::tag),
+		Codec.INT.optionalFieldOf("count", 1).forGetter(TagStackIngredient::count)
+	).apply(builder, TagStackIngredient::new));
 	
-	public static class TagCountValue extends TagValue
+	private final TagKey<Item> tag;	public TagKey<Item> tag() { return this.tag; }
+	private final int count;	public int count() { return this.count; }
+	
+	public TagStackIngredient(TagKey<Item> tag, int count)
 	{
-		private final int count;
-		public int count() { return this.count; }
-
-		public TagCountValue(TagKey<Item> tag, int count)
-		{
-			super(tag);
-			this.count = count;
-		}
-
+		super(Stream.of(new TagCountValue(tag, count)), JumboFurnace.get().tagStackIngredient);
+		this.tag = tag;
+		this.count = count;
+	}
+	
+	public static record TagCountValue(TagKey<Item> tag, int count) implements Ingredient.Value
+	{		
 		@Override
 		public Collection<ItemStack> getItems()
 		{
-			var items = super.getItems();
-			items.forEach(stack -> stack.setCount(this.count));
-			return items;
-		}
+			var list = new ArrayList<ItemStack>();
+			for (var holder : BuiltInRegistries.ITEM.getTagOrEmpty(this.tag))
+			{
+				list.add(new ItemStack(holder.value(), this.count));
+			}
 
-		@Override
-		public JsonObject serialize()
-		{
-			JsonObject obj = super.serialize();
-			obj.addProperty("count", this.count());
-			return obj;
+            if (list.size() == 0) {
+                list.add(new ItemStack(Blocks.BARRIER).setHoverName(Component.literal("Empty Tag: " + this.tag.location())));
+            }
+            return list;
 		}
 	}
 

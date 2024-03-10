@@ -9,9 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
+import net.neoforged.neoforge.items.IItemHandler;
 
 public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 {
@@ -26,31 +24,26 @@ public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 	}
 
 	// exterior blocks grant interfacing access to the internal block's itemhandlers
-	@Override
-	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side)
+	@Nullable
+	public IItemHandler getItemHandler(Direction side)
 	{
-		if (cap == ForgeCapabilities.ITEM_HANDLER)
+		JumboFurnaceCoreBlockEntity core = this.getCoreTile();
+		if (core != null)
 		{
-			JumboFurnaceCoreBlockEntity core = this.getCoreTile();
-			if (core != null)
+			if (side == Direction.UP)
 			{
-				if (side == Direction.UP)
-				{
-					return core.inputOptional.cast();
-				}
-				else if (side == Direction.DOWN)
-				{
-					return core.outputOptional.cast();
-				}
-				else
-				{
-					return core.fuelOptional.cast();
-				}
+				return core.input;
+			}
+			else if (side == Direction.DOWN)
+			{
+				return core.output;
+			}
+			else
+			{
+				return core.fuel;
 			}
 		}
-
-
-		return super.getCapability(cap, side);
+		return null;
 	}
 	
 	@Nullable

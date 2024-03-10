@@ -17,9 +17,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.event.level.BlockEvent.EntityMultiPlaceEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.BlockSnapshot;
+import net.neoforged.neoforge.event.level.BlockEvent.EntityMultiPlaceEvent;
 
 public class MultiBlockHelper
 {
@@ -66,7 +66,7 @@ public class MultiBlockHelper
 	{
 		// the two-blockpos constructor for AABB is [inclusive, exclusive)
 		// so we have to add 2 to the second arg
-		boolean noEntitiesInArea = world.getEntitiesOfClass(LivingEntity.class, new AABB(corePos.offset(-1,-1,-1), corePos.offset(2,2,2))).isEmpty();
+		boolean noEntitiesInArea = world.getEntitiesOfClass(LivingEntity.class, AABB.encapsulatingFullBlocks(corePos.offset(-1,-1,-1), corePos.offset(2,2,2))).isEmpty();
 		return noEntitiesInArea && get3x3CubeAround(corePos)
 			.allMatch(pos ->
 				world.getBlockState(pos)
@@ -92,7 +92,7 @@ public class MultiBlockHelper
 			.map(pair -> BlockSnapshot.create(key, world, pair.getFirst()))
 			.collect(Collectors.toList());
 		EntityMultiPlaceEvent event = new EntityMultiPlaceEvent(snapshots, placedAgainst, entity);
-		MinecraftForge.EVENT_BUS.post(event);
+		NeoForge.EVENT_BUS.post(event);
 		return !event.isCanceled();
 	}
 }

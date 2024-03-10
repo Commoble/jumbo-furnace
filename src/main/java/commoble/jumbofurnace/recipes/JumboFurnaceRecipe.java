@@ -1,38 +1,59 @@
 package commoble.jumbofurnace.recipes;
 
+import java.util.function.Function;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import commoble.jumbofurnace.JumboFurnace;
+import commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.common.crafting.CraftingHelper;
+import net.neoforged.neoforge.items.IItemHandler;
 
-public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
+public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredients, ItemStack result, float experience) implements Recipe<ClaimableRecipeWrapper>
 {
-	public final RecipeType<?> type;
-	public final ResourceLocation id;
-	public final String group;
-	public final NonNullList<Ingredient> ingredients;
-	public final ItemStack result;
-	public final float experience;
+	public static final Codec<JumboFurnaceRecipe> CODEC = RecordCodecBuilder.create(builder -> builder.group(
+			ExtraCodecs.strictOptionalField(Codec.STRING, "group", "").forGetter(JumboFurnaceRecipe::group),
+			NonNullList.codecOf(Ingredient.CODEC_NONEMPTY)
+				.comapFlatMap(JumboFurnaceRecipe::validateIngredients, Function.identity()).fieldOf("ingredients").forGetter(JumboFurnaceRecipe::ingredients),
+			CraftingHelper.smeltingResultCodec().fieldOf("result").forGetter(JumboFurnaceRecipe::result),
+			Codec.FLOAT.fieldOf("experience").orElse(0.0F).forGetter(JumboFurnaceRecipe::experience)
+		).apply(builder, JumboFurnaceRecipe::new));
+	
+	public static DataResult<NonNullList<Ingredient>> validateIngredients(NonNullList<Ingredient> ingredients)
+	{
+		int size = ingredients.size();
+		if (size < 1)
+		{
+			return DataResult.error(() -> "No ingredients for jumbo furnace recipe");
+		}
+		if (size > JumboFurnaceMenu.INPUT_SLOTS)
+		{
+			return DataResult.error(() -> "Too many ingredients for jumbo furnace recipe! the max is " + (JumboFurnaceMenu.INPUT_SLOTS));
+		}
+		return DataResult.success(ingredients);
+	}
 	
 	/** Wrapper around regular furnace recipes to make single-input jumbo furnace recipes **/
 	public JumboFurnaceRecipe(SmeltingRecipe baseRecipe)
 	{
-		this(JumboFurnace.get().jumboSmeltingRecipeType.get(), baseRecipe.getId(), baseRecipe.getGroup(), baseRecipe.getIngredients(), baseRecipe.result.copy(), baseRecipe.getExperience());
+		this(baseRecipe.getGroup(), baseRecipe.getIngredients(), baseRecipe.result.copy(), baseRecipe.getExperience());
 	}
 	
-	public JumboFurnaceRecipe(RecipeType<?> type, ResourceLocation id, String group, NonNullList<Ingredient> ingredients, ItemStack result, float experience)
+	public JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredients, ItemStack result, float experience)
 	{
-		this.type = type;
-		this.id = id;
 		this.group = group;
 		this.ingredients = ingredients;
 		this.result = result;
@@ -93,12 +114,6 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 	}
 
 	@Override
-	public ResourceLocation getId()
-	{
-		return this.id;
-	}
-
-	@Override
 	public RecipeSerializer<?> getSerializer()
 	{
 		return JumboFurnace.get().jumboSmeltingRecipeSerializer.get();
@@ -107,7 +122,7 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 	@Override
 	public RecipeType<?> getType()
 	{
-		return this.type;
+		return JumboFurnace.get().jumboSmeltingRecipeType.get();
 	}
 	
 	@Override
@@ -119,7 +134,7 @@ public class JumboFurnaceRecipe implements Recipe<ClaimableRecipeWrapper>
 	public int getSpecificity()
 	{
 		int specificity = (int)(this.experience*10);
-		int totalItems = ForgeRegistries.ITEMS.getKeys().size();
+		int totalItems = BuiltInRegistries.ITEM.size();
 		for (Ingredient ingredient : this.ingredients)
 		{
 			ItemStack[] matchingStacks = ingredient.getItems();

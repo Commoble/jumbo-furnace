@@ -7,15 +7,15 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 
 /**
  * Helper for creating configs and defining complex objects in configs 
  */
-public record ConfigHelper(ForgeConfigSpec.Builder builder)
+public record ConfigHelper(ModConfigSpec.Builder builder)
 {
 	static final Logger LOGGER = LogManager.getLogger();
 	
@@ -33,7 +33,7 @@ public record ConfigHelper(ForgeConfigSpec.Builder builder)
 	 */
 	public static <T> T register(
 		final ModConfig.Type configType,
-		final Function<ForgeConfigSpec.Builder, T> configFactory)
+		final Function<ModConfigSpec.Builder, T> configFactory)
 	{
 		return register(configType, configFactory, null);
 	}
@@ -53,14 +53,14 @@ public record ConfigHelper(ForgeConfigSpec.Builder builder)
 	 */
 	public static <T> T register(
 		final ModConfig.Type configType,
-		final Function<ForgeConfigSpec.Builder, T> configFactory,
+		final Function<ModConfigSpec.Builder, T> configFactory,
 		final @Nullable String configName)
 	{
 		final ModLoadingContext modContext = ModLoadingContext.get();
-		final org.apache.commons.lang3.tuple.Pair<T, ForgeConfigSpec> entry = new ForgeConfigSpec.Builder()
+		final org.apache.commons.lang3.tuple.Pair<T, ModConfigSpec> entry = new ModConfigSpec.Builder()
 			.configure(configFactory);
 		final T config = entry.getLeft();
-		final ForgeConfigSpec spec = entry.getRight();
+		final ModConfigSpec spec = entry.getRight();
 		if (configName == null)
 		{
 			modContext.registerConfig(configType,spec);
