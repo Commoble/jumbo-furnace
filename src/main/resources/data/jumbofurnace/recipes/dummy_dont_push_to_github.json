@@ -1,0 +1,17 @@
+{
+	"type": "jumbofurnace:jumbo_smelting",
+	"ingredients":
+	[
+		{
+			"item": "jumbofurnace:jumbo_furnace"
+		}
+	],
+	"results": [
+		{"item": "gold_ingot"},
+		{"item": "iron_ingot"},
+		{"item": "copper_ingot"},
+		{"item": "diamond"}
+	],
+	"cookingtime": 200,
+	"experience": 0.1
+}

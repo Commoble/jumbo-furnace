@@ -2,18 +2,19 @@ package net.commoble.jumbofurnace.recipes;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-import com.mojang.datafixers.util.Either;
+import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.commoble.jumbofurnace.JumboFurnace;
 import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
+import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.util.ExtraCodecs;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
@@ -21,25 +22,28 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.crafting.CraftingHelper;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
-public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredients, List<ItemStack> results, float experience) implements Recipe<ClaimableRecipeWrapper>
+public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients, List<ItemStack> results, float experience, int cookingTime, Supplier<Integer> specificity) implements Recipe<Container>
 {
 	public static final Codec<JumboFurnaceRecipe> CODEC = RecordCodecBuilder.create(builder -> builder.group(
-			ExtraCodecs.strictOptionalField(Codec.STRING, "group", "").forGetter(JumboFurnaceRecipe::group),
-			NonNullList.codecOf(Ingredient.CODEC_NONEMPTY)
-				.comapFlatMap(JumboFurnaceRecipe::validateIngredients, Function.identity()).fieldOf("ingredients").forGetter(JumboFurnaceRecipe::ingredients),
-			// we accept either a "results" results list or a "result" single result
-			Codec.mapEither(
-					CraftingHelper.smeltingResultCodec().listOf().fieldOf("results"),
-					CraftingHelper.smeltingResultCodec().fieldOf("result"))
+			Codec.STRING.optionalFieldOf( "group", "").forGetter(JumboFurnaceRecipe::group),
+			SizedIngredient.FLAT_CODEC.listOf()
+				.comapFlatMap(JumboFurnaceRecipe::validateIngredients, Function.identity())
+				.fieldOf("ingredients").forGetter(JumboFurnaceRecipe::ingredients),
+			ItemStack.CODEC.listOf().fieldOf("results")
 				.flatXmap(JumboFurnaceRecipe::readResults, JumboFurnaceRecipe::writeResults)
 				.forGetter(JumboFurnaceRecipe::results),
-			Codec.FLOAT.fieldOf("experience").orElse(0.0F).forGetter(JumboFurnaceRecipe::experience)
+			Codec.FLOAT.fieldOf("experience").orElse(0.0F).forGetter(JumboFurnaceRecipe::experience),
+			Codec.INT.optionalFieldOf("cookingtime", 200).forGetter(JumboFurnaceRecipe::cookingTime)
 		).apply(builder, JumboFurnaceRecipe::new));
 	
-	public static DataResult<NonNullList<Ingredient>> validateIngredients(NonNullList<Ingredient> ingredients)
+	public JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients, List<ItemStack> results, float experience, int cookingTime)
+	{
+		this(group, ingredients, results, experience, cookingTime, Suppliers.memoize(() -> getSpecificity(ingredients, experience)));
+	}
+	
+	public static DataResult<List<SizedIngredient>> validateIngredients(List<SizedIngredient> ingredients)
 	{
 		int size = ingredients.size();
 		if (size < 1)
@@ -53,47 +57,45 @@ public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredien
 		return DataResult.success(ingredients);
 	}
 	
-	public static DataResult<List<ItemStack>> readResults(Either<List<ItemStack>,ItemStack> either)
+	public static DataResult<List<ItemStack>> readResults(List<ItemStack> list)
 	{
-		return either.map(
-			list -> list.isEmpty() ? DataResult.error(() -> "Empty result list for jumbo smelting recipe") : DataResult.success(list),
-			itemStack -> DataResult.success(List.of(itemStack)));
+		return list.isEmpty()
+			? DataResult.error(() -> "Empty result list for jumbo smelting recipe")
+			: DataResult.success(list);
 	}
 	
-	public static DataResult<Either<List<ItemStack>,ItemStack>> writeResults(List<ItemStack> results)
+	public static DataResult<List<ItemStack>> writeResults(List<ItemStack> results)
 	{
 		return results.isEmpty() ? DataResult.error(() -> "Empty result list for jumbo smelting recipe")
-			: results.size() == 1 ? DataResult.success(Either.right(results.get(0)))
-			: DataResult.success(Either.left(results));
+			: DataResult.success(results);
 			
 	}
 	
 	/** Wrapper around regular furnace recipes to make single-input jumbo furnace recipes **/
 	public JumboFurnaceRecipe(SmeltingRecipe baseRecipe)
 	{
-		this(baseRecipe.getGroup(), baseRecipe.getIngredients(), List.of(baseRecipe.result.copy()), baseRecipe.getExperience());
+		this(baseRecipe.getGroup(), NonNullList.copyOf(baseRecipe.getIngredients().stream().map(ing -> new SizedIngredient(ing, 1)).toList()), List.of(baseRecipe.result.copy()), baseRecipe.getExperience(), baseRecipe.getCookingTime());
 	}
 	
 	@Override
 	public NonNullList<Ingredient> getIngredients()
 	{
-		return this.ingredients;
+		return NonNullList.copyOf(this.ingredients().stream().map(SizedIngredient::ingredient).toList());
 	}
 
 	@Override
-	public boolean matches(ClaimableRecipeWrapper inv, Level worldIn)
+	public boolean matches(Container inv, Level worldIn)
 	{
-		IItemHandler unusedInputs = inv.getUnusedInputs();
 		for (Ingredient ingredient : this.getIngredients())
 		{
 			int amountOfIngredient = ingredient.getItems()[0].getCount();
-			int slots = unusedInputs.getSlots();
+			int slots = inv.getContainerSize();
 			for (int slot=0; slot < slots && amountOfIngredient > 0; slot++)
 			{
-				ItemStack stackInSlot = unusedInputs.getStackInSlot(slot);
+				ItemStack stackInSlot = inv.getItem(slot);
 				if (ingredient.test(stackInSlot) && stackInSlot.getCount() >= amountOfIngredient)
 				{
-					ItemStack usedStack = unusedInputs.extractItem(slot, amountOfIngredient, false);
+					ItemStack usedStack = inv.removeItem(slot, amountOfIngredient);
 					amountOfIngredient -= usedStack.getCount();
 				}
 			}
@@ -110,21 +112,21 @@ public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredien
 	}
 
 	@Override
-	public ItemStack assemble(ClaimableRecipeWrapper inv, RegistryAccess registries)
-	{
-		return this.results.get(0).copy();
-	}
-
-	@Override
 	public boolean canCraftInDimensions(int width, int height)
 	{
 		return true;
 	}
 
 	@Override
-	public ItemStack getResultItem(RegistryAccess registries)
+	public ItemStack assemble(Container p_44001_, Provider p_336092_)
 	{
-		return this.results.get(0);
+		return this.results.get(0).copy();
+	}
+
+	@Override
+	public ItemStack getResultItem(Provider p_336125_)
+	{
+		return this.results.get(0).copy();
 	}
 
 	@Override
@@ -145,11 +147,11 @@ public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredien
 		return true;
 	}
 	
-	public int getSpecificity()
+	public static int getSpecificity(List<SizedIngredient> ingredients, float experience)
 	{
-		int specificity = (int)(this.experience*10);
+		int specificity = (int)(experience*10);
 		int totalItems = BuiltInRegistries.ITEM.size();
-		for (Ingredient ingredient : this.ingredients)
+		for (SizedIngredient ingredient : ingredients)
 		{
 			ItemStack[] matchingStacks = ingredient.getItems();
 			if(matchingStacks.length < 1)
@@ -169,21 +171,10 @@ public record JumboFurnaceRecipe(String group, NonNullList<Ingredient> ingredien
 	}
 
 	@Override
-	public NonNullList<ItemStack> getRemainingItems(ClaimableRecipeWrapper inv)
+	public NonNullList<ItemStack> getRemainingItems(Container inv)
 	{
-		IItemHandler items = inv.getItemsBeingSmelted();
-		int slots = items.getSlots();
-		NonNullList<ItemStack> containerItems = NonNullList.withSize(items.getSlots(), ItemStack.EMPTY);
-		for (int slot=0; slot<slots; slot++)
-		{
-			ItemStack stackInSlot = items.getStackInSlot(slot);
-			if (stackInSlot.hasCraftingRemainingItem())
-			{
-				containerItems.set(slot, stackInSlot.getCraftingRemainingItem());
-			}
-		}
-		
-		return containerItems;
+		// nope, we use a different system for remainder items
+		return NonNullList.create();
 	}
 
 }

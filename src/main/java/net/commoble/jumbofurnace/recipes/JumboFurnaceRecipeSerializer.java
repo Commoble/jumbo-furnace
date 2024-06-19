@@ -41,6 +41,7 @@ public class JumboFurnaceRecipeSerializer implements RecipeSerializer<JumboFurna
 		}
 
         float experience = buffer.readFloat();
+        float cookingTime = buffer.readInt();
 		return new JumboFurnaceRecipe( groupName, ingredients, results, experience);
 	}
 
@@ -62,6 +63,7 @@ public class JumboFurnaceRecipeSerializer implements RecipeSerializer<JumboFurna
         }
 
         buffer.writeFloat(recipe.experience());
+        buffer.writeInt(recipe.cookingTime());
 	}
 
 	@Override

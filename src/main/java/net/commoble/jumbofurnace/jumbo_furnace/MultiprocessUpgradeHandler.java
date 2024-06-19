@@ -26,7 +26,7 @@ public class MultiprocessUpgradeHandler extends ItemStackHandler
 	protected void onContentsChanged(int slot)
 	{
 		super.onContentsChanged(slot);
-		this.te.onInputInventoryChanged();
+		this.te.markInputInventoryChanged();
 		this.te.setChanged();
 	}
 	

@@ -1,9 +1,7 @@
 package net.commoble.jumbofurnace.jumbo_furnace;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.FloatTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -13,18 +11,17 @@ public class OutputItemHandler extends ItemStackHandler
 	
 	public final JumboFurnaceCoreBlockEntity te;
 	public boolean forcingInserts = false;
-	public final float[] storedExperience;
+	public float storedExperience = 0F;
 	
 	public OutputItemHandler(JumboFurnaceCoreBlockEntity te)
 	{
 		super(JumboFurnaceMenu.INPUT_SLOTS);
 		this.te = te;
-		this.storedExperience = new float[9];
 	}
 	
-	public void addExperience(int slot, float experience)
+	public void addExperience(float experience)
 	{
-		this.storedExperience[slot] += experience;
+		this.storedExperience += experience;
 	}
 
 	@Override
@@ -46,41 +43,29 @@ public class OutputItemHandler extends ItemStackHandler
 	{
 		super.onContentsChanged(slot);
 		this.te.setChanged();
-		this.te.onOutputInventoryChanged();
+		this.te.markOutputInventoryChanged();
 	}
 	
-	public float getAndConsumeExperience(int index)
+	public float getAndConsumeExperience()
 	{
-		float amount = this.storedExperience[index];
-		this.storedExperience[index] = 0;
+		float amount = this.storedExperience;
+		this.storedExperience = 0;
 		return amount;
 	}
 
 	@Override
-	public CompoundTag serializeNBT()
+	public CompoundTag serializeNBT(HolderLookup.Provider registries)
 	{
-		CompoundTag result = super.serializeNBT();
-		ListTag list = new ListTag();
-		for (float experience : this.storedExperience)
-		{
-			list.add(FloatTag.valueOf(experience));
-		}
-		result.put(EXPERIENCE, list);
+		CompoundTag result = super.serializeNBT(registries);
+		result.putFloat(EXPERIENCE, this.storedExperience);
 		return result;
 	}
 
 	@Override
-	public void deserializeNBT(CompoundTag nbt)
+	public void deserializeNBT(HolderLookup.Provider registries, CompoundTag nbt)
 	{
-		super.deserializeNBT(nbt);
-		ListTag list = nbt.getList(EXPERIENCE, Tag.TAG_FLOAT);
-		int listSize = list.size();
-		int slotCount = this.storedExperience.length;
-		int slotsToRead = Math.min(listSize, slotCount);
-		for (int i=0; i<slotsToRead; i++)
-		{
-			this.storedExperience[i] = list.getFloat(i);
-		}
+		super.deserializeNBT(registries, nbt);
+		this.storedExperience = nbt.getFloat(EXPERIENCE);
 	}
 	
 }

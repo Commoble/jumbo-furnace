@@ -3,14 +3,14 @@ plugins {
 	id 'eclipse'
 	id 'idea'
 	id 'maven-publish'
-	id 'net.neoforged.gradle.userdev' version "7.0.+"
+	id 'net.neoforged.gradle.userdev' version "7.0.142"
 }
 
 group = "net.commoble.${modid}"
 base { archivesName="${modid}-${mc_version}" }
 version = "${mod_version}"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 // include resources generated from datagen in main
 sourceSets.main.resources { srcDir 'src/generated/resources' }
@@ -39,10 +39,10 @@ repositories {
 
 dependencies {
 	implementation "net.neoforged:neoforge:${neo_version}"
-	compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-	compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
+	//compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
+	//compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
 	// at runtime, use the full JEI jar for NeoForge
-	runtimeOnly "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+	//runtimeOnly "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
 
 }
 
@@ -91,4 +91,12 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
 }
