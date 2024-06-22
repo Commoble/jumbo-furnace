@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.commoble.jumbofurnace.JumboFurnace;
@@ -14,19 +15,22 @@ import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.Container;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
-public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients, List<ItemStack> results, float experience, int cookingTime, Supplier<Integer> specificity) implements Recipe<Container>
+public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients, List<ItemStack> results, float experience, int cookingTime, Supplier<Integer> specificity) implements Recipe<RecipeInput>
 {
-	public static final Codec<JumboFurnaceRecipe> CODEC = RecordCodecBuilder.create(builder -> builder.group(
+	public static final MapCodec<JumboFurnaceRecipe> CODEC = RecordCodecBuilder.mapCodec(builder -> builder.group(
 			Codec.STRING.optionalFieldOf( "group", "").forGetter(JumboFurnaceRecipe::group),
 			SizedIngredient.FLAT_CODEC.listOf()
 				.comapFlatMap(JumboFurnaceRecipe::validateIngredients, Function.identity())
@@ -37,6 +41,14 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 			Codec.FLOAT.fieldOf("experience").orElse(0.0F).forGetter(JumboFurnaceRecipe::experience),
 			Codec.INT.optionalFieldOf("cookingtime", 200).forGetter(JumboFurnaceRecipe::cookingTime)
 		).apply(builder, JumboFurnaceRecipe::new));
+	
+	public static final StreamCodec<RegistryFriendlyByteBuf, JumboFurnaceRecipe> STREAM_CODEC = StreamCodec.composite(
+		ByteBufCodecs.STRING_UTF8, JumboFurnaceRecipe::group,
+		SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()), JumboFurnaceRecipe::ingredients,
+		ItemStack.LIST_STREAM_CODEC, JumboFurnaceRecipe::results,
+		ByteBufCodecs.FLOAT, JumboFurnaceRecipe::experience,
+		ByteBufCodecs.VAR_INT, JumboFurnaceRecipe::cookingTime,
+		JumboFurnaceRecipe::new);
 	
 	public JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients, List<ItemStack> results, float experience, int cookingTime)
 	{
@@ -84,31 +96,34 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 	}
 
 	@Override
-	public boolean matches(Container inv, Level worldIn)
+	public boolean matches(RecipeInput inv, Level worldIn)
 	{
-		for (Ingredient ingredient : this.getIngredients())
-		{
-			int amountOfIngredient = ingredient.getItems()[0].getCount();
-			int slots = inv.getContainerSize();
-			for (int slot=0; slot < slots && amountOfIngredient > 0; slot++)
-			{
-				ItemStack stackInSlot = inv.getItem(slot);
-				if (ingredient.test(stackInSlot) && stackInSlot.getCount() >= amountOfIngredient)
-				{
-					ItemStack usedStack = inv.removeItem(slot, amountOfIngredient);
-					amountOfIngredient -= usedStack.getCount();
-				}
-			}
-			
-			// if we didn't fully match the ingredient, return false
-			if (amountOfIngredient > 0)
-			{
-				return false;
-			}
-		}
-		
-		// if we made it this far, all ingredients matched, so return true
-		return true;
+		// TODO not implemented, we still use our custom matching system
+		// might be easier to use the vanilla way now though?
+		return false;
+//		for (Ingredient ingredient : this.getIngredients())
+//		{
+//			int amountOfIngredient = ingredient.getItems()[0].getCount();
+//			int slots = inv.size();
+//			for (int slot=0; slot < slots && amountOfIngredient > 0; slot++)
+//			{
+//				ItemStack stackInSlot = inv.getItem(slot);
+//				if (ingredient.test(stackInSlot) && stackInSlot.getCount() >= amountOfIngredient)
+//				{
+//					ItemStack usedStack = inv.removeItem(slot, amountOfIngredient);
+//					amountOfIngredient -= usedStack.getCount();
+//				}
+//			}
+//			
+//			// if we didn't fully match the ingredient, return false
+//			if (amountOfIngredient > 0)
+//			{
+//				return false;
+//			}
+//		}
+//		
+//		// if we made it this far, all ingredients matched, so return true
+//		return true;
 	}
 
 	@Override
@@ -118,13 +133,13 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 	}
 
 	@Override
-	public ItemStack assemble(Container p_44001_, Provider p_336092_)
+	public ItemStack assemble(RecipeInput input, Provider registries)
 	{
 		return this.results.get(0).copy();
 	}
 
 	@Override
-	public ItemStack getResultItem(Provider p_336125_)
+	public ItemStack getResultItem(Provider registries)
 	{
 		return this.results.get(0).copy();
 	}
@@ -171,7 +186,7 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 	}
 
 	@Override
-	public NonNullList<ItemStack> getRemainingItems(Container inv)
+	public NonNullList<ItemStack> getRemainingItems(RecipeInput inv)
 	{
 		// nope, we use a different system for remainder items
 		return NonNullList.create();

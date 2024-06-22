@@ -20,6 +20,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -72,16 +73,22 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 			: JumboFurnace.get().jumboFurnaceExteriorBlockEntityType.get().create(pos,state);
 	}
 	
-	@Deprecated
+	
+	
 	@Override
-	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit)
+	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit)
 	{
 		// if player uses shears on block, drop a whole jumbo furnace instead
-		ItemStack stack = player.getItemInHand(handIn);
-		if (player.isShiftKeyDown() && handIn != null && stack.is(Tags.Items.SHEARS))
+		if (player.isShiftKeyDown() && stack.is(Tags.Items.TOOLS_SHEAR))
 		{
-			return InteractionResult.SUCCESS;
+			return ItemInteractionResult.SUCCESS;
 		}
+		return super.useItemOn(stack, state, level, pos, player, hand, hit);
+	}
+
+	@Override
+	public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit)
+	{
 		BlockPos corePos = JumboFurnaceBlock.getCorePos(state, pos);
 		BlockEntity be = level.getBlockEntity(corePos);
 		if (be instanceof JumboFurnaceCoreBlockEntity core)
@@ -94,11 +101,10 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 			return InteractionResult.SUCCESS;
 		}
 		
-		return super.use(state, level, corePos, player, handIn, hit);
+		return super.useWithoutItem(state, level, pos, player, hit);
 	}
 
 	@Override
-	@Deprecated
 	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving)
 	{
 		if (state.getBlock() != newState.getBlock())
@@ -110,13 +116,12 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 				double x = pos.getX() + 0.5D;
 				double y = pos.getY() + 0.5D;
 				double z = pos.getZ() + 0.5D;
-				float experience = 0;
+				float experience = core.output.storedExperience;
 				for (int i=0; i<JumboFurnaceMenu.INPUT_SLOTS; i++)
 				{
 					drops.add(core.input.getStackInSlot(i));
 					drops.add(core.fuel.getStackInSlot(i));
 					drops.add(core.output.getStackInSlot(i));
-					experience += core.output.storedExperience[i];
 				}
 				drops.add(core.multiprocessUpgradeHandler.getStackInSlot(0));
 				for (ItemStack drop : drops)

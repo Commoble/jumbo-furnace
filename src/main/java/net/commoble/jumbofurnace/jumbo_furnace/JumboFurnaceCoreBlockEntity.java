@@ -416,7 +416,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		}
 		
 		boolean startedAnyRecipes = false;
-		var recipes = RecipeSorter.INSTANCE.getSortedFurnaceRecipes(currentInputItems, this.level.getRecipeManager());
+		var recipes = RecipeSorter.INSTANCE.getSortedFurnaceRecipesValidForInputs(currentInputItems, this.level.getRecipeManager());
 		
 		iterateRecipes:
 		for (var recipe : recipes)
@@ -580,6 +580,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 						{
 							this.addToOutputOrBackstock(stack.copy());
 						}
+						this.output.addExperience(recipe.recipe().experience());
 					}
 					else
 					{

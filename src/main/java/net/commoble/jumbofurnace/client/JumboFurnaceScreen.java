@@ -1,5 +1,6 @@
 package net.commoble.jumbofurnace.client;
 
+import net.commoble.jumbofurnace.JumboFurnace;
 import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -9,7 +10,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu>
 {
-	public static final ResourceLocation GUI_TEXTURE = new ResourceLocation("jumbofurnace:textures/gui/jumbo_furnace.png");
+	public static final ResourceLocation GUI_TEXTURE = JumboFurnace.id("textures/gui/jumbo_furnace.png");
 
 	// progress bar stuff
 	public static final int BURN_METER_FROM_X = 176;
@@ -61,7 +62,7 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 			graphics.blit(GUI_TEXTURE, xStart + BURN_METER_TO_X, yStart + BURN_METER_TO_Y + BURN_METER_HEIGHT - burnAmount, BURN_METER_FROM_X, BURN_METER_HEIGHT - burnAmount, BURN_METER_WIDTH, burnAmount);
 		}
 
-		int cookProgress = (this.menu).getCookProgressionScaled() + 1;
-		graphics.blit(GUI_TEXTURE, xStart + COOK_METER_TO_X, yStart + COOK_METER_TO_Y, COOK_METER_FROM_X, COOK_METER_FROM_Y, cookProgress, COOK_METER_HEIGHT);
+//		int cookProgress = (this.menu).getCookProgressionScaled() + 1;
+//		graphics.blit(GUI_TEXTURE, xStart + COOK_METER_TO_X, yStart + COOK_METER_TO_Y, COOK_METER_FROM_X, COOK_METER_FROM_Y, cookProgress, COOK_METER_HEIGHT);
 	}
 }

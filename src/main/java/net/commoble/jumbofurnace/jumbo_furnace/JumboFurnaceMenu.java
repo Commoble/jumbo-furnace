@@ -271,12 +271,12 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		return this.furnaceData.get(2);
 	}
 
-	public int getCookProgressionScaled()
-	{
-		int cookProgress = this.getCookProgress();
-		int cookTimeForRecipe = JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get();
-		return cookTimeForRecipe != 0 && cookProgress != 0 ? cookProgress * 24 / cookTimeForRecipe : 0;
-	}
+//	public int getCookProgressionScaled()
+//	{
+//		int cookProgress = this.getCookProgress();
+//		int cookTimeForRecipe = JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get();
+//		return cookTimeForRecipe != 0 && cookProgress != 0 ? cookProgress * 24 / cookTimeForRecipe : 0;
+//	}
 
 	public int getBurnLeftScaled()
 	{

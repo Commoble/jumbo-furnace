@@ -25,7 +25,7 @@ import net.minecraft.world.item.crafting.RecipeManager;
 @JeiPlugin
 public class JEIProxy implements IModPlugin
 {
-	public static final ResourceLocation JEI_RECIPE_TEXTURE = new ResourceLocation(ModIds.JEI_ID, "textures/jei/gui/gui_vanilla.png");
+	public static final ResourceLocation JEI_RECIPE_TEXTURE = ResourceLocation.fromNamespaceAndPath(ModIds.JEI_ID, "textures/jei/gui/gui_vanilla.png");
 	
 	@Nullable
 	private JumboSmeltingCategory jumboSmeltingCategory;
@@ -33,7 +33,7 @@ public class JEIProxy implements IModPlugin
 	@Nullable
 	private JumboFurnaceUpgradeCategory jumboFurnaceUpgradeCategory;
 
-	public static final ResourceLocation ID = new ResourceLocation(JumboFurnace.MODID, JumboFurnace.MODID);
+	public static final ResourceLocation ID = JumboFurnace.id(JumboFurnace.MODID);
 	
 	@Override
 	public ResourceLocation getPluginUid()
@@ -86,7 +86,7 @@ public class JEIProxy implements IModPlugin
 		if (world != null)
 		{
 			RecipeManager manager = world.getRecipeManager();
-			return RecipeSorter.INSTANCE.getSortedFurnaceRecipes(manager);
+			return RecipeSorter.INSTANCE.getAllSortedFurnaceRecipes(manager);
 		}
 		else
 		{

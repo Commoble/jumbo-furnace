@@ -52,7 +52,7 @@ public class JumboFurnaceItem extends Item
 					BlockState jumboState = placementStates.get(0).getSecond();
 					SoundType soundtype = jumboState.getSoundType(world, placePos, player);
 					// play the sound to null player because we're not placing on the client
-					world.playSound(null, placePos, jumboState.getSoundType().getPlaceSound(), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+					world.playSound(null, placePos, jumboState.getSoundType(world, placePos, player).getPlaceSound(), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
 					if (player == null || !player.getAbilities().instabuild) {
 						context.getItemInHand().shrink(1);
 					}

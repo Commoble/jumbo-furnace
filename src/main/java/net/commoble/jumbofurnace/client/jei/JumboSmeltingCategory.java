@@ -45,7 +45,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 		this.xlBackgroundOutputs = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 0, 60, 54, 54);
 		this.staticArrow = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 61, 60, 22, 54);
 		this.arrow = helper.drawableBuilder(JEIProxy.JEI_RECIPE_TEXTURE, 82, 128, 24, 17)
-			.buildAnimated(JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get(), IDrawableAnimated.StartDirection.LEFT, false);
+			.buildAnimated(200, IDrawableAnimated.StartDirection.LEFT, false);
 		this.staticFlame = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 82, 114, 14, 14);
 		this.animatedFlame = helper.createAnimatedDrawable(this.staticFlame, 300, IDrawableAnimated.StartDirection.TOP, true);
 		this.backgroundFlame = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 1, 134, 14, 14);

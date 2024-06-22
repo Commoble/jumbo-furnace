@@ -3,8 +3,6 @@ package net.commoble.jumbofurnace;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import com.mojang.datafixers.util.Pair;
 
 import net.commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger;
@@ -19,9 +17,8 @@ import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceItem;
 import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
 import net.commoble.jumbofurnace.jumbo_furnace.MultiBlockHelper;
 import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
-import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipeSerializer;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
-import net.commoble.jumbofurnace.recipes.TagStackIngredient;
+import net.commoble.jumbofurnace.recipes.SimpleRecipeSerializer;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -37,6 +34,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
@@ -53,8 +51,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.bus.api.Event.Result;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -64,7 +60,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.common.crafting.IngredientType;
+import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
@@ -73,7 +69,6 @@ import net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 @Mod(JumboFurnace.MODID)
 public class JumboFurnace
@@ -82,8 +77,8 @@ public class JumboFurnace
 	public static JumboFurnace get() { return instance; }
 	
 	public static final String MODID = "jumbofurnace";
-	public static final TagKey<Block> JUMBOFURNACEABLE_TAG = TagKey.create(Registries.BLOCK, new ResourceLocation(MODID, "jumbofurnaceable"));
-	public static final TagKey<Item> MULTIPROCESSING_UPGRADE_TAG = TagKey.create(Registries.ITEM, new ResourceLocation(MODID, "multiprocessing_upgrade"));
+	public static final TagKey<Block> JUMBOFURNACEABLE_TAG = TagKey.create(Registries.BLOCK, id("jumbofurnaceable"));
+	public static final TagKey<Item> MULTIPROCESSING_UPGRADE_TAG = TagKey.create(Registries.ITEM, id("multiprocessing_upgrade"));
 	
 	public final ServerConfig serverConfig;
 	public final DeferredHolder<Block, JumboFurnaceBlock> jumboFurnaceBlock;
@@ -94,7 +89,6 @@ public class JumboFurnace
 	public final DeferredHolder<MenuType<?>, MenuType<JumboFurnaceMenu>> jumboFurnaceMenuType;
 	public final DeferredHolder<RecipeType<?>, RecipeType<JumboFurnaceRecipe>> jumboSmeltingRecipeType;
 	public final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<JumboFurnaceRecipe>> jumboSmeltingRecipeSerializer;
-	public final DeferredHolder<IngredientType<?>, IngredientType<TagStackIngredient>> tagStackIngredient;
 	public final DeferredHolder<CriterionTrigger<?>, AssembleJumboFurnaceTrigger> assembleJumboFurnaceTrigger;
 	public final DeferredHolder<CriterionTrigger<?>, UpgradeJumboFurnaceTrigger> upgradeJumboFurnaceTrigger;
 	
@@ -115,7 +109,6 @@ public class JumboFurnace
 		DeferredRegister<MenuType<?>> menus = makeDeferredRegister(modBus, Registries.MENU);
 		DeferredRegister<RecipeType<?>> recipeTypes = makeDeferredRegister(modBus, Registries.RECIPE_TYPE);
 		DeferredRegister<RecipeSerializer<?>> recipeSerializers = makeDeferredRegister(modBus, Registries.RECIPE_SERIALIZER);
-		DeferredRegister<IngredientType<?>> ingredientTypes = makeDeferredRegister(modBus, NeoForgeRegistries.Keys.INGREDIENT_TYPES);
 		DeferredRegister<CriterionTrigger<?>> triggerTypes = makeDeferredRegister(modBus, Registries.TRIGGER_TYPE);
 		
 		this.jumboFurnaceBlock = blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.ofFullCopy(Blocks.FURNACE)));
@@ -128,8 +121,7 @@ public class JumboFurnace
 			 * allows items to add custom lines of information to the mouseover description
 			 */
 			@Override
-			@OnlyIn(Dist.CLIENT)
-			public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn)
+			public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flagIn)
 			{
 				tooltip.add(Component.translatable("jumbofurnace.jumbo_furnace_info_tooltip"));
 			}
@@ -142,11 +134,9 @@ public class JumboFurnace
 		
 		this.jumboFurnaceMenuType = menus.register(Names.JUMBO_FURNACE, () -> new MenuType<>(JumboFurnaceMenu::getClientMenu, FeatureFlags.VANILLA_SET));
 		
-		this.jumboSmeltingRecipeType = recipeTypes.register(Names.JUMBO_SMELTING, () -> RecipeType.simple(new ResourceLocation(MODID, Names.JUMBO_SMELTING)));
+		this.jumboSmeltingRecipeType = recipeTypes.register(Names.JUMBO_SMELTING, () -> RecipeType.simple(ResourceLocation.fromNamespaceAndPath(MODID, Names.JUMBO_SMELTING)));
 		
-		this.jumboSmeltingRecipeSerializer = recipeSerializers.register(Names.JUMBO_SMELTING, () -> new JumboFurnaceRecipeSerializer(this.jumboSmeltingRecipeType.get()));
-		
-		this.tagStackIngredient = ingredientTypes.register(Names.TAG_STACK, () -> new IngredientType<>(TagStackIngredient.CODEC));
+		this.jumboSmeltingRecipeSerializer = recipeSerializers.register(Names.JUMBO_SMELTING, () -> new SimpleRecipeSerializer<>(JumboFurnaceRecipe.CODEC, JumboFurnaceRecipe.STREAM_CODEC));
 		
 		this.assembleJumboFurnaceTrigger = triggerTypes.register(Names.ASSEMBLE_JUMBO_FURNACE, AssembleJumboFurnaceTrigger::new);
 		this.upgradeJumboFurnaceTrigger = triggerTypes.register(Names.UPGRADE_JUMBO_FURNACE, UpgradeJumboFurnaceTrigger::new);
@@ -252,11 +242,11 @@ public class JumboFurnace
 	private void onRightClickBlockLow(RightClickBlock event)
 	{
 		// if block or item usage is denied, do nothing
-		if (this.serverConfig.allowShearing().get() && event.getUseItem() != Result.DENY && event.getUseBlock() != Result.DENY)
+		if (this.serverConfig.allowShearing().get() && event.getUseItem() != TriState.FALSE && event.getUseBlock() != TriState.FALSE)
 		{
 			Player player = event.getEntity();
 			ItemStack stack = event.getItemStack();
-			if (player.isSecondaryUseActive() && stack.is(Tags.Items.SHEARS))
+			if (player.isSecondaryUseActive() && stack.is(Tags.Items.TOOLS_SHEAR))
 			{
 				Level level = event.getLevel();
 				BlockPos pos = event.getPos();
@@ -273,9 +263,7 @@ public class JumboFurnace
 						// permission to use items on the block
 			            Block.popResource(level, pos, new ItemStack(this.jumboFurnaceItem.get()));
 			            InteractionHand hand = event.getHand();
-			            stack.hurtAndBreak(1, player, (playerEntity) -> {
-			               playerEntity.broadcastBreakEvent(hand);
-			            });
+			            stack.hurtAndBreak(1, player, hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
 						
 						MultiBlockHelper.get3x3CubeAround(corePos)
 							.forEach(componentPos ->
@@ -309,5 +297,10 @@ public class JumboFurnace
 				stacks.add(stack);
 			}
 		}
+	}
+	
+	public static ResourceLocation id(String path)
+	{
+		return ResourceLocation.fromNamespaceAndPath(MODID, path);
 	}
 }

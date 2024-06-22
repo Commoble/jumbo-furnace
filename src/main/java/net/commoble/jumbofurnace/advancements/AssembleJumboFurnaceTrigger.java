@@ -10,7 +10,6 @@ import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
 import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.ExtraCodecs;
 
 public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<Criterion>
 {
@@ -27,7 +26,7 @@ public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<Criterio
 
 	public static record Criterion(Optional<ContextAwarePredicate> player) implements SimpleCriterionTrigger.SimpleInstance
 	{
-		public static final Codec<Criterion> CODEC = ExtraCodecs.strictOptionalField(EntityPredicate.ADVANCEMENT_CODEC, "player")
+		public static final Codec<Criterion> CODEC = EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("player")
 			.xmap(Criterion::new, Criterion::player)
 			.codec();
 	}

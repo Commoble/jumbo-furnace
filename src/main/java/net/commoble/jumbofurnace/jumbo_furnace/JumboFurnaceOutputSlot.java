@@ -50,7 +50,7 @@ public class JumboFurnaceOutputSlot extends SlotItemHandler
 		
 		if (!this.player.level().isClientSide() && this.getItemHandler() instanceof OutputItemHandler outputHandler)
 		{
-			spawnExpOrbs(this.player, outputHandler.getAndConsumeExperience(this.getSlotIndex()));
+			spawnExpOrbs(this.player, outputHandler.getAndConsumeExperience());
 		}
 		
 		EventHooks.firePlayerSmeltedEvent(this.player, stack);
