@@ -3,8 +3,7 @@
 	"ingredients":
 	[
 		{
-			"type": "jumbofurnace:tag_stack",
-			"tag": "forge:furnaces",
+			"tag": "neoforge:player_workstations/furnaces",
 			"count": 27
 		}
 	],
@@ -12,5 +11,6 @@
 	{
 		"item": "jumbofurnace:jumbo_furnace"
 	},
+	"cookingtime": 200
 	"experience": 0.1
 }

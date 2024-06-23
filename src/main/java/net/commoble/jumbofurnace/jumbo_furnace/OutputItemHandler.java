@@ -67,5 +67,22 @@ public class OutputItemHandler extends ItemStackHandler
 		super.deserializeNBT(registries, nbt);
 		this.storedExperience = nbt.getFloat(EXPERIENCE);
 	}
+
+	@Override
+	public ItemStack extractItem(int slot, int amount, boolean simulate)
+	{
+		ItemStack result = super.extractItem(slot, amount, simulate);
+		if (!simulate && !result.isEmpty() && this.getStackInSlot(slot).isEmpty())
+		{
+			ItemStack backstockStack = te.backstock.removeFirst();
+			if (!backstockStack.isEmpty())
+			{
+				this.setStackInSlot(slot, backstockStack);
+			}
+		}
+		return result;
+	}
+	
+	
 	
 }

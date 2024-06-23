@@ -3,7 +3,8 @@
 	"ingredients":
 	[
 		{
-			"item": "jumbofurnace:jumbo_furnace"
+			"tag": "minecraft:anvil",
+			"count": 4
 		}
 	],
 	"results": [

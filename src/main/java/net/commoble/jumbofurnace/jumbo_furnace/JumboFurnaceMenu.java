@@ -266,8 +266,9 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		return this.furnaceData.get(1);
 	}
 	
-	public int getCookProgress()
+	public int getCurrentRecipeCount()
 	{
+		
 		return this.furnaceData.get(2);
 	}
 

@@ -21,7 +21,7 @@ public class JumboFurnaceSyncData implements ContainerData
 			case 1:
 				return this.te.lastItemBurnedValue;
 			case 2:
-				return this.te.cookProgress;
+				return this.te.inFlightRecipes.size();
 			default:
 				return 0;
 		}
@@ -30,20 +30,7 @@ public class JumboFurnaceSyncData implements ContainerData
 	@Override
 	public void set(int index, int value)
 	{
-		switch (index)
-		{
-			case 0:
-				this.te.burnTimeRemaining = value;
-				break;
-			case 1:
-				this.te.lastItemBurnedValue = value;
-				break;
-			case 2:
-				this.te.cookProgress = value;
-				break;
-			default:
-				break;
-		}
+		// noop, this is the serverside data and set is only called clientside
 	}
 
 	@Override

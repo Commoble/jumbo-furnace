@@ -9,10 +9,11 @@
 * Jumbo Furnace is now in the Functional Blocks creative tab (instead of Building Blocks)
 
 ### Data Changes
-* The `27 furnace -> 1 jumbo furnace` jumbo smelting recipe now uses the forge:furnaces tag for the inputs.
+* The `27 furnace -> 1 jumbo furnace` jumbo smelting recipe now uses the neoforge:player_workstations/furnaces tag for its furnace input.
 * Jumbo Smelting recipes now allow multiple outputs. You can achieve this with a "results" field which specifies a list of itemstacks to create, or you can keep using the "result" field instead to specify a single output.
 * Jumbo Smelting recipes now allow per-recipe cooking times as vanilla smelting recipes do. This is set by the "cookingtime" field in the recipe json and defaults to 200 if not specified. Jumbo Furnace will also respect the cooking times of standard smelting recipes.
 * The serverconfig option to set the jumbo furnace's global cooking time has been removed as there is no longer a global jumbo furnace cook time.
+* The jumbofurnace:tag_stack ingredient type has been removed. Jumbo furnace recipes now support neoforge "sized ingredients" instead, which allow a count of any ingredient type.
 * Example recipe using the new fields:
 ```
 {
@@ -20,7 +21,8 @@
 	"ingredients":
 	[
 		{
-			"item": "jumbofurnace:jumbo_furnace"
+			"tag": "minecraft:anvil",
+			"count": 4
 		}
 	],
 	"results": [
