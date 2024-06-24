@@ -6,6 +6,7 @@
 * Upgraded Jumbo Furnaces which are processing multiple recipes now process recipes independently instead of all at once; e.g. if you add raw chicken to a jumbo furnace which is already cooking chicken, it will start smelting the new chicken immediately, and the two chickens will finish cooking at different times. This fixes a bug where adding recipe ingredients at the end of a smelt cycle would cause them to consume less fuel than intended.
 * Jumbo Furnace now consumes ingredients when it begins cooking a recipe instead of when it finishes. This may cause confusion, but was necessary to keep the previous two points from being too convoluted to implement, and resulted in a lot of bugs being fixed.
 * Jumbo Furnace will now award a player all stored smelting experience when they take any item out of the output slots (instead of trying to store recipe experience in the slot that the recipe added a result item to).
+* Crafting remainders from fuel and recipe inputs (such as empty buckets and bowls) are now added to the output slots when a recipe begins cooking.
 * Jumbo Furnace is now in the Functional Blocks creative tab (instead of Building Blocks)
 
 ### Data Changes
