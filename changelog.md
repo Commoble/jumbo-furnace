@@ -1,4 +1,4 @@
-## 1.20.4-5.0.0.0
+## 1.21-5.0.0.0
 * Updated to MC 1.21 / Neoforge. This update is not compatible with old worlds.
 
 ### Player-Facing Changes
