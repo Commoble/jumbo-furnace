@@ -1,12 +1,13 @@
 ## 1.20.4-5.0.0.0
-* Updated to MC 1.20.4 / Neoforge. This update is not compatible with old worlds.
+* Updated to MC 1.21 / Neoforge. This update is not compatible with old worlds.
 
 ### Player-Facing Changes
-* Jumbo Smelting Recipes now allow producing more than one result itemstack
-* Upgraded Jumbo Furnaces which are processing multiple recipes now process recipes independently instead of all at once; e.g. if you add raw chicken to a jumbo furnace which is already cooking chicken, it will start smelting the new chicken immediately, and the two chickens will finish cooking at different times. This fixes a bug where adding recipe ingredients at the end of a smelt cycle would cause them to consume less fuel than intended.
-* Jumbo Furnace now consumes ingredients when it begins cooking a recipe instead of when it finishes. This may cause confusion, but was necessary to keep the previous two points from being too convoluted to implement, and resulted in a lot of bugs being fixed.
+* Jumbo Smelting Recipes now allow producing more than one result itemstack (#1)
+* Upgraded Jumbo Furnaces which are processing multiple recipes now process recipes independently instead of all at once; e.g. if you add raw chicken to a jumbo furnace which is already cooking chicken, it will start smelting the new chicken immediately, and the two chickens will finish cooking at different times.
+* When cooking non-jumbo smelting recipes, jumbo furnace will use that recipe's actual cooking time; there is no longer a "global" cooking time for jumbo smelting (#21)
+* Jumbo Furnace now consumes ingredients when it begins cooking a recipe instead of when it finishes. This may cause confusion, but was necessary to keep the previous three points from being too convoluted to implement, and resulted in a lot of bugs being fixed.
 * Jumbo Furnace will now award a player all stored smelting experience when they take any item out of the output slots (instead of trying to store recipe experience in the slot that the recipe added a result item to).
-* Crafting remainders from fuel and recipe inputs (such as empty buckets and bowls) are now added to the output slots when a recipe begins cooking.
+* Crafting remainders from fuel and recipe inputs (such as empty buckets and bowls) are now added to the output slots when a recipe begins cooking. (#11)
 * Jumbo Furnace is now in the Functional Blocks creative tab (instead of Building Blocks)
 
 ### Data Changes
@@ -37,7 +38,10 @@
 }
 ```
 
-### Bugfixes
+### Bugfixes and other improvements
+* Recipes should now always use the correct amount of fuel when processing multiple recipes at once (#14)
+* Improved recipe caching, recipes are now filtered by input items before checking recipes (#19)
+* Reloading world after changing the global cooking time config no longer causes the furnace to stop working because there is no longer a global cooking time config (#22)
 
 ## 1.20.1-4.0.0.5
 * Fix "unknown recipe category" log warnings for jumbo smelting recipes
