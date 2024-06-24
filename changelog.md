@@ -26,10 +26,10 @@
 		}
 	],
 	"results": [
-		{"item": "gold_ingot"},
-		{"item": "iron_ingot"},
-		{"item": "copper_ingot"},
-		{"item": "diamond"}
+		{"id": "gold_ingot"},
+		{"id": "iron_ingot"},
+		{"id": "copper_ingot"},
+		{"id": "diamond"}
 	],
 	"cookingtime": 200,
 	"experience": 0.1
