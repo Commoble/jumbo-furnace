@@ -24,6 +24,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe>
 {
@@ -119,7 +120,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 		}
 
 		// input slots
-		NonNullList<Ingredient> ingredients = recipe.getIngredients();
+		List<SizedIngredient> ingredients = recipe.ingredients();
 		int ingredientCount = ingredients.size();
 		for (int row = 0; row < 3; row++)
 		{
@@ -129,7 +130,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 				var slot = recipeLayout.addSlot(RecipeIngredientRole.INPUT, column*18 + 1, row*18 + 1);
 				if (inputID < ingredientCount)
 				{
-					slot.addIngredients(ingredients.get(inputID));
+					slot.addItemStacks(List.of(ingredients.get(inputID).getItems()));
 				}
 			}
 		}

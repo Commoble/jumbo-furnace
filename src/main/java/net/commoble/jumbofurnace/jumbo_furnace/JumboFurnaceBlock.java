@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 import com.mojang.datafixers.util.Pair;
 
 import net.commoble.jumbofurnace.JumboFurnace;
+import net.commoble.jumbofurnace.recipes.InFlightRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -117,6 +118,7 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 				double y = pos.getY() + 0.5D;
 				double z = pos.getZ() + 0.5D;
 				float experience = core.output.storedExperience;
+				// drop everything in the inventory slots
 				for (int i=0; i<JumboFurnaceMenu.INPUT_SLOTS; i++)
 				{
 					drops.add(core.input.getStackInSlot(i));
@@ -124,6 +126,19 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 					drops.add(core.output.getStackInSlot(i));
 				}
 				drops.add(core.multiprocessUpgradeHandler.getStackInSlot(0));
+				// drop the internal inventories too
+				for (InFlightRecipe inflight : core.inFlightRecipes)
+				{
+					for (ItemStack input : inflight.inputs())
+					{
+						drops.add(input);
+					}
+				}
+				for (ItemStack stack : core.backstock)
+				{
+					drops.add(stack);
+				}
+				// take all those items and spawn them in the world
 				for (ItemStack drop : drops)
 				{
 					Containers.dropItemStack(level, x, y, z, drop);

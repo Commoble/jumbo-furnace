@@ -44,7 +44,7 @@ public class RecipeSorter extends SimplePreparableReloadListener<Void>
 			var recipesForItem = this.cachedSortedRecipes.get(item);
 			if (recipesForItem != null)
 			{
-				recipesForItems.addAll(recipesForItems);
+				recipesForItems.addAll(recipesForItem);
 			}
 		}
 		

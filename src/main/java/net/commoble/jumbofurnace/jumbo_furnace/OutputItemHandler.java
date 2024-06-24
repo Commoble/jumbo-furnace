@@ -3,6 +3,7 @@ package net.commoble.jumbofurnace.jumbo_furnace;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 public class OutputItemHandler extends ItemStackHandler
@@ -30,10 +31,10 @@ public class OutputItemHandler extends ItemStackHandler
 		return this.forcingInserts;
 	}
 	
-	public ItemStack insertCraftResult(int slot, ItemStack stack, boolean simulate)
+	public ItemStack insertCraftResult(ItemStack stack, boolean simulate)
 	{
 		this.forcingInserts = true;
-		ItemStack result = this.insertItem(slot, stack, simulate);
+		ItemStack result = ItemHandlerHelper.insertItemStacked(this, stack, simulate);
 		this.forcingInserts = false;
 		return result;
 	}
@@ -72,7 +73,7 @@ public class OutputItemHandler extends ItemStackHandler
 	public ItemStack extractItem(int slot, int amount, boolean simulate)
 	{
 		ItemStack result = super.extractItem(slot, amount, simulate);
-		if (!simulate && !result.isEmpty() && this.getStackInSlot(slot).isEmpty())
+		if (!simulate && !result.isEmpty() && this.getStackInSlot(slot).isEmpty() && !te.backstock.isEmpty())
 		{
 			ItemStack backstockStack = te.backstock.removeFirst();
 			if (!backstockStack.isEmpty())

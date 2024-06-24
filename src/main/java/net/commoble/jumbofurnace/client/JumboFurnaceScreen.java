@@ -71,6 +71,8 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 		}
 //		int cookProgress = (this.menu).getCookProgressionScaled() + 1;
 //		graphics.blit(GUI_TEXTURE, xStart + COOK_METER_TO_X, yStart + COOK_METER_TO_Y, COOK_METER_FROM_X, COOK_METER_FROM_Y, cookProgress, COOK_METER_HEIGHT);
+		// debug recipes to make sure we're doing it right
+		graphics.drawString(Minecraft.getInstance().font, Component.literal("x" + String.valueOf(this.menu.getCurrentRecipeCount())), xStart + COOK_METER_TO_X + 10, yStart + COOK_METER_TO_Y + 20, 0x373737, false);
 	}
 	
 	@SuppressWarnings("resource")
@@ -87,7 +89,7 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 		}
 		int extraRecipes = recipes - 1;
 		double gameTime = (Minecraft.getInstance().level.getGameTime() % COOK_METER_WIDTH) + partialTicks;
-		double scaledTime = gameTime * (extraRecipes/16); // 4x meter speed at max recipes
+		double scaledTime = gameTime * (1 + extraRecipes/16); // 4x meter speed at max recipes
 		return (int)(scaledTime % COOK_METER_WIDTH);
 	}
 }

@@ -142,67 +142,6 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		return 1 + this.multiprocessUpgradeHandler.getStackInSlot(0).getCount();
 	}
 	
-//	/** Called at the start of a tick when the input inventory has changed **/
-//	public void updateRecipes()
-//	{
-//		// make copy of output slots
-//		int slots = this.output.getSlots();
-//		ItemStackHandler outputSimulator = new ItemStackHandler(slots);
-//		for (int slot=0; slot<slots; slot++)
-//		{
-//			outputSimulator.setStackInSlot(slot, this.output.getStackInSlot(slot).copy());
-//		}
-//		ClaimableRecipeWrapper wrapper = this.input.getFreshRecipeInput();
-//		// get all recipes allowed by furnace or jumbo furnace
-//		// sort them by specificity (can we do this on recipe reload?)
-//		// recipes requiring multiple ingredients = most important, ingredients with more matching items (tags) = less important
-//		List<JumboFurnaceRecipe> recipes = RecipeSorter.INSTANCE.getSortedFurnaceRecipes(this.level.getRecipeManager());
-//		// start assigning input slots to usable recipes as they are found
-//		for (JumboFurnaceRecipe recipe : recipes)
-//		{
-//			// loop recipe over inputs until it can't match or we have no unused inputs left
-//			while (wrapper.getRecipeCount() < this.getMaxSimultaneousRecipes()
-//				&& wrapper.matchAndClaimInputs(recipe, this.level, outputSimulator)
-//				&& wrapper.hasUnusedInputsLeft());
-//		}
-//		// when all input slots are claimed or the recipe list is exhausted, set the new recipe cache
-//		this.cachedRecipes = wrapper;
-//		this.needsRecipeUpdate = false;
-//		this.needsOutputUpdate = true;
-//	}
-	
-//	public boolean checkIfRoomToCook()
-//	{
-//		// make copy of output slots
-//		int slots = this.output.getSlots();
-//		ItemStackHandler outputSimulator = new ItemStackHandler(slots);
-//		for (int slot=0; slot<slots; slot++)
-//		{
-//			outputSimulator.setStackInSlot(slot, this.output.getStackInSlot(slot).copy());
-//		}
-//		
-//		// see if we can fill every output slot
-//		// items with container items almost always have a stack size of 1
-//		// we can generally assume that they can be placed back into the input slots
-//		// so we only need to be concerned with the canonical output
-//		for (Recipe<ClaimableRecipeWrapper> recipe : this.cachedRecipes.getRecipe())
-//		{
-//			ItemStack result = recipe.assemble(this.cachedRecipes, this.level.registryAccess()).copy();
-//			for (int slot=0; slot < slots && !result.isEmpty(); slot++)
-//			{
-//				result = outputSimulator.insertItem(slot, result, false);
-//			}
-//			// if we couldn't fit the result in the output, no room to cook
-//			if (!result.isEmpty())
-//			{
-//				return false;
-//			}
-//		}
-//		
-//		// if we made it this far, all recipe results have room
-//		return true;
-//	}
-	
 	protected void serverTick()
 	{
 		boolean wasBurningBeforeTick = this.burnTimeRemaining > 0;
@@ -217,21 +156,20 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		// firstly check if we can consume any inputs and transition the itemstacks to inflight recipes
 		// if we have heat, great
 		// if we don't have heat, but we have fuel, we may be able to burn it depending on the inventory state
-		boolean hasHeatOrFuel = this.hasHeatOrFuel();
-		boolean shouldCheckRecipes = hasHeatOrFuel && this.shouldCheckRecipes();
 		
 		// then if we have heat or fuel, process each inflight recipe
-		if (hasHeatOrFuel)
+		if (this.hasHeatOrFuel())
 		{
-			dirty = true;
 			boolean processedAnyRecipes = this.processInflightRecipes();
 			if (processedAnyRecipes)
 			{
+				dirty = true;
 			}
 			// if we didn't increment any recipes, decrement heat (always lose at least one heat/tick)
 			else if (this.burnTimeRemaining > 0)
 			{
 				this.burnTimeRemaining --;
+				dirty = true;
 			}
 		}
 		
@@ -241,7 +179,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			// we are unlit and fuel stock has increased since we last checked, or
 			// inputs have been added to since we last checked recipes, or
 			// outputs have decreased since we last checked recipes
-		if (shouldCheckRecipes)
+		if (this.hasHeatOrFuel() && this.shouldCheckRecipes())
 		{
 			boolean processedAnyInputs = this.processInputs();
 			if (processedAnyInputs)
@@ -414,7 +352,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		if (!this.isBurning())
 		{
 			newFuelInventory = JumboFurnaceUtils.copyItemHandler(this.fuel); 
-			consumableFuel = simulateConsumeFuel(outputSimulator, newFuelInventory);
+			consumableFuel = simulateConsumeFuel(newFuelInventory, outputSimulator);
 			// if we can't consume fuel then we can't do anything else anyway
 			consumableFuelValue = JumboFurnaceUtils.getJumboSmeltingBurnTime(consumableFuel);
 			if (consumableFuelValue <= 0)
@@ -530,6 +468,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		if (consumableFuelValue > 0 && startedAnyRecipes)
 		{
 			this.burnTimeRemaining += consumableFuelValue;
+			this.lastItemBurnedValue = consumableFuelValue;
 			JumboFurnaceUtils.copyItemHandlerTo(newFuelInventory, this.fuel);
 			ItemStack fuelRemainder = consumableFuel.getCraftingRemainingItem();
 			if (!fuelRemainder.isEmpty())
@@ -590,6 +529,8 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 							this.addToOutputOrBackstock(stack.copy());
 						}
 						this.output.addExperience(recipe.recipe().experience());
+						// we have more room for new recipes so we should check them again
+						this.shouldCheckRecipes = true;
 					}
 					else
 					{
@@ -601,6 +542,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				else
 				{
 					anyFuelLeftToCheck = false;
+					remainingRecipes.add(recipe);
 				}
 			}
 			else
@@ -804,7 +746,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	
 	private void addToOutputOrBackstock(ItemStack stack)
 	{
-		ItemStack extraRemainder = ItemHandlerHelper.insertItemStacked(this.output, stack, false);
+		ItemStack extraRemainder = this.output.insertCraftResult(stack, false);
 		if (!extraRemainder.isEmpty())
 		{
 			// if we can't put the remainder in the output for some reason, keep it and we can maybe sneak it into player inventory later

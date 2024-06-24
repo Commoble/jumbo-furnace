@@ -7,10 +7,11 @@
 			"count": 27
 		}
 	],
-	"result":
-	{
-		"item": "jumbofurnace:jumbo_furnace"
-	},
-	"cookingtime": 200
+	"results": [
+		{
+			"id": "jumbofurnace:jumbo_furnace"
+		}
+	],
+	"cookingtime": 200,
 	"experience": 0.1
 }
