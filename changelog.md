@@ -1,3 +1,6 @@
+## 1.21-5.0.0.1
+* Fixed jumbo smelting recipe for 27 furnaces -> 1 jumbo furnace not working due to broken ingredient tag. Closes #23
+
 ## 1.21-5.0.0.0
 * Updated to MC 1.21 / Neoforge. This update is not compatible with old worlds.
 

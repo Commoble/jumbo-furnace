@@ -3,7 +3,7 @@
 	"ingredients":
 	[
 		{
-			"tag": "neoforge:player_workstations/furnaces",
+			"tag": "c:player_workstations/furnaces",
 			"count": 27
 		}
 	],
