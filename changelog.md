@@ -1,3 +1,6 @@
+## 1.21-5.0.0.2
+* Fixed advancements not loading
+
 ## 1.21-5.0.0.1
 * Fixed jumbo smelting recipe for 27 furnaces -> 1 jumbo furnace not working due to broken ingredient tag. Closes #23
 

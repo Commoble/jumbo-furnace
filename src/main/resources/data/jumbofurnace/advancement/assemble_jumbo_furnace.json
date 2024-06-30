@@ -5,7 +5,7 @@
 		"frame": "goal",
 		"icon": 
 		{
-			"item": "jumbofurnace:jumbo_furnace"
+			"id": "jumbofurnace:jumbo_furnace"
 		},
 		"title":
 		{
