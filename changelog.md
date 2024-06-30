@@ -1,3 +1,6 @@
+## 1.21-5.0.0.3
+* Add EMI support
+
 ## 1.21-5.0.0.2
 * Fixed advancements not loading
 
