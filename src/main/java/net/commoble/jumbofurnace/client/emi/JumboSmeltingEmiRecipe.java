@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.render.EmiTexture;
@@ -16,6 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 public record JumboSmeltingEmiRecipe(ResourceLocation id, List<EmiIngredient> inputs, List<EmiStack> outputs, float experience, int cookingTime) implements EmiRecipe
@@ -77,7 +77,7 @@ public record JumboSmeltingEmiRecipe(ResourceLocation id, List<EmiIngredient> in
 	{
 		widgets.addTexture(EmiTexture.SHAPELESS, 56, 2);
 		widgets.addFillingArrow(70, 18, 50 * this.cookingTime).tooltip((mx, my) -> {
-			return List.of(ClientTooltipComponent.create(EmiPort.ordered(EmiPort.translatable("emi.cooking.time", this.cookingTime / 20f))));
+			return List.of(ClientTooltipComponent.create(Component.translatable("emi.cooking.time", this.cookingTime / 20f).getVisualOrderText()));
 		});
 		widgets.addTexture(EmiTexture.EMPTY_FLAME, 74, 37);
 		widgets.addAnimatedTexture(EmiTexture.FULL_FLAME, 74, 37, 4000, false, true, true);
@@ -88,7 +88,7 @@ public record JumboSmeltingEmiRecipe(ResourceLocation id, List<EmiIngredient> in
 			Minecraft minecraft = Minecraft.getInstance();
 			Font fontRenderer = minecraft.font;
 			int stringWidth = fontRenderer.width(experienceString);
-			widgets.addText(EmiPort.ordered(EmiPort.translatable("emi.cooking.experience", this.experience)), 109-stringWidth, 0, -1, true);
+			widgets.addText(Component.translatable("emi.cooking.experience", this.experience), 109-stringWidth, 0, -1, true);
 		}
 		
 		
