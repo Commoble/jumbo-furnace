@@ -1,3 +1,6 @@
+## 1.21-5.0.0.4
+* Made smelting bar animation less choppy
+
 ## 1.21-5.0.0.3
 * Add EMI support
 

@@ -2,6 +2,7 @@ package net.commoble.jumbofurnace.client;
 
 import net.commoble.jumbofurnace.JumboFurnace;
 import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -75,7 +76,6 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 		graphics.drawString(Minecraft.getInstance().font, Component.literal("x" + String.valueOf(this.menu.getCurrentRecipeCount())), xStart + COOK_METER_TO_X + 10, yStart + COOK_METER_TO_Y + 20, 0x373737, false);
 	}
 	
-	@SuppressWarnings("resource")
 	private int getCookMeterPixels(float partialTicks)
 	{
 		int recipes = this.menu.getCurrentRecipeCount();
@@ -86,10 +86,8 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 		if (this.menu.getBurnTimeRemaining() <= 0)
 		{
 			return COOK_METER_WIDTH / 2;
-		}
-		int extraRecipes = recipes - 1;
-		double gameTime = (Minecraft.getInstance().level.getGameTime() % COOK_METER_WIDTH) + partialTicks;
-		double scaledTime = gameTime * (1 + extraRecipes/16); // 4x meter speed at max recipes
-		return (int)(scaledTime % COOK_METER_WIDTH);
+		} 
+		long gameTime = (long)(Util.getMillis() / 50D) % COOK_METER_WIDTH;
+		return (int) gameTime;
 	}
 }
