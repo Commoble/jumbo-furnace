@@ -473,7 +473,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			ItemStack fuelRemainder = consumableFuel.getCraftingRemainingItem();
 			if (!fuelRemainder.isEmpty())
 			{
-				this.addToOutputOrBackstock(fuelRemainder.copy());
+				this.addToFuelOrOutputOrBackstock(fuelRemainder.copy());
 			}
 		}
 		
@@ -599,12 +599,14 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				ItemStack remainder = stackInSlot.getCraftingRemainingItem().copy();
 				// if there is no remainder item, no further checks needed.
 				// if there is a remainder item, use the fuel if it fits in the output simulator
-				if (remainder.isEmpty() || ItemHandlerHelper.insertItemStacked(outputSimulator, remainder, true).isEmpty())
+				if (remainder.isEmpty()
+					|| (JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder) > 0 && ItemHandlerHelper.insertItemStacked(this.fuel, remainder, true).isEmpty())
+					|| ItemHandlerHelper.insertItemStacked(outputSimulator, remainder, true).isEmpty())
 				{
 					this.fuel.extractItem(slot, 1, false);
 					this.burnTimeRemaining += burnTime;
 					this.lastItemBurnedValue = burnTime;
-					this.addToOutputOrBackstock(remainder);
+					this.addToFuelOrOutputOrBackstock(remainder);
 					return true;
 				}
 			}
@@ -632,9 +634,22 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			if (burnTime > 0)
 			{
 				ItemStack remainder = stackInSlot.getCraftingRemainingItem();
-				// if there is no remainder item, no further checks needed.
 				// if there is a remainder item, use the fuel if it fits in the output simulator
-				if (remainder.isEmpty() || ItemHandlerHelper.insertItemStacked(outputInventory, remainder.copy(), false).isEmpty())
+				// if there is no remainder item, no further checks needed.
+				if (remainder.isEmpty())
+				{
+					return stackInSlot.copy(); 
+				}
+				// if remainder item is also a fuel, try to return it to the fuel inventory
+				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder) > 0)
+				{
+					remainder = ItemHandlerHelper.insertItemStacked(fuelInventory, remainder.copy(), true);
+					if (remainder.isEmpty())
+					{
+						return stackInSlot.copy();
+					}
+				}
+				if (ItemHandlerHelper.insertItemStacked(outputInventory, remainder.copy(), false).isEmpty())
 				{
 					return stackInSlot.copy();
 				}
@@ -742,6 +757,18 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		MultiBlockHelper.get3x3CubeAround(this.worldPosition)
 			.filter(exteriorPos -> !exteriorPos.equals(this.worldPosition))
 			.forEach(exteriorPos -> this.level.updateNeighbourForOutputSignal(exteriorPos, this.getBlockState().getBlock()));
+	}
+	
+	private void addToFuelOrOutputOrBackstock(ItemStack stack)
+	{
+		if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stack) > 0)
+		{
+			stack = ItemHandlerHelper.insertItemStacked(this.fuel, stack, false);
+		}
+		if (!stack.isEmpty())
+		{
+			addToOutputOrBackstock(stack);
+		}
 	}
 	
 	private void addToOutputOrBackstock(ItemStack stack)
