@@ -1,3 +1,6 @@
+## 1.21.1-5.0.0.6
+* Fix jumbo smelting recipes missing textures in JEI
+
 ## 1.21.1-5.0.0.5
 * When fuel items are consumed from the fuel inventory and produce crafting remainders which are also fuel items, the crafting remainders are now returned to the fuel inventory instead of the output inventory
 * Now requires MC 1.21.1 / neoforge 21.1.58

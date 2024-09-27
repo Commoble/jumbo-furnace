@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableList;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
-import mezz.jei.api.constants.ModIds;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
@@ -25,7 +24,8 @@ import net.minecraft.world.item.crafting.RecipeManager;
 @JeiPlugin
 public class JEIProxy implements IModPlugin
 {
-	public static final ResourceLocation JEI_RECIPE_TEXTURE = ResourceLocation.fromNamespaceAndPath(ModIds.JEI_ID, "textures/jei/gui/gui_vanilla.png");
+	public static final ResourceLocation CRAFTING_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/crafting_table.png");
+	public static final ResourceLocation FURNACE_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/furnace.png");
 	
 	@Nullable
 	private JumboSmeltingCategory jumboSmeltingCategory;

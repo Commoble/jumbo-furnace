@@ -6,7 +6,6 @@ import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableAnimated;
-import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
@@ -20,10 +19,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe>
@@ -31,25 +28,18 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	public static final RecipeType<JumboFurnaceRecipe> TYPE = RecipeType.create(JumboFurnace.MODID, Names.JUMBO_SMELTING, JumboFurnaceRecipe.class);
 	
 	private final IDrawable backgroundInputs;
-	private final IDrawable staticArrow;
 	private final IDrawable xlBackgroundOutputs;
 	private final IDrawable icon;
 	private final IDrawableAnimated arrow;
-	private final IDrawableStatic staticFlame;
 	private final IDrawableAnimated animatedFlame;
-	private final IDrawableStatic backgroundFlame;
 	
 	public JumboSmeltingCategory(IGuiHelper helper)
 	{
 		this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
-		this.backgroundInputs = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 0, 60, 54, 54);
-		this.xlBackgroundOutputs = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 0, 60, 54, 54);
-		this.staticArrow = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 61, 60, 22, 54);
-		this.arrow = helper.drawableBuilder(JEIProxy.JEI_RECIPE_TEXTURE, 82, 128, 24, 17)
-			.buildAnimated(200, IDrawableAnimated.StartDirection.LEFT, false);
-		this.staticFlame = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 82, 114, 14, 14);
-		this.animatedFlame = helper.createAnimatedDrawable(this.staticFlame, 300, IDrawableAnimated.StartDirection.TOP, true);
-		this.backgroundFlame = helper.createDrawable(JEIProxy.JEI_RECIPE_TEXTURE, 1, 134, 14, 14);
+		this.backgroundInputs = helper.createDrawable(JEIProxy.CRAFTING_TEXTURE, 29, 16, 54, 54);
+		this.xlBackgroundOutputs = helper.createDrawable(JEIProxy.CRAFTING_TEXTURE, 29, 16, 54, 54);
+		this.animatedFlame = helper.createAnimatedRecipeFlame(300);
+		this.arrow = helper.createAnimatedRecipeArrow(200);
 	}
 
 	@Override
@@ -86,8 +76,6 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	public void draw(JumboFurnaceRecipe recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY)
 	{
 		this.xlBackgroundOutputs.draw(graphics, 110, 0);
-		this.staticArrow.draw(graphics, 71, 0);
-		this.backgroundFlame.draw(graphics, 75, 38);
 		this.animatedFlame.draw(graphics, 75, 38);
 		this.arrow.draw(graphics, 70, 18);
 

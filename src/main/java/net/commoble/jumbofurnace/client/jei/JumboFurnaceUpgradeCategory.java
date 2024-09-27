@@ -36,7 +36,7 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 	public JumboFurnaceUpgradeCategory(IGuiHelper helper)
 	{
 		this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
-		this.background = helper.drawableBuilder(JEIProxy.JEI_RECIPE_TEXTURE, 90, 74, 26, 26)
+		this.background = helper.drawableBuilder(JEIProxy.FURNACE_TEXTURE, 111, 30, 26, 26)
 			.addPadding(0, 80, 45, 45)
 			.build();
 	}
@@ -75,7 +75,7 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 		int lineCount = lines.size();
 		for (int i=0; i<lineCount; i++)
 		{
-			graphics.drawString(fontRenderer, lines.get(i), 0, 27 + i*9, 0xFF808080);
+			graphics.drawString(fontRenderer, lines.get(i), 0, 27 + i*9, 0xFF808080, false);
 		}
 	}
 
