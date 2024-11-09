@@ -2,6 +2,6 @@
 	"replace": false,
 	"values":
 	[
-		"minecraft:furnace"
+		"#c:player_workstations/furnaces"
 	]
 }

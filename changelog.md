@@ -1,3 +1,6 @@
+## 1.21.1-5.0.0.7
+* Merging furnace blocks into a jumbo furnace now permits any furnace in the c:player_workstations/furnaces block tag
+
 ## 1.21.1-5.0.0.6
 * Fix jumbo smelting recipes missing textures in JEI
 
