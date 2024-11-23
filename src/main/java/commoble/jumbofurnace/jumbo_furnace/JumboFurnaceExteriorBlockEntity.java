@@ -29,7 +29,7 @@ public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side)
 	{
-		if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
+		if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY && side != null)
 		{
 			JumboFurnaceCoreBlockEntity core = this.getCoreTile();
 			if (core != null)
