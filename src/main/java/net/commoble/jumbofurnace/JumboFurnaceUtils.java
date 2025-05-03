@@ -2,6 +2,7 @@ package net.commoble.jumbofurnace;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.block.entity.FuelValues;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -13,12 +14,12 @@ public class JumboFurnaceUtils
 	 * @return If the itemstack provides a burn time specific to jumbo smelting, returns that.
 	 * Otherwise, returns the burn time for vanilla furnace smelting.
 	 */
-	public static int getJumboSmeltingBurnTime(ItemStack stack)
+	public static int getJumboSmeltingBurnTime(ItemStack stack, FuelValues fuelValues)
 	{
-		int jumboSmeltingBurnTime = stack.getBurnTime(JumboFurnace.get().jumboSmeltingRecipeType.get());
+		int jumboSmeltingBurnTime = stack.getBurnTime(JumboFurnace.get().jumboSmeltingRecipeType.get(), fuelValues);
 		return jumboSmeltingBurnTime >= 0
 			? jumboSmeltingBurnTime
-			: stack.getBurnTime(RecipeType.SMELTING);
+			: stack.getBurnTime(RecipeType.SMELTING, fuelValues);
 	}
 	
 	public static IItemHandler copyItemHandler(IItemHandler itemHandler)

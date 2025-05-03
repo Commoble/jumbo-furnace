@@ -17,7 +17,7 @@ public class FuelItemHandler extends ItemStackHandler
 	@Override
 	public boolean isItemValid(int slot, ItemStack stack)
 	{
-		return JumboFurnaceUtils.getJumboSmeltingBurnTime(stack) > 0;
+		return JumboFurnaceUtils.getJumboSmeltingBurnTime(stack, te.getLevel().fuelValues()) > 0;
 	}
 
 	@Override

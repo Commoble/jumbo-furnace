@@ -9,19 +9,17 @@ import javax.annotation.Nullable;
 import com.mojang.datafixers.util.Pair;
 
 import net.commoble.jumbofurnace.JumboFurnace;
-import net.commoble.jumbofurnace.recipes.InFlightRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -77,12 +75,12 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 	
 	
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit)
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit)
 	{
 		// if player uses shears on block, drop a whole jumbo furnace instead
 		if (player.isShiftKeyDown() && stack.is(Tags.Items.TOOLS_SHEAR))
 		{
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 		return super.useItemOn(stack, state, level, pos, player, hand, hit);
 	}
@@ -104,62 +102,19 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 		
 		return super.useWithoutItem(state, level, pos, player, hit);
 	}
+	
+	
 
 	@Override
-	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving)
+	protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean isMoving)
 	{
-		if (state.getBlock() != newState.getBlock())
+		super.affectNeighborsAfterRemoval(state, level, pos, isMoving);			
+		// we use the moving flag to check whether we should dismantle the rest of the furnace in the usual manner and drop blocks
+		// things that dismantle the furnace themselves (shears) should remove blocks with moving == true
+		// (block flag 64 or 1<<6 or Constants.BlockFlags.IS_MOVING)
+		if (!isMoving)
 		{
-			BlockEntity be = level.getBlockEntity(pos);
-			if (be instanceof JumboFurnaceCoreBlockEntity core)
-			{
-				List<ItemStack> drops = new ArrayList<>();
-				double x = pos.getX() + 0.5D;
-				double y = pos.getY() + 0.5D;
-				double z = pos.getZ() + 0.5D;
-				float experience = core.output.storedExperience;
-				// drop everything in the inventory slots
-				for (int i=0; i<JumboFurnaceMenu.INPUT_SLOTS; i++)
-				{
-					drops.add(core.input.getStackInSlot(i));
-					drops.add(core.fuel.getStackInSlot(i));
-					drops.add(core.output.getStackInSlot(i));
-				}
-				drops.add(core.multiprocessUpgradeHandler.getStackInSlot(0));
-				// drop the internal inventories too
-				for (InFlightRecipe inflight : core.inFlightRecipes)
-				{
-					for (ItemStack input : inflight.inputs())
-					{
-						drops.add(input);
-					}
-				}
-				for (ItemStack stack : core.backstock)
-				{
-					drops.add(stack);
-				}
-				// take all those items and spawn them in the world
-				for (ItemStack drop : drops)
-				{
-					Containers.dropItemStack(level, x, y, z, drop);
-				}
-				Player player = level.getNearestPlayer(x, y, z, 16D, null);
-				if (player != null)
-				{
-					JumboFurnaceOutputSlot.spawnExpOrbs(player, experience);
-				}
-				
-			}
-			
-			// we use the moving flag to check whether we should dismantle the rest of the furnace in the usual manner and drop blocks
-			// things that dismantle the furnace themselves (shears) should remove blocks with moving == true
-			// (block flag 64 or 1<<6 or Constants.BlockFlags.IS_MOVING)
-			if (!isMoving)
-			{
-				this.destroyNextBlockPos(level, state, pos);
-			}
-
-			super.onRemove(state, level, pos, newState, isMoving);
+			this.destroyNextBlockPos(level, state, pos);
 		}
 	}
 	

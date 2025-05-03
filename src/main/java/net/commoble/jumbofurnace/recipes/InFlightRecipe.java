@@ -5,6 +5,9 @@ import java.util.List;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 
 public class InFlightRecipe
@@ -14,6 +17,12 @@ public class InFlightRecipe
 			ItemStack.CODEC.listOf().fieldOf("inputs").forGetter(InFlightRecipe::inputs),
 			Codec.INT.fieldOf("progress").forGetter(InFlightRecipe::progress)
 		).apply(builder, InFlightRecipe::new));
+	
+	public static final StreamCodec<RegistryFriendlyByteBuf, InFlightRecipe> STREAM_CODEC = StreamCodec.composite(
+		JumboFurnaceRecipe.STREAM_CODEC, InFlightRecipe::recipe,
+		ItemStack.STREAM_CODEC.apply(ByteBufCodecs.list()), InFlightRecipe::inputs,
+		ByteBufCodecs.INT, InFlightRecipe::progress,
+		InFlightRecipe::new);
 	
 	private final JumboFurnaceRecipe recipe;
 	private final List<ItemStack> inputs;

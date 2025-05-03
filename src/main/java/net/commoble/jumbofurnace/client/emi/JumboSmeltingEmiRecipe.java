@@ -1,24 +1,6 @@
 package net.commoble.jumbofurnace.client.emi;
 
-import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-
-import dev.emi.emi.api.recipe.EmiRecipe;
-import dev.emi.emi.api.recipe.EmiRecipeCategory;
-import dev.emi.emi.api.render.EmiTexture;
-import dev.emi.emi.api.stack.EmiIngredient;
-import dev.emi.emi.api.stack.EmiStack;
-import dev.emi.emi.api.widget.WidgetHolder;
-import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-
-public record JumboSmeltingEmiRecipe(ResourceLocation id, List<EmiIngredient> inputs, List<EmiStack> outputs, float experience, int cookingTime) implements EmiRecipe
+public record JumboSmeltingEmiRecipe() {}/*ResourceLocation id, List<EmiIngredient> inputs, List<EmiStack> outputs, float experience, int cookingTime) implements EmiRecipe
 {
 	public JumboSmeltingEmiRecipe(ResourceLocation id, JumboFurnaceRecipe recipe)
 	{
@@ -124,3 +106,4 @@ public record JumboSmeltingEmiRecipe(ResourceLocation id, List<EmiIngredient> in
 	}
 
 }
+*/

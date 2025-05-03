@@ -2,6 +2,8 @@ package net.commoble.jumbofurnace;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.mojang.datafixers.util.Pair;
 
@@ -16,6 +18,7 @@ import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceExteriorBlockEntity;
 import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceItem;
 import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
 import net.commoble.jumbofurnace.jumbo_furnace.MultiBlockHelper;
+import net.commoble.jumbofurnace.recipes.InFlightRecipeSyncPacket;
 import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.commoble.jumbofurnace.recipes.SimpleRecipeSerializer;
@@ -27,10 +30,12 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.TriState;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -42,6 +47,7 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
@@ -53,6 +59,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -60,13 +67,13 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.common.util.TriState;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.neoforged.neoforge.event.level.BlockEvent.EntityMultiPlaceEvent;
 import net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -103,34 +110,34 @@ public class JumboFurnace
 		this.serverConfig = ConfigHelper.register(ModConfig.Type.SERVER, ServerConfig::create);
 		
 		// register forge objects
-		DeferredRegister<Block> blocks = makeDeferredRegister(modBus, Registries.BLOCK);
-		DeferredRegister<Item> items = makeDeferredRegister(modBus, Registries.ITEM);
-		DeferredRegister<BlockEntityType<?>> blockEntities = makeDeferredRegister(modBus, Registries.BLOCK_ENTITY_TYPE);
-		DeferredRegister<MenuType<?>> menus = makeDeferredRegister(modBus, Registries.MENU);
-		DeferredRegister<RecipeType<?>> recipeTypes = makeDeferredRegister(modBus, Registries.RECIPE_TYPE);
-		DeferredRegister<RecipeSerializer<?>> recipeSerializers = makeDeferredRegister(modBus, Registries.RECIPE_SERIALIZER);
-		DeferredRegister<CriterionTrigger<?>> triggerTypes = makeDeferredRegister(modBus, Registries.TRIGGER_TYPE);
+		DeferredRegister.Blocks blocks = defreg(DeferredRegister::createBlocks);
+		DeferredRegister.Items items = defreg(DeferredRegister::createItems);
+		DeferredRegister<BlockEntityType<?>> blockEntities = defreg(Registries.BLOCK_ENTITY_TYPE);
+		DeferredRegister<MenuType<?>> menus = defreg(Registries.MENU);
+		DeferredRegister<RecipeType<?>> recipeTypes = defreg(Registries.RECIPE_TYPE);
+		DeferredRegister<RecipeSerializer<?>> recipeSerializers = defreg(Registries.RECIPE_SERIALIZER);
+		DeferredRegister<CriterionTrigger<?>> triggerTypes = defreg(Registries.TRIGGER_TYPE);
 		
-		this.jumboFurnaceBlock = blocks.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceBlock(Block.Properties.ofFullCopy(Blocks.FURNACE)));
+		this.jumboFurnaceBlock = blocks.registerBlock(Names.JUMBO_FURNACE, JumboFurnaceBlock::new, Block.Properties.ofFullCopy(Blocks.FURNACE));
 		
-		this.jumboFurnaceItem = items.register(Names.JUMBO_FURNACE, () -> new JumboFurnaceItem(new Item.Properties()));
+		this.jumboFurnaceItem = items.registerItem(Names.JUMBO_FURNACE, JumboFurnaceItem::new);
 		
-		this.jumboFurnaceJeiDummy = items.register(Names.JUMBO_FURNACE_JEI, () -> new Item(new Item.Properties())
+		this.jumboFurnaceJeiDummy = items.registerItem(Names.JUMBO_FURNACE_JEI, props -> new Item(props)
 		{
 			/**
 			 * allows items to add custom lines of information to the mouseover description
 			 */
 			@Override
-			public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flagIn)
+			public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flagIn)
 			{
-				tooltip.add(Component.translatable("jumbofurnace.jumbo_furnace_info_tooltip"));
+				tooltip.accept(Component.translatable("jumbofurnace.jumbo_furnace_info_tooltip"));
 			}
 		});
 		
 		this.jumboFurnaceCoreBlockEntityType = blockEntities.register(Names.JUMBO_FURNACE_CORE,
-			() -> BlockEntityType.Builder.of(JumboFurnaceCoreBlockEntity::create, this.jumboFurnaceBlock.get()).build(null));
+			() -> new BlockEntityType<>(JumboFurnaceCoreBlockEntity::create, this.jumboFurnaceBlock.get()));
 		this.jumboFurnaceExteriorBlockEntityType = blockEntities.register(Names.JUMBO_FURNACE_EXTERIOR,
-			() -> BlockEntityType.Builder.of(JumboFurnaceExteriorBlockEntity::create, this.jumboFurnaceBlock.get()).build(null));
+			() -> new BlockEntityType<>(JumboFurnaceExteriorBlockEntity::create, this.jumboFurnaceBlock.get()));
 		
 		this.jumboFurnaceMenuType = menus.register(Names.JUMBO_FURNACE, () -> new MenuType<>(JumboFurnaceMenu::getClientMenu, FeatureFlags.VANILLA_SET));
 		
@@ -143,6 +150,7 @@ public class JumboFurnace
 		
 		modBus.addListener(this::onBuildCreativeTabs);
 		modBus.addListener(this::onRegisterCapabilities);
+		modBus.addListener(this::onRegisterPayloads);
 
 		forgeBus.addListener(this::onAddServerReloadListeners);
 		forgeBus.addListener(this::onEntityPlaceBlock);
@@ -154,9 +162,18 @@ public class JumboFurnace
 		}
 	}
 	
-	private static <T> DeferredRegister<T> makeDeferredRegister(IEventBus modBus, ResourceKey<Registry<T>> registryKey)
+	private static <T> DeferredRegister<T> defreg(ResourceKey<Registry<T>> registryKey)
 	{
+		IEventBus modBus = ModList.get().getModContainerById(MODID).get().getEventBus();
 		DeferredRegister<T> register = DeferredRegister.create(registryKey, MODID);
+		register.register(modBus);
+		return register;
+	}
+	
+	private static <R extends DeferredRegister<?>> R defreg(Function<String,R> defregFactory)
+	{
+		IEventBus modBus = ModList.get().getModContainerById(MODID).get().getEventBus();
+		R register = defregFactory.apply(MODID);
 		register.register(modBus);
 		return register;
 	}
@@ -166,16 +183,22 @@ public class JumboFurnace
 		event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, this.jumboFurnaceExteriorBlockEntityType.get(), (be, side) -> be.getItemHandler(side));
 	}
 	
-	private void onAddServerReloadListeners(AddReloadListenerEvent event)
+	private void onAddServerReloadListeners(AddServerReloadListenersEvent event)
 	{
-		event.addListener(RecipeSorter.INSTANCE);
+		event.addListener(JumboFurnace.id("recipe_sorter"), RecipeSorter.SERVER_INSTANCE);
+	}
+	
+	private void onRegisterPayloads(RegisterPayloadHandlersEvent event)
+	{
+		var registrar = event.registrar("1");
+		registrar.playToClient(InFlightRecipeSyncPacket.TYPE, InFlightRecipeSyncPacket.STREAM_CODEC, InFlightRecipeSyncPacket::handle);
 	}
 	
 	private void onEntityPlaceBlock(EntityPlaceEvent event)
 	{
 		BlockState state = event.getPlacedBlock();
 		LevelAccessor levelAccess = event.getLevel();
-		if (!(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof Level level)
+		if (!(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof ServerLevel level)
 		{
 			BlockPos pos = event.getPos();
 			BlockState againstState = event.getPlacedAgainst();
@@ -226,7 +249,7 @@ public class JumboFurnace
 
 					for (ItemStack stack : stacks)
 					{
-						entity.spawnAtLocation(stack);
+						entity.spawnAtLocation(level, stack);
 					}
 				}
 			}

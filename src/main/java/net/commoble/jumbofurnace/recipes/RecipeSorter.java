@@ -10,19 +10,20 @@ import java.util.SortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.commoble.jumbofurnace.JumboFurnace;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 public class RecipeSorter extends SimplePreparableReloadListener<Void>
 {
-	public static final RecipeSorter INSTANCE = new RecipeSorter();
+	public static final RecipeSorter SERVER_INSTANCE = new RecipeSorter();
 	
 	// keep track of when recipes have reloaded
 	private int currentGeneration = 0;
@@ -30,11 +31,11 @@ public class RecipeSorter extends SimplePreparableReloadListener<Void>
 	private Map<Item, List<JumboFurnaceRecipe>> cachedSortedRecipes = new Reference2ObjectOpenHashMap<>();
 	private List<JumboFurnaceRecipe> allRecipes = new ArrayList<>();
 	
-	public SortedSet<JumboFurnaceRecipe> getSortedFurnaceRecipesValidForInputs(Collection<Item> inputItems, RecipeManager manager)
+	public SortedSet<JumboFurnaceRecipe> getSortedFurnaceRecipesValidForInputs(Collection<Item> inputItems, RecipeMap recipeMap)
 	{
 		if (this.currentGeneration != this.lastKnownGeneration)
 		{
-			this.sortFurnaceRecipes(manager);
+			this.sortFurnaceRecipes(recipeMap);
 			this.lastKnownGeneration = this.currentGeneration;
 		}
 		
@@ -51,48 +52,45 @@ public class RecipeSorter extends SimplePreparableReloadListener<Void>
 		return recipesForItems;
 	}
 	
-	public List<JumboFurnaceRecipe> getAllSortedFurnaceRecipes(RecipeManager manager)
+	public List<JumboFurnaceRecipe> getAllSortedFurnaceRecipes(RecipeMap recipeMap)
 	{
 		if (this.currentGeneration != this.lastKnownGeneration)
 		{
-			this.sortFurnaceRecipes(manager);
+			this.sortFurnaceRecipes(recipeMap);
 			this.lastKnownGeneration = this.currentGeneration;
 		}
 		return allRecipes;
 	}
 	
-	private void sortFurnaceRecipes(RecipeManager manager)
+	private void sortFurnaceRecipes(RecipeMap recipeMap)
 	{
 		Map<Item, List<JumboFurnaceRecipe>> results = new Reference2ObjectOpenHashMap<>();
 		SortedSet<JumboFurnaceRecipe> allRecipes = new ObjectRBTreeSet<>(RecipeSorter::compareRecipes);
 		
 		// we need to track the wrapped recipes so we don't put two copies of them in the results map
-		Map<ResourceLocation, JumboFurnaceRecipe> wrappedRecipes = new HashMap<>();
-		for (var holder : manager.getAllRecipesFor(RecipeType.SMELTING))
+		Map<ResourceKey<Recipe<?>>, JumboFurnaceRecipe> wrappedRecipes = new HashMap<>();
+		for (var holder : recipeMap.byType(RecipeType.SMELTING))
 		{
-			ResourceLocation key = holder.id();
+			ResourceKey<Recipe<?>> key = holder.id();
 			JumboFurnaceRecipe recipe = new JumboFurnaceRecipe(holder.value());
 			allRecipes.add(recipe);
-			for (Ingredient ingredient : recipe.getIngredients())
+			Ingredient ingredient = holder.value().input();
+			ingredient.getValues().forEach(itemHolder -> 
 			{
-				for (ItemStack stack : ingredient.getItems())
-				{
-					results.computeIfAbsent(stack.getItem(), x -> new ArrayList<>())
-						.add(wrappedRecipes.computeIfAbsent(key, x -> recipe));
-				}
-			}
+				results.computeIfAbsent(itemHolder.value(), x -> new ArrayList<>())
+					.add(wrappedRecipes.computeIfAbsent(key, x -> recipe));
+			});
 		}
-		for (var holder : manager.getAllRecipesFor(JumboFurnace.get().jumboSmeltingRecipeType.get()))
+		for (var holder : recipeMap.byType(JumboFurnace.get().jumboSmeltingRecipeType.get()))
 		{
 			JumboFurnaceRecipe recipe = holder.value();
 			allRecipes.add(recipe);
-			for (Ingredient ingredient : recipe.getIngredients())
+			for (SizedIngredient sizedIngredient : recipe.ingredients())
 			{
-				for (ItemStack stack : ingredient.getItems())
-				{
-					results.computeIfAbsent(stack.getItem(), x -> new ArrayList<>())
-						.add(recipe);
-				}
+				sizedIngredient.ingredient().getValues().forEach(itemHolder -> {
+					results.computeIfAbsent(itemHolder.value(), x -> new ArrayList<>())
+					.add(recipe);
+				});
 			}
 		}
 		this.cachedSortedRecipes = results;

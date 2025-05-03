@@ -66,7 +66,7 @@ public class OutputItemHandler extends ItemStackHandler
 	public void deserializeNBT(HolderLookup.Provider registries, CompoundTag nbt)
 	{
 		super.deserializeNBT(registries, nbt);
-		this.storedExperience = nbt.getFloat(EXPERIENCE);
+		this.storedExperience = nbt.getFloatOr(EXPERIENCE, 0F);
 	}
 
 	@Override

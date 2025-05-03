@@ -1,9 +1,13 @@
 package net.commoble.jumbofurnace.jumbo_furnace;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import net.commoble.jumbofurnace.JumboFurnace;
 import net.commoble.jumbofurnace.JumboFurnaceUtils;
+import net.commoble.jumbofurnace.recipes.InFlightRecipe;
+import net.commoble.jumbofurnace.recipes.InFlightRecipeSyncPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public class JumboFurnaceMenu extends AbstractContainerMenu
 {
@@ -66,6 +71,9 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 	private final ContainerLevelAccess usabilityTest;
 	private final ContainerData furnaceData;
 	private final Optional<JumboFurnaceCoreBlockEntity> serverFurnace;
+	private final Player player;
+	
+	public List<InFlightRecipe> recipes = new ArrayList<>(); // used clientside for rendering
 
 	/** Container factory for opening the container clientside **/
 	public static JumboFurnaceMenu getClientMenu(int id, Inventory playerInventory)
@@ -90,7 +98,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 	{
 		super(JumboFurnace.get().jumboFurnaceMenuType.get(), id);
 		
-		Player player = playerInventory.player;
+		this.player = playerInventory.player;
 		this.usabilityTest = ContainerLevelAccess.create(player.level(), pos);
 		this.furnaceData = furnaceData;
 		this.serverFurnace = serverFurnace;
@@ -115,7 +123,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 			{
 				int x = FUEL_START_X + SLOT_SPACING*column;
 				int index = row * SLOT_COLUMNS + column;
-				this.addSlot(new JumboFurnaceFuelSlot(fuel, index, x, y));
+				this.addSlot(new JumboFurnaceFuelSlot(fuel, index, x, y, playerInventory.player.level().fuelValues()));
 			}
 		}
 		
@@ -212,7 +220,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 					}
 				}
 				// if we can burn the item, try to put it in the fuel slots first
-				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot) > 0)
+				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot, player.level().fuelValues()) > 0)
 				{
 					// if we changed any fuel item slots
 					if (this.moveItemStackTo(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))
@@ -272,13 +280,6 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		return this.furnaceData.get(2);
 	}
 
-//	public int getCookProgressionScaled()
-//	{
-//		int cookProgress = this.getCookProgress();
-//		int cookTimeForRecipe = JumboFurnace.get().serverConfig.jumboFurnaceCookTime().get();
-//		return cookTimeForRecipe != 0 && cookProgress != 0 ? cookProgress * 24 / cookTimeForRecipe : 0;
-//	}
-
 	public int getBurnLeftScaled()
 	{
 		int totalBurnTime = this.getItemBurnedValue();
@@ -295,4 +296,21 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		return this.getBurnTimeRemaining() > 0;
 	}
 
+	@Override
+	public void broadcastChanges()
+	{
+		super.broadcastChanges();
+		// sync recipe wrappers to client menu
+		if (this.player instanceof ServerPlayer serverPlayer)
+		{
+			this.serverFurnace.ifPresent(be -> {
+				PacketDistributor.sendToPlayer(serverPlayer, new InFlightRecipeSyncPacket(be.inFlightRecipes));
+			});
+		}
+	}
+
+	public void updateRecipes(List<InFlightRecipe> recipes)
+	{
+		this.recipes = recipes;
+	}
 }

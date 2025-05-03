@@ -3,8 +3,8 @@
 	"ingredients":
 	[
 		{
-			"tag": "c:player_workstations/furnaces",
-			"count": 27
+			"count": 27,
+			"ingredient": "#c:player_workstations/furnaces"
 		}
 	],
 	"results": [
