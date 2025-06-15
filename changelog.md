@@ -1,3 +1,7 @@
+## 1.21.5-6.0.0.0
+* Crafting remainders for smelting inputs are no longer retained
+* Progress bar now renders items being smelted
+
 ## 1.21.1-5.0.0.7
 * Merging furnace blocks into a jumbo furnace now permits any furnace in the c:player_workstations/furnaces block tag
 
