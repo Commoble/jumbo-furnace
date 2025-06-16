@@ -1,3 +1,6 @@
+## 1.21.1-5.0.0.8
+* Jumbo Furnaces no longer retain crafting remainders of recipe inputs, to match expected behavior of vanilla furnaces. Recipes that expect crafting remainders to be generated will need to implement them as a jumbo smelting recipe with multiple outputs.
+
 ## 1.21.1-5.0.0.7
 * Merging furnace blocks into a jumbo furnace now permits any furnace in the c:player_workstations/furnaces block tag
 

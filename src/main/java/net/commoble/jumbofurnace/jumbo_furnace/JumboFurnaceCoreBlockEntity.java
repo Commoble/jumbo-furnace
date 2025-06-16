@@ -405,11 +405,6 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 							if (ingredient.test(inputSimulator.extractItem(inputSlot, 1, true)))
 							{
 								ItemStack inputStack = inputSimulator.extractItem(inputSlot, 1, false);
-								ItemStack remainder = inputStack.getCraftingRemainingItem();
-								if (!remainder.isEmpty())
-								{
-									remainders.add(remainder.copy());
-								}
 								recipeInputs.add(inputStack.copy());
 								foundInput = true;
 								break;
