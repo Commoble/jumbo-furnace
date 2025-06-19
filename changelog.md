@@ -1,4 +1,5 @@
-## 1.21.5-6.0.0.0
+## 1.21.6-6.0.0.0
+* Updated to MC 1.21.6 / Neoforge 21.6.6-beta
 * Crafting remainders for smelting inputs are no longer retained
 * Progress bar now renders items being smelted
 

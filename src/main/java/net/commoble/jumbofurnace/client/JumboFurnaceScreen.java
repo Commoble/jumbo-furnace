@@ -8,7 +8,7 @@ import net.commoble.jumbofurnace.recipes.InFlightRecipe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -63,13 +63,13 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 		int yStart = (this.height - this.imageHeight) / 2;
 		
 		// draw the background
-		graphics.blit(RenderType::guiTextured, GUI_TEXTURE, xStart, yStart, 0,0, this.imageWidth, this.imageHeight, 256, 256);
+		graphics.blit(RenderPipelines.GUI_TEXTURED, GUI_TEXTURE, xStart, yStart, 0,0, this.imageWidth, this.imageHeight, 256, 256);
 		
 		// draw progress bars
 		if (this.menu.isBurning())
 		{
 			int burnAmount = (this.menu).getBurnLeftScaled() + 1;
-			graphics.blitSprite(RenderType::guiTextured, LIT_PROGRESS_SPRITE, 14, 14, 0, 14 - burnAmount, xStart + BURN_METER_TO_X, yStart + BURN_METER_TO_Y + 14 - burnAmount, 14, burnAmount);
+			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, LIT_PROGRESS_SPRITE, 14, 14, 0, 14 - burnAmount, xStart + BURN_METER_TO_X, yStart + BURN_METER_TO_Y + 14 - burnAmount, 14, burnAmount);
 		}
 		
 		// draw recipes moving from left to right
@@ -97,6 +97,6 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 		}
 		
 		// draw recipe count
-		graphics.drawString(Minecraft.getInstance().font, Component.literal("x" + String.valueOf(this.menu.getCurrentRecipeCount())), xStart + COOK_METER_TO_X + 10, yStart + COOK_METER_TO_Y + 20, 0x373737, false);
+		graphics.drawString(Minecraft.getInstance().font, Component.literal("x" + String.valueOf(this.menu.getCurrentRecipeCount())), xStart + COOK_METER_TO_X + 10, yStart + COOK_METER_TO_Y + 20, 0xFF373737, false);
 	}
 }

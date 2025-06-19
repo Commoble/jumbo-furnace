@@ -1,10 +1,11 @@
 package net.commoble.jumbofurnace.jumbo_furnace;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
-import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -14,9 +15,6 @@ import net.commoble.jumbofurnace.recipes.InFlightRecipe;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
@@ -29,6 +27,8 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
@@ -46,8 +46,10 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	public static final String BACKSTOCK = "backstock";
 	public static final BlockEntityTicker<JumboFurnaceCoreBlockEntity> SERVER_TICKER = (level,pos,state,core)->core.serverTick();
 	
-	public static final Codec<List<InFlightRecipe>> INFLIGHT_RECIPES_CODEC = InFlightRecipe.CODEC.listOf();
-	public static final Codec<List<ItemStack>> BACKSTOCK_CODEC = ItemStack.CODEC.listOf();
+	public static final Codec<List<InFlightRecipe>> INFLIGHT_RECIPES_CODEC = InFlightRecipe.CODEC.listOf()
+		.xmap(ArrayList::new, Function.identity()); // map to mutable lists
+	public static final Codec<List<ItemStack>> BACKSTOCK_CODEC = ItemStack.CODEC.listOf()
+		.xmap(ArrayList::new, Function.identity());
 	
 	public final InputItemHandler input = new InputItemHandler(this);
 	public final ItemStackHandler fuel = new FuelItemHandler(this);
@@ -76,33 +78,39 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	{
 		super(type, pos, state);
 	}
+	
+	void foobar() {
+		
+	}
+	
+	public static final Codec<EnumMap<Direction, Integer>> FOOBAR = Codec.unboundedMap(Direction.CODEC, Codec.INT).xmap(EnumMap::new, Function.identity());
 
 	@Override
-	public void loadAdditional(CompoundTag compound, HolderLookup.Provider registries)
+	public void loadAdditional(ValueInput input)
 	{
-		super.loadAdditional(compound, registries);
-		this.input.deserializeNBT(registries, compound.getCompoundOrEmpty(INPUT));
-		this.fuel.deserializeNBT(registries, compound.getCompoundOrEmpty(FUEL));
-		this.output.deserializeNBT(registries, compound.getCompoundOrEmpty(OUTPUT));
-		this.multiprocessUpgradeHandler.deserializeNBT(registries, compound.getCompoundOrEmpty(MULTIPROCESS_UPGRADES));
-		this.inFlightRecipes = Lists.newArrayList(INFLIGHT_RECIPES_CODEC.parse(NbtOps.INSTANCE, compound.getCompoundOrEmpty(RECIPES)).result().orElse(List.of()));
-		this.backstock = Lists.newArrayList(BACKSTOCK_CODEC.parse(NbtOps.INSTANCE, compound.getCompoundOrEmpty(BACKSTOCK)).result().orElse(List.of()));
-		this.burnTimeRemaining = compound.getIntOr(BURN_TIME,0);
-		this.lastItemBurnedValue = compound.getIntOr(BURN_VALUE,0);
+		super.loadAdditional(input);
+		this.input.deserialize(input.childOrEmpty(INPUT));
+		this.fuel.deserialize(input.childOrEmpty(FUEL));
+		this.output.deserialize(input.childOrEmpty(OUTPUT));
+		this.multiprocessUpgradeHandler.deserialize(input.childOrEmpty(MULTIPROCESS_UPGRADES));
+		this.inFlightRecipes = input.read(RECIPES, INFLIGHT_RECIPES_CODEC).orElseGet(ArrayList::new);
+		this.backstock = input.read(BACKSTOCK, BACKSTOCK_CODEC).orElseGet(ArrayList::new);
+		this.burnTimeRemaining = input.getIntOr(BURN_TIME, 0);
+		this.lastItemBurnedValue = input.getIntOr(BURN_VALUE, 0);
 	}
 
 	@Override
-	public void saveAdditional(CompoundTag compound, HolderLookup.Provider registries)
+	public void saveAdditional(ValueOutput output)
 	{
-		super.saveAdditional(compound, registries);
-		compound.put(INPUT, this.input.serializeNBT(registries));
-		compound.put(FUEL, this.fuel.serializeNBT(registries));
-		compound.put(OUTPUT, this.output.serializeNBT(registries));
-		compound.put(MULTIPROCESS_UPGRADES, this.multiprocessUpgradeHandler.serializeNBT(registries));
-		INFLIGHT_RECIPES_CODEC.encodeStart(NbtOps.INSTANCE, this.inFlightRecipes).ifSuccess(tag -> compound.put(RECIPES, tag));
-		BACKSTOCK_CODEC.encodeStart(NbtOps.INSTANCE, this.backstock).ifSuccess(tag -> compound.put(BACKSTOCK, tag));
-		compound.putInt(BURN_TIME, this.burnTimeRemaining);
-		compound.putInt(BURN_VALUE, this.lastItemBurnedValue);
+		super.saveAdditional(output);
+		this.input.serialize(output.child(INPUT));
+		this.fuel.serialize(output.child(FUEL));
+		this.output.serialize(output.child(OUTPUT));
+		this.multiprocessUpgradeHandler.serialize(output.child(MULTIPROCESS_UPGRADES));
+		output.store(RECIPES, INFLIGHT_RECIPES_CODEC, this.inFlightRecipes);
+		output.store(BACKSTOCK, INFLIGHT_RECIPES_CODEC, this.inFlightRecipes);
+		output.putInt(BURN_TIME, this.burnTimeRemaining);
+		output.putInt(BURN_VALUE, this.lastItemBurnedValue);
 	}
 	
 	public boolean isBurning()

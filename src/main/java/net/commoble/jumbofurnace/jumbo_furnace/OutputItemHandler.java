@@ -1,8 +1,8 @@
 package net.commoble.jumbofurnace.jumbo_furnace;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -55,18 +55,17 @@ public class OutputItemHandler extends ItemStackHandler
 	}
 
 	@Override
-	public CompoundTag serializeNBT(HolderLookup.Provider registries)
+	public void serialize(ValueOutput output)
 	{
-		CompoundTag result = super.serializeNBT(registries);
-		result.putFloat(EXPERIENCE, this.storedExperience);
-		return result;
+		super.serialize(output);
+		output.putFloat(EXPERIENCE, this.storedExperience);
 	}
 
 	@Override
-	public void deserializeNBT(HolderLookup.Provider registries, CompoundTag nbt)
+	public void deserialize(ValueInput input)
 	{
-		super.deserializeNBT(registries, nbt);
-		this.storedExperience = nbt.getFloatOr(EXPERIENCE, 0F);
+		super.deserialize(input);
+		this.storedExperience = input.getFloatOr(EXPERIENCE, 0F);
 	}
 
 	@Override
