@@ -1,6 +1,9 @@
 package net.commoble.jumbofurnace.client;
 
+import java.util.List;
+
 import net.commoble.jumbofurnace.JumboFurnace;
+import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.world.item.crafting.RecipeMap;
 import net.neoforged.bus.api.IEventBus;
@@ -42,5 +45,10 @@ public class ClientProxy
 	{
 		clientRecipes = RecipeMap.EMPTY;
 		recipeSorter = new RecipeSorter();
+	}
+	
+	public static List<JumboFurnaceRecipe> getAllSortedFurnaceRecipes()
+	{
+		return recipeSorter.getAllSortedFurnaceRecipes(clientRecipes);
 	}
 }

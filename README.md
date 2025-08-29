@@ -10,8 +10,8 @@ Custom jumbo recipe example:
 	"type": "jumbofurnace:jumbo_smelting",
 	"ingredients":
 	[
-		{ // neoforge "sized ingredient" format, can be item, tag, or custom ingredient type
-			"tag": "minecraft:anvil",
+		{ // neoforge "sized ingredient" format
+			"ingredient": "minecraft:anvil",
 			"count": 4
 		}
 	],

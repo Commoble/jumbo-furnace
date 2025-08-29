@@ -1,3 +1,7 @@
+## 21.8.0
+* Updated to MC 1.21.8 / Neoforge 21.8.39
+* Readd JEI integration
+
 ## 1.21.6-6.0.0.0
 * Updated to MC 1.21.6 / Neoforge 21.6.6-beta
 * Crafting remainders for smelting inputs are no longer retained
