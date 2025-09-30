@@ -40,7 +40,7 @@ public class JumboFurnaceItem extends Item
 		BlockPlaceContext blockContext = new BlockPlaceContext(context);
 		if (MultiBlockHelper.canJumboFurnacePlaceAt(world, corePos, blockContext))
 		{
-			if (!world.isClientSide)
+			if (!world.isClientSide())
 			{
 				BlockState againstState = world.getBlockState(againstPos);
 				@Nullable Player player = context.getPlayer();

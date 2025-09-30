@@ -56,7 +56,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
@@ -156,7 +155,7 @@ public class JumboFurnace
 		forgeBus.addListener(this::onEntityPlaceBlock);
 		forgeBus.addListener(EventPriority.LOW, this::onRightClickBlockLow);
 		
-		if (FMLEnvironment.dist == Dist.CLIENT)
+		if (FMLEnvironment.getDist().isClient())
 		{
 			ClientProxy.addClientListeners(modBus, forgeBus);
 		}
@@ -279,7 +278,7 @@ public class JumboFurnace
 					// we used shears on a jumbo furnace while sneaking -- event will now be cancelled/overridden
 					
 					// only make changes to world on server (blocks, itemstacks, entities, etc)
-					if (!level.isClientSide)
+					if (!level.isClientSide())
 					{
 						BlockPos corePos = JumboFurnaceBlock.getCorePos(state, pos);
 						// forge fires a RightClickBlock event before this is called, we can assume that this would fail if the player didn't have

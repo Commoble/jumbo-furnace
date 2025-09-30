@@ -256,7 +256,7 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 
 	@Override
 	@Deprecated
-	public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos)
+	public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction dir)
 	{
 		BlockPos corePos = getCorePos(state, pos);
 		BlockEntity be = level.getBlockEntity(corePos);
@@ -364,7 +364,7 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type)
 	{
-		return type == JumboFurnace.get().jumboFurnaceCoreBlockEntityType.get() && !level.isClientSide
+		return type == JumboFurnace.get().jumboFurnaceCoreBlockEntityType.get() && !level.isClientSide()
 			? (BlockEntityTicker<T>)JumboFurnaceCoreBlockEntity.SERVER_TICKER
 			: null;
 	}
