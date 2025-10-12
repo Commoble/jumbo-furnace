@@ -1,5 +1,6 @@
 ## 21.10.0
 * Updated to MC 1.21.10 / Neoforge 21.10.6-beta
+* Inventory loss may occur if migrating from 1.21.8 due to inventory format changes
 
 ## 21.8.0
 * Updated to MC 1.21.8 / Neoforge 21.8.39
