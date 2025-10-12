@@ -5,6 +5,8 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import mezz.jei.api.IModPlugin;
+import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
@@ -15,7 +17,7 @@ import net.commoble.jumbofurnace.client.ClientProxy;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
-//@JeiPlugin TODO don't let JEI load this class until we have the 1.21.9+ apis
+@JeiPlugin
 public class JEIProxy implements IModPlugin
 {
 	public static final ResourceLocation CRAFTING_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/crafting_table.png");
@@ -56,6 +58,10 @@ public class JEIProxy implements IModPlugin
 	@Override
 	public void registerRecipeCatalysts(IRecipeCatalystRegistration registration)
 	{
+		registration.addCraftingStation(
+			RecipeTypes.SMELTING,
+			VanillaTypes.ITEM_STACK,
+			new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
 		registration.addCraftingStation(
 			JumboSmeltingCategory.TYPE,
 			VanillaTypes.ITEM_STACK,

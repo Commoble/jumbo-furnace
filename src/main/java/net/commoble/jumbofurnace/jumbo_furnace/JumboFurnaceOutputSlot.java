@@ -5,17 +5,17 @@ import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.EventHooks;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
-public class JumboFurnaceOutputSlot extends SlotItemHandler
+public class JumboFurnaceOutputSlot extends ResourceHandlerSlot
 {
 	private int removeCount = 0;
 	private final Player player;
 
-	public JumboFurnaceOutputSlot(Player player, IItemHandler itemHandler, int index, int xPosition, int yPosition)
+	public JumboFurnaceOutputSlot(Player player, ItemStacksResourceHandler itemHandler, int index, int xPosition, int yPosition)
 	{
-		super(itemHandler, index, xPosition, yPosition);
+		super(itemHandler, itemHandler::set, index, xPosition, yPosition);
 		this.player = player;
 	}
 
@@ -47,7 +47,7 @@ public class JumboFurnaceOutputSlot extends SlotItemHandler
 	{
 		stack.onCraftedBy(this.player, this.removeCount);
 		
-		if (!this.player.level().isClientSide() && this.getItemHandler() instanceof OutputItemHandler outputHandler)
+		if (!this.player.level().isClientSide() && this.getResourceHandler() instanceof OutputItemHandler outputHandler)
 		{
 			spawnExpOrbs(this.player, outputHandler.getAndConsumeExperience());
 		}

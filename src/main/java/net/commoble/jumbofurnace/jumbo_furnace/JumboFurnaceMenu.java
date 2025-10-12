@@ -21,10 +21,9 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class JumboFurnaceMenu extends AbstractContainerMenu
 {
@@ -79,7 +78,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 	public static JumboFurnaceMenu getClientMenu(int id, Inventory playerInventory)
 	{
 		// init client inventory with dummy slots
-		return new JumboFurnaceMenu(id, playerInventory, BlockPos.ZERO, new ItemStackHandler(9), new ItemStackHandler(9), new UninsertableItemStackHandler(9), new ItemStackHandler(1), new SimpleContainerData(4), Optional.empty());
+		return new JumboFurnaceMenu(id, playerInventory, BlockPos.ZERO, new ItemStacksResourceHandler(9), new ItemStacksResourceHandler(9), new UninsertableItemStackHandler(9), new ItemStacksResourceHandler(1), new SimpleContainerData(4), Optional.empty());
 	}
 	
 	/**
@@ -94,7 +93,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 			Component.translatable(TITLE));
 	}
 	
-	protected JumboFurnaceMenu(int id, Inventory playerInventory, BlockPos pos, IItemHandler inputs, IItemHandler fuel, IItemHandler outputs, IItemHandler multiprocessUpgrades, ContainerData furnaceData, Optional<JumboFurnaceCoreBlockEntity> serverFurnace)
+	protected JumboFurnaceMenu(int id, Inventory playerInventory, BlockPos pos, ItemStacksResourceHandler inputs, ItemStacksResourceHandler fuel, ItemStacksResourceHandler outputs, ItemStacksResourceHandler multiprocessUpgrades, ContainerData furnaceData, Optional<JumboFurnaceCoreBlockEntity> serverFurnace)
 	{
 		super(JumboFurnace.get().jumboFurnaceMenuType.get(), id);
 		
@@ -111,7 +110,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 			{
 				int x = INPUT_START_X + SLOT_SPACING*column;
 				int index = row * SLOT_COLUMNS + column;
-				this.addSlot(new SlotItemHandler(inputs, index, x, y));
+				this.addSlot(new ResourceHandlerSlot(inputs, inputs::set, index, x, y));
 			}
 		}
 		

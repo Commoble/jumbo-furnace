@@ -9,7 +9,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 
 public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 {
@@ -25,7 +26,7 @@ public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 
 	// exterior blocks grant interfacing access to the internal block's itemhandlers
 	@Nullable
-	public IItemHandler getItemHandler(Direction side)
+	public ResourceHandler<ItemResource> getItemHandler(Direction side)
 	{
 		JumboFurnaceCoreBlockEntity core = this.getCoreTile();
 		if (core != null)

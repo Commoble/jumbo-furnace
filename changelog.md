@@ -1,3 +1,6 @@
+## 21.10.0
+* Updated to MC 1.21.10 / Neoforge 21.10.6-beta
+
 ## 21.8.0
 * Updated to MC 1.21.8 / Neoforge 21.8.39
 * Readd JEI integration

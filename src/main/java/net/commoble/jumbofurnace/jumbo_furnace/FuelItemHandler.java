@@ -2,9 +2,10 @@ package net.commoble.jumbofurnace.jumbo_furnace;
 
 import net.commoble.jumbofurnace.JumboFurnaceUtils;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 
-public class FuelItemHandler extends ItemStackHandler
+public class FuelItemHandler extends ItemStacksResourceHandler
 {
 	public final JumboFurnaceCoreBlockEntity te;
 	
@@ -15,15 +16,15 @@ public class FuelItemHandler extends ItemStackHandler
 	}
 
 	@Override
-	public boolean isItemValid(int slot, ItemStack stack)
+	public boolean isValid(int slot, ItemResource resource)
 	{
-		return JumboFurnaceUtils.getJumboSmeltingBurnTime(stack, te.getLevel().fuelValues()) > 0;
+		return JumboFurnaceUtils.getJumboSmeltingBurnTime(resource.toStack(), te.getLevel().fuelValues()) > 0;
 	}
 
 	@Override
-	protected void onContentsChanged(int slot)
+	protected void onContentsChanged(int slot, ItemStack oldStack)
 	{
-		super.onContentsChanged(slot);
+		super.onContentsChanged(slot, oldStack);
 		this.te.setChanged();
 		this.te.markFuelInventoryChanged();
 	}

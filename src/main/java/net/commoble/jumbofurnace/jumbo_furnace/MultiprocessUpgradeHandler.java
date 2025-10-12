@@ -2,11 +2,11 @@ package net.commoble.jumbofurnace.jumbo_furnace;
 
 import net.commoble.jumbofurnace.JumboFurnace;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
-public class MultiprocessUpgradeHandler extends ItemStackHandler
+public class MultiprocessUpgradeHandler extends ItemStacksResourceHandler
 {	
 	private final JumboFurnaceCoreBlockEntity te;
 	
@@ -17,15 +17,15 @@ public class MultiprocessUpgradeHandler extends ItemStackHandler
 	}
 
 	@Override
-	public boolean isItemValid(int slot, ItemStack stack)
+	public boolean isValid(int slot, ItemResource stack)
 	{
 		return stack.is(JumboFurnace.MULTIPROCESSING_UPGRADE_TAG);
 	}
 
 	@Override
-	protected void onContentsChanged(int slot)
+	protected void onContentsChanged(int slot, ItemStack oldStack)
 	{
-		super.onContentsChanged(slot);
+		super.onContentsChanged(slot, oldStack);
 		this.te.markInputInventoryChanged();
 		this.te.setChanged();
 	}
@@ -33,12 +33,12 @@ public class MultiprocessUpgradeHandler extends ItemStackHandler
 	// need a handler for the slot as well
 	// the base SlotItemHandler respects the isItemValid of the parent,
 	// but we only use the above handler of the parent on servers
-	public static class MultiprocessUpgradeSlotHandler extends SlotItemHandler
+	public static class MultiprocessUpgradeSlotHandler extends ResourceHandlerSlot
 	{
 
-		public MultiprocessUpgradeSlotHandler(IItemHandler itemHandler, int index, int xPosition, int yPosition)
+		public MultiprocessUpgradeSlotHandler(ItemStacksResourceHandler itemHandler, int index, int xPosition, int yPosition)
 		{
-			super(itemHandler, index, xPosition, yPosition);
+			super(itemHandler, itemHandler::set, index, xPosition, yPosition);
 		}
 
 		@Override

@@ -1,9 +1,9 @@
 package net.commoble.jumbofurnace.jumbo_furnace;
 
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 
-public class UninsertableItemStackHandler extends ItemStackHandler
+public class UninsertableItemStackHandler extends ItemStacksResourceHandler
 {
 
 	public UninsertableItemStackHandler(int slots)
@@ -12,7 +12,7 @@ public class UninsertableItemStackHandler extends ItemStackHandler
 	}
 
 	@Override
-	public boolean isItemValid(int slot, ItemStack stack)
+	public boolean isValid(int slot, ItemResource resource)
 	{
 		return false;
 	}

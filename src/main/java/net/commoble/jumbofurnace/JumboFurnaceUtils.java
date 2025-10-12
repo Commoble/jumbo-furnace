@@ -1,11 +1,17 @@
 package net.commoble.jumbofurnace;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.entity.FuelValues;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 
 public class JumboFurnaceUtils
 {
@@ -22,28 +28,67 @@ public class JumboFurnaceUtils
 			: stack.getBurnTime(RecipeType.SMELTING, fuelValues);
 	}
 	
-	public static IItemHandler copyItemHandler(IItemHandler itemHandler)
+	public static ItemStacksResourceHandler copyItemHandler(ItemStacksResourceHandler itemHandler)
 	{
-		int slots = itemHandler.getSlots();
-		ItemStackHandler copy = new ItemStackHandler(slots);
+		int slots = itemHandler.size();
+		ItemStacksResourceHandler copy = new ItemStacksResourceHandler(slots);
 		for (int i=0; i<slots; i++)
 		{
-			copy.setStackInSlot(i, itemHandler.getStackInSlot(i).copy());
+			ItemStack stackInSlot = ItemUtil.getStack(itemHandler, i);
+			copy.set(i, ItemResource.of(stackInSlot), stackInSlot.getCount());
 		}
 		return copy;
 	}
 	
-	public static void copyItemHandlerTo(IItemHandler from, IItemHandlerModifiable to)
+	public static void copyItemHandlerTo(ItemStacksResourceHandler from, ItemStacksResourceHandler to)
 	{
-		int slots = to.getSlots();
-		int fromSlots = from.getSlots();
+		int slots = to.size();
+		int fromSlots = from.size();
 		if (fromSlots < slots)
 		{
 			slots = fromSlots;
 		}
 		for (int i=0; i<slots; i++)
 		{
-			to.setStackInSlot(i, from.getStackInSlot(i));
+			ItemStack stackInSlot = ItemUtil.getStack(from, i);
+			to.set(i, ItemResource.of(stackInSlot), stackInSlot.getCount());
+		}
+	}
+	
+	public static ItemStack insertItemStacked(ItemStacksResourceHandler handler, ItemStack stack, @Nullable TransactionContext context)
+	{
+		int oldCount = stack.getCount();
+		int inserted = ResourceHandlerUtil.insertStacking(handler, ItemResource.of(stack), oldCount, context);
+		return stack.copyWithCount(oldCount - inserted);
+	}
+	
+	public static ItemStack extract(int slot, ResourceHandler<ItemResource> handler, int amount, TransactionContext context)
+	{
+		ItemResource resource = handler.getResource(slot);
+		if (resource.isEmpty())
+			return ItemStack.EMPTY;
+		int extracted = handler.extract(slot, resource, amount, context);
+		return resource.toStack(extracted);
+	}
+	
+	public static ItemStack extractImmediate(int slot, ResourceHandler<ItemResource> handler, int amount)
+	{
+		try (Transaction t = Transaction.open(null))
+		{
+			ItemStack stack = extract(slot, handler, amount, t);
+			t.commit();
+			return stack;
+		}
+	}
+	
+	public static ItemStack insertImmediate(int slot, ItemStacksResourceHandler handler, ItemStack stack)
+	{
+		int oldCount = stack.getCount();
+		try (Transaction t = Transaction.open(null))
+		{
+			int inserted = handler.insert(slot, ItemResource.of(stack), oldCount, t);
+			t.commit();
+			return stack.copyWithCount(oldCount - inserted);
 		}
 	}
 }

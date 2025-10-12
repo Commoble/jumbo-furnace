@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.jetbrains.annotations.Nullable;
+
 import com.mojang.datafixers.util.Pair;
 
 import net.commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger;
@@ -22,6 +24,7 @@ import net.commoble.jumbofurnace.recipes.InFlightRecipeSyncPacket;
 import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.commoble.jumbofurnace.recipes.SimpleRecipeSerializer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -71,10 +74,12 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.neoforged.neoforge.event.level.BlockEvent.EntityMultiPlaceEvent;
 import net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent;
-import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 @Mod(JumboFurnace.MODID)
 public class JumboFurnace
@@ -129,7 +134,8 @@ public class JumboFurnace
 			@Override
 			public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flagIn)
 			{
-				tooltip.accept(Component.translatable("jumbofurnace.jumbo_furnace_info_tooltip"));
+				tooltip.accept(Component.translatable("jumbofurnace.jumbo_furnace_info_tooltip")
+					.withStyle(ChatFormatting.GRAY));
 			}
 		});
 		
@@ -179,7 +185,7 @@ public class JumboFurnace
 	
 	private void onRegisterCapabilities(RegisterCapabilitiesEvent event)
 	{
-		event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, this.jumboFurnaceExteriorBlockEntityType.get(), (be, side) -> be.getItemHandler(side));
+		event.registerBlockEntity(Capabilities.Item.BLOCK, this.jumboFurnaceExteriorBlockEntityType.get(), (be, side) -> be.getItemHandler(side));
 	}
 	
 	private void onAddServerReloadListeners(AddServerReloadListenersEvent event)
@@ -197,7 +203,7 @@ public class JumboFurnace
 	{
 		BlockState state = event.getPlacedBlock();
 		LevelAccessor levelAccess = event.getLevel();
-		if (!(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof ServerLevel level)
+		if (!Transaction.hasActiveTransaction() && !(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof ServerLevel level)
 		{
 			BlockPos pos = event.getPos();
 			BlockState againstState = event.getPlacedAgainst();
@@ -216,13 +222,13 @@ public class JumboFurnace
 
 					for (Direction dir : Direction.values())
 					{
-						IItemHandler sideHandler = level.getCapability(Capabilities.ItemHandler.BLOCK, newPos, dir);
+						@Nullable ResourceHandler<ItemResource> sideHandler = level.getCapability(Capabilities.Item.BLOCK, newPos, dir);
 						if (sideHandler != null)
 						{
 							addItemsToList(stacks, sideHandler);
 						}
 					}
-					IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, newPos, null);
+					@Nullable ResourceHandler<ItemResource> handler = level.getCapability(Capabilities.Item.BLOCK, newPos, null);
 					if (handler != null)
 					{
 						addItemsToList(stacks, handler);
@@ -308,12 +314,12 @@ public class JumboFurnace
 		}
 	}
 	
-	private static void addItemsToList(List<ItemStack> stacks, IItemHandler handler)
+	private static void addItemsToList(List<ItemStack> stacks, ResourceHandler<ItemResource> handler)
 	{
-		int slots = handler.getSlots();
+		int slots = handler.size();
 		for (int slot=0; slot<slots; slot++)
 		{
-			ItemStack stack = handler.extractItem(slot, 64, false);
+			ItemStack stack = JumboFurnaceUtils.extractImmediate(slot, handler, handler.getAmountAsInt(slot));
 			if (!stack.isEmpty())
 			{
 				stacks.add(stack);

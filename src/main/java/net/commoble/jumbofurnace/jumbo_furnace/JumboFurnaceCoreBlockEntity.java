@@ -30,9 +30,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 public class JumboFurnaceCoreBlockEntity extends BlockEntity
 {
@@ -43,26 +43,22 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	public static final String BURN_TIME = "burn_time";
 	public static final String BURN_VALUE = "burn_value";
 	public static final String RECIPES = "recipes";
-	public static final String BACKSTOCK = "backstock";
 	public static final BlockEntityTicker<JumboFurnaceCoreBlockEntity> SERVER_TICKER = (level,pos,state,core)->core.serverTick();
 	
 	public static final Codec<List<InFlightRecipe>> INFLIGHT_RECIPES_CODEC = InFlightRecipe.CODEC.listOf()
 		.xmap(ArrayList::new, Function.identity()); // map to mutable lists
-	public static final Codec<List<ItemStack>> BACKSTOCK_CODEC = ItemStack.CODEC.listOf()
-		.xmap(ArrayList::new, Function.identity());
 	
 	public final InputItemHandler input = new InputItemHandler(this);
-	public final ItemStackHandler fuel = new FuelItemHandler(this);
+	public final FuelItemHandler fuel = new FuelItemHandler(this);
 	public final OutputItemHandler output = new OutputItemHandler(this);
 	public final MultiprocessUpgradeHandler multiprocessUpgradeHandler = new MultiprocessUpgradeHandler(this);
 
 	public List<InFlightRecipe> inFlightRecipes = new ArrayList<>();
-	public List<ItemStack> backstock = new ArrayList<>();
 	
 	/**
 	 * cached copy of output slots and inflight recipe results, tossed on relevant updates
 	 */
-	public IItemHandler outputSimulatorCache = null;
+	public ItemStacksResourceHandler outputSimulatorCache = null;
 	
 	public int burnTimeRemaining = 0;
 	public int lastItemBurnedValue = 200;
@@ -94,7 +90,6 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		this.output.deserialize(input.childOrEmpty(OUTPUT));
 		this.multiprocessUpgradeHandler.deserialize(input.childOrEmpty(MULTIPROCESS_UPGRADES));
 		this.inFlightRecipes = input.read(RECIPES, INFLIGHT_RECIPES_CODEC).orElseGet(ArrayList::new);
-		this.backstock = input.read(BACKSTOCK, BACKSTOCK_CODEC).orElseGet(ArrayList::new);
 		this.burnTimeRemaining = input.getIntOr(BURN_TIME, 0);
 		this.lastItemBurnedValue = input.getIntOr(BURN_VALUE, 0);
 	}
@@ -108,7 +103,6 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		this.output.serialize(output.child(OUTPUT));
 		this.multiprocessUpgradeHandler.serialize(output.child(MULTIPROCESS_UPGRADES));
 		output.store(RECIPES, INFLIGHT_RECIPES_CODEC, this.inFlightRecipes);
-		output.store(BACKSTOCK, INFLIGHT_RECIPES_CODEC, this.inFlightRecipes);
 		output.putInt(BURN_TIME, this.burnTimeRemaining);
 		output.putInt(BURN_VALUE, this.lastItemBurnedValue);
 	}
@@ -152,7 +146,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	
 	public int getMaxSimultaneousRecipes()
 	{
-		return 1 + this.multiprocessUpgradeHandler.getStackInSlot(0).getCount();
+		return 1 + ItemUtil.getStack(this.multiprocessUpgradeHandler, 0).getCount();
 	}
 	
 	protected void serverTick()
@@ -298,10 +292,10 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		if (this.burnTimeRemaining > 0)
 			return true;
 		
-		int slots = this.fuel.getSlots();
+		int slots = this.fuel.size();
 		for (int i=0; i<slots; i++)
 		{
-			if (!this.fuel.getStackInSlot(i).isEmpty())
+			if (!ItemUtil.getStack(this.fuel, i).isEmpty())
 			{
 				return true;
 			}
@@ -343,17 +337,17 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		// maybe more if the server has lots of multi-input recipes or there's a lot of mod overlap in the modpack
 		// but this list is expected to be much smaller than just iterating over the entire recipe list each time
 		Set<Item> currentInputItems = new ReferenceOpenHashSet<>();
-		int slots = this.input.getSlots();
+		int slots = this.input.size();
 		for (int i=0; i<slots; i++)
 		{
-			ItemStack stack = this.input.getStackInSlot(i);
+			ItemStack stack = ItemUtil.getStack(this.input, i);
 			if (!stack.isEmpty())
 			{
 				currentInputItems.add(stack.getItem());
 			}
 		}
 		// create output simulator, we will use this to make sure we have room for recipe results + remainders
-		IItemHandler outputSimulator = JumboFurnaceUtils.copyItemHandler(this.getOutputAndInFlightRecipeResults());
+		ItemStacksResourceHandler outputSimulator = JumboFurnaceUtils.copyItemHandler(this.getOutputAndInFlightRecipeResults());
 		
 		// if we have no heat, create fuel simulator, consume fuel from it, add fuel remainder (if any) to output simulator
 		// we do this because we may have an edge case where we must consume a lava bucket,
@@ -362,7 +356,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		// so we simulate the consumption of fuel to determine whether we need to include fuel remainder
 		ItemStack consumableFuel = ItemStack.EMPTY;
 		int consumableFuelValue = 0;
-		IItemHandler newFuelInventory = this.fuel;
+		ItemStacksResourceHandler newFuelInventory = this.fuel;
 		
 		if (!this.isBurning())
 		{
@@ -404,7 +398,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			int maxIterations = this.getMaxSimultaneousRecipes() - this.inFlightRecipes.size();
 			for (int recipeIteration = 0; recipeIteration < maxIterations; recipeIteration++)
 			{
-				IItemHandler inputSimulator = JumboFurnaceUtils.copyItemHandler(this.input);
+				ItemStacksResourceHandler inputSimulator = JumboFurnaceUtils.copyItemHandler(this.input);
 				List<ItemStack> recipeInputs = new ArrayList<>();
 				List<ItemStack> remainders = new ArrayList<>();
 				for (SizedIngredient sizedIngredient : recipe.ingredients())
@@ -415,16 +409,20 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 					{
 						// attempt to find matching stacks, pull them out of the input simulator
 						boolean foundInput = false;
-						int inputSlots = inputSimulator.getSlots();
+						int inputSlots = inputSimulator.size();
 						for (int inputSlot=0; inputSlot < inputSlots; inputSlot++)
 						{
 							// check each ingredient slot until we find one
-							if (ingredient.test(inputSimulator.extractItem(inputSlot, 1, true)))
+							try(Transaction t = Transaction.open(null))
 							{
-								ItemStack inputStack = inputSimulator.extractItem(inputSlot, 1, false);
-								recipeInputs.add(inputStack.copy());
-								foundInput = true;
-								break;
+								ItemStack inputStack = JumboFurnaceUtils.extract(inputSlot, inputSimulator, 1, t);
+								if (ingredient.test(inputStack))
+								{
+									t.commit();
+									recipeInputs.add(inputStack.copy());
+									foundInput=true;
+									break;
+								}
 							}
 						}
 						// if we didn't find this ingredient, skip to the next recipe
@@ -436,7 +434,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				}
 				// if we're still here, we found every required ingredient
 				// now check if we have room in the output simulator for results
-				IItemHandler outputSimulatorForRecipe = JumboFurnaceUtils.copyItemHandler(outputSimulator);
+				ItemStacksResourceHandler outputSimulatorForRecipe = JumboFurnaceUtils.copyItemHandler(outputSimulator);
 				// TODO at some point we should support ingredient-sensitive outputs
 				// currently neither vanilla smelting recipes nor jumbo recipes support this
 				// (vanilla #assemble doesn't support multiple outputs)
@@ -446,14 +444,14 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				for (ItemStack stack : recipe.results())
 				{
 					// use insertItemStacked to prioritize slots that already have partial stacks of that item in them
-					if (!ItemHandlerHelper.insertItemStacked(outputSimulatorForRecipe, stack.copy(), false).isEmpty())
+					if (!JumboFurnaceUtils.insertItemStacked(outputSimulatorForRecipe, stack.copy(), null).isEmpty())
 					{
 						continue iterateRecipes;
 					}
 				}
 				for (ItemStack stack : remainders)
 				{
-					if (!ItemHandlerHelper.insertItemStacked(outputSimulatorForRecipe, stack, false).isEmpty())
+					if (!JumboFurnaceUtils.insertItemStacked(outputSimulatorForRecipe, stack, null).isEmpty())
 					{
 						continue iterateRecipes;
 					}
@@ -599,28 +597,38 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	// so we don't need to return a list of all nine slots, just the first one that fits with the recipe
 	
 	// and we only need an output simulator, so we can use the same impl for both cases
-	private boolean tryConsumeFuel(IItemHandler outputSimulator)
+	private boolean tryConsumeFuel(ItemStacksResourceHandler outputSimulator)
 	{
-		int slots = this.fuel.getSlots();
+		int slots = this.fuel.size();
 		FuelValues fuelValues = this.level.fuelValues();
 		for (int slot=0; slot<slots; slot++)
 		{
-			ItemStack stackInSlot = this.fuel.extractItem(slot, 1, true);
-			int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot, fuelValues);
-			if (burnTime > 0)
+			try(Transaction t = Transaction.open(null))
 			{
-				ItemStack remainder = stackInSlot.getCraftingRemainder().copy();
-				// if there is no remainder item, no further checks needed.
-				// if there is a remainder item, use the fuel if it fits in the output simulator
-				if (remainder.isEmpty()
-					|| (JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder, fuelValues) > 0 && ItemHandlerHelper.insertItemStacked(this.fuel, remainder, true).isEmpty())
-					|| ItemHandlerHelper.insertItemStacked(outputSimulator, remainder, true).isEmpty())
+				ItemStack extractedFuel = JumboFurnaceUtils.extract(slot, this.fuel, 1, t);
+				int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(extractedFuel, fuelValues);
+				if (burnTime > 0)
 				{
-					this.fuel.extractItem(slot, 1, false);
-					this.burnTimeRemaining += burnTime;
-					this.lastItemBurnedValue = burnTime;
-					this.addToFuelOrOutputOrBackstock(remainder);
-					return true;
+					ItemStack remainder = extractedFuel.getCraftingRemainder().copy();
+					// if there's a remainder then we can only consume the fuel if we can stash the remainder somewhere
+					// if remainder fits in fuel inventory, consume the fuel
+					if (!remainder.isEmpty() && JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder, fuelValues) > 0)
+					{
+						remainder = JumboFurnaceUtils.insertItemStacked(this.fuel, remainder, t);
+					}
+					// if remainder fits in output simulator, consume the fuel
+					if (!remainder.isEmpty())
+					{
+						remainder = JumboFurnaceUtils.insertItemStacked(outputSimulator, remainder, t);
+					}
+					// if there was no remainder or we were able to deal with it, consume the fuel
+					if (remainder.isEmpty())
+					{
+						t.commit();
+						this.burnTimeRemaining += burnTime;
+						this.lastItemBurnedValue = burnTime;
+						return true;
+					}
 				}
 			}
 		}
@@ -633,12 +641,13 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	 * @param outputInventory Output inventory (simulated or otherwise). Will be modified if consumed fuel has remainder item.
 	 * @return ItemStack of the fuel which would be consumed. Returns EMPTY if no consumable fuel exists.
 	 */
-	private static ItemStack simulateConsumeFuel(IItemHandler fuelInventory, IItemHandler outputInventory, FuelValues fuelValues)
+	private static ItemStack simulateConsumeFuel(ItemStacksResourceHandler fuelInventory, ItemStacksResourceHandler outputInventory, FuelValues fuelValues)
 	{
-		int slots = fuelInventory.getSlots();
+		int slots = fuelInventory.size();
 		for (int slot=0; slot<slots; slot++)
 		{
-			ItemStack stackInSlot = fuelInventory.extractItem(slot, 1, false);
+			ItemStack stackInSlot = JumboFurnaceUtils.extractImmediate(slot, fuelInventory, 1);
+//			ItemStack stackInSlot = fuelInventory.extractItem(slot, 1, false);
 			if (stackInSlot.isEmpty())
 			{
 				continue;
@@ -656,33 +665,36 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				// if remainder item is also a fuel, try to return it to the fuel inventory
 				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder, fuelValues) > 0)
 				{
-					remainder = ItemHandlerHelper.insertItemStacked(fuelInventory, remainder.copy(), true);
-					if (remainder.isEmpty())
+					try(Transaction t = Transaction.open(null))
 					{
-						return stackInSlot.copy();
+						remainder = JumboFurnaceUtils.insertItemStacked(fuelInventory, remainder.copy(), t);
+						if (remainder.isEmpty())
+						{
+							return stackInSlot.copy();
+						}
 					}
 				}
-				if (ItemHandlerHelper.insertItemStacked(outputInventory, remainder.copy(), false).isEmpty())
+				if (JumboFurnaceUtils.insertItemStacked(outputInventory, remainder.copy(), null).isEmpty())
 				{
 					return stackInSlot.copy();
 				}
 			}
 			// we didn't use the fuel so put it back
-			fuelInventory.insertItem(slot, stackInSlot, false);
+			JumboFurnaceUtils.insertImmediate(slots, fuelInventory, stackInSlot);
 		}
 		return ItemStack.EMPTY;
 	}
 	
-	private IItemHandler getOutputAndInFlightRecipeResults()
+	private ItemStacksResourceHandler getOutputAndInFlightRecipeResults()
 	{
 		if (this.outputSimulatorCache == null)
 		{
-			IItemHandler outputSimulator = JumboFurnaceUtils.copyItemHandler(this.output);
+			ItemStacksResourceHandler outputSimulator = JumboFurnaceUtils.copyItemHandler(this.output);
 			for (InFlightRecipe recipe : this.inFlightRecipes)
 			{
 				for (ItemStack stack : recipe.recipe().results())
 				{
-					ItemHandlerHelper.insertItemStacked(outputSimulator, stack.copy(), false);
+					JumboFurnaceUtils.insertItemStacked(outputSimulator, stack, null);
 				}
 			}
 			this.outputSimulatorCache = outputSimulator;
@@ -776,7 +788,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	{
 		if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stack, this.level.fuelValues()) > 0)
 		{
-			stack = ItemHandlerHelper.insertItemStacked(this.fuel, stack, false);
+			stack = JumboFurnaceUtils.insertItemStacked(this.fuel, stack, null);
 		}
 		if (!stack.isEmpty())
 		{
@@ -786,11 +798,11 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	
 	private void addToOutputOrBackstock(ItemStack stack)
 	{
-		ItemStack extraRemainder = this.output.insertCraftResult(stack, false);
+		ItemStack extraRemainder = this.output.insertCraftResult(stack);
 		if (!extraRemainder.isEmpty())
 		{
 			// if we can't put the remainder in the output for some reason, keep it and we can maybe sneak it into player inventory later
-			this.backstock.add(extraRemainder);
+			this.output.backstock.apply(list -> list.add(extraRemainder));
 			this.outputSimulatorCache = null;
 			this.shouldCheckRecipes = true;
 		}
@@ -808,11 +820,11 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		// drop everything in the inventory slots
 		for (int i=0; i<JumboFurnaceMenu.INPUT_SLOTS; i++)
 		{
-			drops.add(this.input.getStackInSlot(i));
-			drops.add(this.fuel.getStackInSlot(i));
-			drops.add(this.output.getStackInSlot(i));
+			drops.add(ItemUtil.getStack(this.input, i));
+			drops.add(ItemUtil.getStack(this.fuel, i));
+			drops.add(ItemUtil.getStack(this.output, i));
 		}
-		drops.add(this.multiprocessUpgradeHandler.getStackInSlot(0));
+		drops.add(ItemUtil.getStack(this.multiprocessUpgradeHandler, 0));
 		// drop the internal inventories too
 		for (InFlightRecipe inflight : this.inFlightRecipes)
 		{
@@ -821,7 +833,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				drops.add(input);
 			}
 		}
-		for (ItemStack stack : this.backstock)
+		for (ItemStack stack : this.output.backstock.get())
 		{
 			drops.add(stack);
 		}

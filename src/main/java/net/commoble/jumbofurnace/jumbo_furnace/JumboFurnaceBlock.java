@@ -37,7 +37,8 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
 
 public class JumboFurnaceBlock extends Block implements EntityBlock
 {
@@ -282,18 +283,19 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 	}
 	
 	// same math as Container.calcRedstone
-	public static int calcRedstoneFromItemHandler(@Nonnull IItemHandler handler)
+	public static int calcRedstoneFromItemHandler(@Nonnull ItemStacksResourceHandler handler)
 	{
 		int nonEmptySlots = 0;
 		float totalItemValue = 0.0F;
-		int slots = handler.getSlots();
+		int slots = handler.size();
 
 		for (int slot = 0; slot < slots; ++slot)
 		{
-			ItemStack itemstack = handler.getStackInSlot(slot);
+			ItemStack itemstack = ItemUtil.getStack(handler, slot);
 			if (!itemstack.isEmpty())
 			{
-				totalItemValue += itemstack.getCount() / (float) Math.min(handler.getSlotLimit(slot), itemstack.getMaxStackSize());
+				int capacity = handler.getCapacityAsInt(slot, handler.getResource(slot));
+				totalItemValue += itemstack.getCount() / (float) Math.min(capacity, itemstack.getMaxStackSize());
 				++nonEmptySlots;
 			}
 		}

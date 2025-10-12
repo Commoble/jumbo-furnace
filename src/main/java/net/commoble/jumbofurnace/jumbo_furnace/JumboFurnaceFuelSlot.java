@@ -3,16 +3,16 @@ package net.commoble.jumbofurnace.jumbo_furnace;
 import net.commoble.jumbofurnace.JumboFurnaceUtils;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.FuelValues;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
-public class JumboFurnaceFuelSlot extends SlotItemHandler
+public class JumboFurnaceFuelSlot extends ResourceHandlerSlot
 {
 	private final FuelValues fuelValues;
 	
-	public JumboFurnaceFuelSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition, FuelValues fuelValues)
+	public JumboFurnaceFuelSlot(ItemStacksResourceHandler itemHandler, int index, int xPosition, int yPosition, FuelValues fuelValues)
 	{
-		super(itemHandler, index, xPosition, yPosition);
+		super(itemHandler, itemHandler::set, index, xPosition, yPosition);
 		this.fuelValues = fuelValues;
 	}
 
