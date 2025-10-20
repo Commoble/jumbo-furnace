@@ -1,3 +1,6 @@
+## 21.10.1
+* Fix crash in newer neoforge betas due to change in transaction APIs. Now requires neoforge 21.10.21-beta
+
 ## 21.10.0
 * Updated to MC 1.21.10 / Neoforge 21.10.6-beta
 * Inventory loss may occur if migrating from 1.21.8 due to inventory format changes

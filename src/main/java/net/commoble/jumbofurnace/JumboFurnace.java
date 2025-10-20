@@ -79,7 +79,6 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 @Mod(JumboFurnace.MODID)
 public class JumboFurnace
@@ -122,7 +121,7 @@ public class JumboFurnace
 		DeferredRegister<RecipeSerializer<?>> recipeSerializers = defreg(Registries.RECIPE_SERIALIZER);
 		DeferredRegister<CriterionTrigger<?>> triggerTypes = defreg(Registries.TRIGGER_TYPE);
 		
-		this.jumboFurnaceBlock = blocks.registerBlock(Names.JUMBO_FURNACE, JumboFurnaceBlock::new, Block.Properties.ofFullCopy(Blocks.FURNACE));
+		this.jumboFurnaceBlock = blocks.registerBlock(Names.JUMBO_FURNACE, JumboFurnaceBlock::new, () -> Block.Properties.ofFullCopy(Blocks.FURNACE));
 		
 		this.jumboFurnaceItem = items.registerItem(Names.JUMBO_FURNACE, JumboFurnaceItem::new);
 		
@@ -203,7 +202,7 @@ public class JumboFurnace
 	{
 		BlockState state = event.getPlacedBlock();
 		LevelAccessor levelAccess = event.getLevel();
-		if (!Transaction.hasActiveTransaction() && !(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof ServerLevel level)
+		if (!(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof ServerLevel level)
 		{
 			BlockPos pos = event.getPos();
 			BlockState againstState = event.getPlacedAgainst();
