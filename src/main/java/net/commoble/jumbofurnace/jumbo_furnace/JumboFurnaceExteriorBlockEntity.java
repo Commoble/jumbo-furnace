@@ -29,7 +29,7 @@ public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 	public ResourceHandler<ItemResource> getItemHandler(Direction side)
 	{
 		JumboFurnaceCoreBlockEntity core = this.getCoreTile();
-		if (core != null)
+		if (core != null && side != null)
 		{
 			if (side == Direction.UP)
 			{
