@@ -53,11 +53,17 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 	{
 		return Component.translatable("gui.jumbofurnace.category.jumbo_furnace_upgrade");
 	}
-
+	
 	@Override
-	public IDrawable getBackground()
+	public int getWidth()
 	{
-		return this.background;
+		return 186;
+	}
+	
+	@Override
+	public int getHeight()
+	{
+		return 116;
 	}
 
 	@Override
@@ -69,6 +75,7 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 	@Override
 	public void draw(JumboFurnaceUpgrade recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY)
 	{
+		this.background.draw(graphics);
 		Minecraft minecraft = Minecraft.getInstance();
 		Font fontRenderer = minecraft.font;
 		FormattedText text = Component.translatable("jumbofurnace.jumbo_furnace_upgrade_info");

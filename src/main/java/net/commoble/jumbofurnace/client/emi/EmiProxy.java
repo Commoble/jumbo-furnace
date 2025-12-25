@@ -23,9 +23,9 @@ public class EmiProxy //implements EmiPlugin
 //		}
 //	}
 //	
-//	static ResourceLocation wrapId(ResourceLocation original)
+//	static Identifier wrapId(Identifier original)
 //	{
-//		return ResourceLocation.fromNamespaceAndPath(original.getNamespace(), String.format("/jumbo_smelting_wrapper/%s", original.getPath()));
+//		return Identifier.fromNamespaceAndPath(original.getNamespace(), String.format("/jumbo_smelting_wrapper/%s", original.getPath()));
 //	}
 
 }

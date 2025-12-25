@@ -39,7 +39,7 @@ Jumbo Furnaces are created when a player places 27 standard furnaces in a 3x3x3 
     # Does this dependency have to exist - if not, ordering below must be specified
     type="required"
     # The version range of the dependency
-    versionRange="[21.10.21-beta,)" #mandatory
+    versionRange="[21.11.13-beta,)" #mandatory
     # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
     ordering="NONE"
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
@@ -48,6 +48,6 @@ Jumbo Furnaces are created when a player places 27 standard furnaces in a 3x3x3 
 [[dependencies.jumbofurnace]]
     modId="minecraft"
     type="required"
-    versionRange="[1.21.10,)"
+    versionRange="[1.21.11,26.1)"
     ordering="NONE"
     side="BOTH"

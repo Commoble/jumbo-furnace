@@ -47,6 +47,12 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	{
 		return backgroundInputs.getWidth() + 56 + xlBackgroundOutputs.getWidth();
 	}
+	
+	@Override
+	public int getHeight()
+	{
+		return 56;
+	}
 
 	@Override
 	public IRecipeType<JumboFurnaceRecipe> getRecipeType()
@@ -61,12 +67,6 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	}
 
 	@Override
-	public IDrawable getBackground()
-	{
-		return this.backgroundInputs;
-	}
-
-	@Override
 	public IDrawable getIcon()
 	{
 		return this.icon;
@@ -75,6 +75,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	@Override
 	public void draw(JumboFurnaceRecipe recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY)
 	{
+		this.backgroundInputs.draw(graphics);
 		this.xlBackgroundOutputs.draw(graphics, 110, 0);
 		this.animatedFlame.draw(graphics, 75, 38);
 		this.arrow.draw(graphics, 70, 18);

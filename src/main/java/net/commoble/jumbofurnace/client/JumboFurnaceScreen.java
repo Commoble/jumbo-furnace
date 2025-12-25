@@ -10,15 +10,15 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu>
 {
-	public static final ResourceLocation GUI_TEXTURE = JumboFurnace.id("textures/gui/jumbo_furnace.png");
-	public static final ResourceLocation LIT_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("container/furnace/lit_progress");
+	public static final Identifier GUI_TEXTURE = JumboFurnace.id("textures/gui/jumbo_furnace.png");
+	public static final Identifier LIT_PROGRESS_SPRITE = Identifier.withDefaultNamespace("container/furnace/lit_progress");
 
 	// progress bar stuff
 	public static final int BURN_METER_FROM_X = 176;
@@ -55,7 +55,6 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 		this.renderTooltip(graphics, x, y);
 	}
 
-	@SuppressWarnings("resource")
 	@Override
 	protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY)
 	{		

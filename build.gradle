@@ -81,16 +81,15 @@ artifacts {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-			artifactId project.archivesBaseName
-            artifact jar
-			artifact sourcesJar
-			artifact javadocJar
+			from components.java
+            artifact sourcesJar
+            artifact javadocJar
         }
     }
     repositories {
         maven {
 			name="localMaven"
-            url "file:///${project.projectDir}/maven"
+			url = "./maven"
         }
     }
 }

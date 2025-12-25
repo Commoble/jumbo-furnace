@@ -1,8 +1,8 @@
 package net.commoble.jumbofurnace.client.emi;
 
-public record JumboSmeltingEmiRecipe() {}/*ResourceLocation id, List<EmiIngredient> inputs, List<EmiStack> outputs, float experience, int cookingTime) implements EmiRecipe
+public record JumboSmeltingEmiRecipe() {}/*Identifier id, List<EmiIngredient> inputs, List<EmiStack> outputs, float experience, int cookingTime) implements EmiRecipe
 {
-	public JumboSmeltingEmiRecipe(ResourceLocation id, JumboFurnaceRecipe recipe)
+	public JumboSmeltingEmiRecipe(Identifier id, JumboFurnaceRecipe recipe)
 	{
 		this(id,
 			recipe.ingredients()
@@ -25,7 +25,7 @@ public record JumboSmeltingEmiRecipe() {}/*ResourceLocation id, List<EmiIngredie
 	}
 
 	@Override
-	public @Nullable ResourceLocation getId()
+	public @Nullable Identifier getId()
 	{
 		return this.id;
 	}

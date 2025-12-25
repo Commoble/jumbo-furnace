@@ -1,3 +1,6 @@
+## 21.11.0
+* Update to MC 1.21.11 / Neoforge 21.11.13-beta
+
 ## 21.10.1
 * Fix crash in newer neoforge betas due to change in transaction APIs. Now requires neoforge 21.10.21-beta
 

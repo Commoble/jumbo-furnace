@@ -14,14 +14,14 @@ import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import net.commoble.jumbofurnace.JumboFurnace;
 import net.commoble.jumbofurnace.client.ClientProxy;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 @JeiPlugin
 public class JEIProxy implements IModPlugin
 {
-	public static final ResourceLocation CRAFTING_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/crafting_table.png");
-	public static final ResourceLocation FURNACE_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/furnace.png");
+	public static final Identifier CRAFTING_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/crafting_table.png");
+	public static final Identifier FURNACE_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/furnace.png");
 	
 	@Nullable
 	private JumboSmeltingCategory jumboSmeltingCategory;
@@ -29,10 +29,10 @@ public class JEIProxy implements IModPlugin
 	@Nullable
 	private JumboFurnaceUpgradeCategory jumboFurnaceUpgradeCategory;
 
-	public static final ResourceLocation ID = JumboFurnace.id(JumboFurnace.MODID);
+	public static final Identifier ID = JumboFurnace.id(JumboFurnace.MODID);
 	
 	@Override
-	public ResourceLocation getPluginUid()
+	public Identifier getPluginUid()
 	{
 		return ID;
 	}

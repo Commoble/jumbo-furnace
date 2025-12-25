@@ -32,7 +32,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -145,7 +145,7 @@ public class JumboFurnace
 		
 		this.jumboFurnaceMenuType = menus.register(Names.JUMBO_FURNACE, () -> new MenuType<>(JumboFurnaceMenu::getClientMenu, FeatureFlags.VANILLA_SET));
 		
-		this.jumboSmeltingRecipeType = recipeTypes.register(Names.JUMBO_SMELTING, () -> RecipeType.simple(ResourceLocation.fromNamespaceAndPath(MODID, Names.JUMBO_SMELTING)));
+		this.jumboSmeltingRecipeType = recipeTypes.register(Names.JUMBO_SMELTING, () -> RecipeType.simple(Identifier.fromNamespaceAndPath(MODID, Names.JUMBO_SMELTING)));
 		
 		this.jumboSmeltingRecipeSerializer = recipeSerializers.register(Names.JUMBO_SMELTING, () -> new SimpleRecipeSerializer<>(JumboFurnaceRecipe.CODEC, JumboFurnaceRecipe.STREAM_CODEC));
 		
@@ -326,8 +326,8 @@ public class JumboFurnace
 		}
 	}
 	
-	public static ResourceLocation id(String path)
+	public static Identifier id(String path)
 	{
-		return ResourceLocation.fromNamespaceAndPath(MODID, path);
+		return Identifier.fromNamespaceAndPath(MODID, path);
 	}
 }
