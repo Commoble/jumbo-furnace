@@ -38,9 +38,7 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 
 	public JumboFurnaceScreen(JumboFurnaceMenu screenContainer, Inventory inv, Component titleIn)
 	{
-		super(screenContainer, inv, titleIn);
-		this.imageWidth = 176;
-		this.imageHeight = 240;
+		super(screenContainer, inv, titleIn, 176, 240);
 		this.titleLabelX = 8;
 		this.titleLabelY = 6;
 		this.inventoryLabelX = 8;
