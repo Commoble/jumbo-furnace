@@ -1,3 +1,6 @@
+## 21.11.1
+* Add missing jar manifest attributes (fixes version not appearing in mods list)
+
 ## 21.11.0
 * Update to MC 1.21.11 / Neoforge 21.11.13-beta
 
