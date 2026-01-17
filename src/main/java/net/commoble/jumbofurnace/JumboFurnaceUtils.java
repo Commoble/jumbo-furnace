@@ -91,4 +91,9 @@ public class JumboFurnaceUtils
 			return stack.copyWithCount(oldCount - inserted);
 		}
 	}
+	
+	public static boolean canBeJumboFurnaceInput(Item item, Level level)
+	{
+		return !RecipeSorter.INSTANCE.getSortedFurnaceRecipesValidForInputs(List.of(item), level.getRecipeManager()).isEmpty();
+	}
 }

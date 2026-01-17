@@ -20,10 +20,33 @@ public class JumboFurnaceOutputSlot extends ResourceHandlerSlot
 	}
 
 	@Override
+	public ItemStack remove(int amount)
+	{
+		// vanilla furnace tracks removecount weirdly, do it the same way in case it's important
+		if (this.hasItem())
+		{
+			this.removeCount = this.removeCount + Math.min(amount, this.getItem().getCount());
+		}
+
+		return super.remove(amount);
+	}
+
+	@Override
 	public void onTake(Player thePlayer, ItemStack stack)
 	{
 		this.checkTakeAchievements(stack);
 		super.onTake(thePlayer, stack);
+	}
+
+	// why does SlotItemHandler override this to noop??
+	@Override
+	public void onQuickCraft(ItemStack modifiedStack, ItemStack originalStack)
+	{
+		int i = originalStack.getCount() - modifiedStack.getCount();
+		if (i > 0)
+		{
+			this.onQuickCraft(originalStack, i);
+		}
 	}
 
 	/**

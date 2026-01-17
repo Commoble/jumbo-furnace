@@ -200,6 +200,10 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 				{
 					return ItemStack.EMPTY;
 				}
+				if (index >= FIRST_OUTPUT_SLOT && index < ORTHOFURNACE_SLOT)
+				{
+					slot.onQuickCraft(stackInSlot, slotStackCopy);
+				}
 			}
 			// otherwise, this is a player slot
 			else
@@ -218,27 +222,46 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 						return ItemStack.EMPTY;
 					}
 				}
-				// if we can burn the item, try to put it in the fuel slots first
-				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot, player.level().fuelValues()) > 0)
+				// handle moving items into input/fuel slots
+				// we should have parity with vanilla here
+				// firstly, if the target item is an ingredient in any relevant recipe, try to move to input slots
+				if (JumboFurnaceUtils.canBeJumboFurnaceInput(stackInSlot.getItem(), player.level()))
 				{
-					// if we changed any fuel item slots
-					if (this.moveItemStackTo(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))
+					if (this.moveItemStackTo(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
 					{
-						this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markFuelInventoryChanged);
+						this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markInputInventoryChanged);
 					}
 					else
 					{
 						return ItemStack.EMPTY;
 					}
 				}
-				// otherwise, try to put it in the input slots
-				if (this.moveItemStackTo(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
+				// if we can burn the item, try to put it in the fuel slots
+				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot) > 0)
 				{
-					this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markInputInventoryChanged);
+					// if we changed any fuel item slots
+					if (this.moveItemStackTo(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))
+					{
+						this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markFuelInventoryChanged);
+					}
+					else {
+						return ItemStack.EMPTY;
+					}
 				}
-				else
+				// if it's neither an input nor a fuel, just try to swap between hotbar/backpack
+				else if (isHotbar(index))
 				{
-					return ItemStack.EMPTY;
+					if (!this.moveItemStackTo(stackInSlot, FIRST_BACKPACK_SLOT, END_PLAYER_SLOTS, false))
+					{
+						return ItemStack.EMPTY;
+					}
+				}
+				else if (isBackpack(index))
+				{
+					if (!this.moveItemStackTo(stackInSlot, FIRST_HOTBAR_SLOT, FIRST_BACKPACK_SLOT, false))
+					{
+						return ItemStack.EMPTY;
+					}
 				}
 			}
 			
@@ -311,5 +334,14 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 	public void updateRecipes(List<InFlightRecipe> recipes)
 	{
 		this.recipes = recipes;
+	}
+	public static boolean isHotbar(int index)
+	{
+		return index >= FIRST_HOTBAR_SLOT && index < FIRST_BACKPACK_SLOT;
+	}
+	
+	public static boolean isBackpack(int index)
+	{
+		return index >= FIRST_BACKPACK_SLOT && index < END_PLAYER_SLOTS;
 	}
 }
