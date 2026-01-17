@@ -215,7 +215,21 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 						return ItemStack.EMPTY;
 					}
 				}
-				// if we can burn the item, try to put it in the fuel slots first
+				// handle moving items into input/fuel slots
+				// we should have parity with vanilla here
+				// firstly, if the target item is an ingredient in any relevant recipe, try to move to input slots
+				if (JumboFurnaceUtils.canBeJumboFurnaceInput(stackInSlot.getItem(), player.level()))
+				{
+					if (this.moveItemStackTo(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
+					{
+						this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markInputInventoryChanged);
+					}
+					else
+					{
+						return ItemStack.EMPTY;
+					}
+				}
+				// if we can burn the item, try to put it in the fuel slots
 				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot) > 0)
 				{
 					// if we changed any fuel item slots
@@ -223,19 +237,24 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 					{
 						this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markFuelInventoryChanged);
 					}
-					else
+					else {
+						return ItemStack.EMPTY;
+					}
+				}
+				// if it's neither an input nor a fuel, just try to swap between hotbar/backpack
+				else if (isHotbar(index))
+				{
+					if (!this.moveItemStackTo(stackInSlot, FIRST_BACKPACK_SLOT, END_PLAYER_SLOTS, false))
 					{
 						return ItemStack.EMPTY;
 					}
 				}
-				// otherwise, try to put it in the input slots
-				if (this.moveItemStackTo(stackInSlot, FIRST_INPUT_SLOT, END_INPUT_SLOTS, false))
+				else if (isBackpack(index))
 				{
-					this.serverFurnace.ifPresent(JumboFurnaceCoreBlockEntity::markInputInventoryChanged);
-				}
-				else
-				{
-					return ItemStack.EMPTY;
+					if (!this.moveItemStackTo(stackInSlot, FIRST_HOTBAR_SLOT, FIRST_BACKPACK_SLOT, false))
+					{
+						return ItemStack.EMPTY;
+					}
 				}
 			}
 			
@@ -299,4 +318,13 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		return this.getBurnTimeRemaining() > 0;
 	}
 
+	public static boolean isHotbar(int index)
+	{
+		return index >= FIRST_HOTBAR_SLOT && index < FIRST_BACKPACK_SLOT;
+	}
+	
+	public static boolean isBackpack(int index)
+	{
+		return index >= FIRST_BACKPACK_SLOT && index < END_PLAYER_SLOTS;
+	}
 }
