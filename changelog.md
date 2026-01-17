@@ -1,4 +1,4 @@
-## 1.21.1-5.0.0.9
+## 21.11.2
 * Fix Jumbo Furnace not incrementing crafting stats when removing items from output slots
 * Shiftclick in Jumbo Furnace menu now behaves consistently with vanilla furnace menu:
 	* If quickmoved item is both an input and a fuel, it will be moved to the input slots

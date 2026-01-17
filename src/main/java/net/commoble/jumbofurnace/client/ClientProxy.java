@@ -14,8 +14,7 @@ import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 
 public class ClientProxy
 {
-	public static RecipeMap clientRecipes = RecipeMap.EMPTY;
-	public static RecipeSorter recipeSorter = new RecipeSorter();
+	public static RecipeSorter recipeSorter = new RecipeSorter(RecipeMap.EMPTY);
 	
 	public static void addClientListeners(IEventBus modBus, IEventBus gameBus)
 	{
@@ -37,18 +36,16 @@ public class ClientProxy
 	
 	private static void onRecipesReceived(RecipesReceivedEvent event)
 	{
-		clientRecipes = event.getRecipeMap();
-		recipeSorter = new RecipeSorter();
+		recipeSorter = new RecipeSorter(event.getRecipeMap());
 	}
 	
 	private static void onLoggingOut(LoggingOut event)
 	{
-		clientRecipes = RecipeMap.EMPTY;
-		recipeSorter = new RecipeSorter();
+		recipeSorter = new RecipeSorter(RecipeMap.EMPTY);
 	}
 	
 	public static List<JumboFurnaceRecipe> getAllSortedFurnaceRecipes()
 	{
-		return recipeSorter.getAllSortedFurnaceRecipes(clientRecipes);
+		return recipeSorter.getAllSortedFurnaceRecipes();
 	}
 }

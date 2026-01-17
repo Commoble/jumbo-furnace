@@ -237,7 +237,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 					}
 				}
 				// if we can burn the item, try to put it in the fuel slots
-				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot) > 0)
+				else if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot, player.level().fuelValues()) > 0)
 				{
 					// if we changed any fuel item slots
 					if (this.moveItemStackTo(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))

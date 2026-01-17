@@ -10,39 +10,64 @@ import java.util.SortedSet;
 import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.commoble.jumbofurnace.JumboFurnace;
+import net.commoble.jumbofurnace.client.ClientProxy;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
-public class RecipeSorter extends SimplePreparableReloadListener<Void>
+public class RecipeSorter
 {
-	public static final RecipeSorter SERVER_INSTANCE = new RecipeSorter();
+	public static RecipeSorter serverInstance = new RecipeSorter(RecipeMap.EMPTY);
 	
-	// keep track of when recipes have reloaded
-	private int currentGeneration = 0;
-	private int lastKnownGeneration = -1;
-	private Map<Item, List<JumboFurnaceRecipe>> cachedSortedRecipes = new Reference2ObjectOpenHashMap<>();
-	private List<JumboFurnaceRecipe> allRecipes = new ArrayList<>();
+	private final RecipeMap recipeMap;
+	private RecipeCache cache = null;
 	
-	public SortedSet<JumboFurnaceRecipe> getSortedFurnaceRecipesValidForInputs(Collection<Item> inputItems, RecipeMap recipeMap)
+	public static void onServerReload(RecipeMap recipeMap)
 	{
-		if (this.currentGeneration != this.lastKnownGeneration)
+		RecipeSorter theNewOne = new RecipeSorter(recipeMap);
+		serverInstance = theNewOne;
+	}
+	
+	public RecipeSorter(RecipeMap recipeMap)
+	{
+		this.recipeMap = recipeMap;
+	}
+	
+	public RecipeMap recipeMap()
+	{
+		return this.recipeMap;
+	}
+	
+	private RecipeCache getOrCreateCache()
+	{
+		RecipeCache cache = this.cache;
+		if (cache == null)
 		{
-			this.sortFurnaceRecipes(recipeMap);
-			this.lastKnownGeneration = this.currentGeneration;
+			cache = RecipeCache.create(this.recipeMap);
+			this.cache = cache;
 		}
-		
+		return cache;
+	}
+	
+	public static RecipeSorter getSidedRecipes(Level level)
+	{
+		return level.isClientSide()
+			? ClientProxy.recipeSorter
+			: serverInstance;
+	}
+	
+	public SortedSet<JumboFurnaceRecipe> getSortedFurnaceRecipesValidForInputs(Collection<Item> inputItems)
+	{		
 		SortedSet<JumboFurnaceRecipe> recipesForItems = new ObjectRBTreeSet<>(RecipeSorter::compareRecipes);
+		var cachedSortedRecipes = this.getOrCreateCache().cachedSortedRecipes;
 		for (Item item : inputItems)
 		{
-			var recipesForItem = this.cachedSortedRecipes.get(item);
+			var recipesForItem = cachedSortedRecipes.get(item);
 			if (recipesForItem != null)
 			{
 				recipesForItems.addAll(recipesForItem);
@@ -52,49 +77,9 @@ public class RecipeSorter extends SimplePreparableReloadListener<Void>
 		return recipesForItems;
 	}
 	
-	public List<JumboFurnaceRecipe> getAllSortedFurnaceRecipes(RecipeMap recipeMap)
+	public List<JumboFurnaceRecipe> getAllSortedFurnaceRecipes()
 	{
-		if (this.currentGeneration != this.lastKnownGeneration)
-		{
-			this.sortFurnaceRecipes(recipeMap);
-			this.lastKnownGeneration = this.currentGeneration;
-		}
-		return allRecipes;
-	}
-	
-	private void sortFurnaceRecipes(RecipeMap recipeMap)
-	{
-		Map<Item, List<JumboFurnaceRecipe>> results = new Reference2ObjectOpenHashMap<>();
-		SortedSet<JumboFurnaceRecipe> allRecipes = new ObjectRBTreeSet<>(RecipeSorter::compareRecipes);
-		
-		// we need to track the wrapped recipes so we don't put two copies of them in the results map
-		Map<ResourceKey<Recipe<?>>, JumboFurnaceRecipe> wrappedRecipes = new HashMap<>();
-		for (var holder : recipeMap.byType(RecipeType.SMELTING))
-		{
-			ResourceKey<Recipe<?>> key = holder.id();
-			JumboFurnaceRecipe recipe = new JumboFurnaceRecipe(holder.value());
-			allRecipes.add(recipe);
-			Ingredient ingredient = holder.value().input();
-			ingredient.getValues().forEach(itemHolder -> 
-			{
-				results.computeIfAbsent(itemHolder.value(), x -> new ArrayList<>())
-					.add(wrappedRecipes.computeIfAbsent(key, x -> recipe));
-			});
-		}
-		for (var holder : recipeMap.byType(JumboFurnace.get().jumboSmeltingRecipeType.get()))
-		{
-			JumboFurnaceRecipe recipe = holder.value();
-			allRecipes.add(recipe);
-			for (SizedIngredient sizedIngredient : recipe.ingredients())
-			{
-				sizedIngredient.ingredient().getValues().forEach(itemHolder -> {
-					results.computeIfAbsent(itemHolder.value(), x -> new ArrayList<>())
-					.add(recipe);
-				});
-			}
-		}
-		this.cachedSortedRecipes = results;
-		this.allRecipes = allRecipes.stream().toList();
+		return this.getOrCreateCache().allRecipes;
 	}
 	
 	/*
@@ -106,16 +91,41 @@ public class RecipeSorter extends SimplePreparableReloadListener<Void>
 		// recipe with higher specificity should be lower when compared, so flip the order
 		return b.specificity().get() - a.specificity().get();
 	}
-
-	@Override
-	protected Void prepare(ResourceManager resourceManagerIn, ProfilerFiller profilerIn)
+	
+	private static record RecipeCache(Map<Item, List<JumboFurnaceRecipe>> cachedSortedRecipes, List<JumboFurnaceRecipe> allRecipes)
 	{
-		return null;
-	}
-
-	@Override
-	protected void apply(Void objectIn, ResourceManager resourceManagerIn, ProfilerFiller profilerIn)
-	{
-		this.currentGeneration++;
+		public static RecipeCache create(RecipeMap recipeMap)
+		{
+			Map<Item, List<JumboFurnaceRecipe>> results = new Reference2ObjectOpenHashMap<>();
+			SortedSet<JumboFurnaceRecipe> allRecipes = new ObjectRBTreeSet<>(RecipeSorter::compareRecipes);
+			
+			// we need to track the wrapped recipes so we don't put two copies of them in the results map
+			Map<ResourceKey<Recipe<?>>, JumboFurnaceRecipe> wrappedRecipes = new HashMap<>();
+			for (var holder : recipeMap.byType(RecipeType.SMELTING))
+			{
+				ResourceKey<Recipe<?>> key = holder.id();
+				JumboFurnaceRecipe recipe = new JumboFurnaceRecipe(holder.value());
+				allRecipes.add(recipe);
+				Ingredient ingredient = holder.value().input();
+				ingredient.getValues().forEach(itemHolder -> 
+				{
+					results.computeIfAbsent(itemHolder.value(), x -> new ArrayList<>())
+						.add(wrappedRecipes.computeIfAbsent(key, x -> recipe));
+				});
+			}
+			for (var holder : recipeMap.byType(JumboFurnace.get().jumboSmeltingRecipeType.get()))
+			{
+				JumboFurnaceRecipe recipe = holder.value();
+				allRecipes.add(recipe);
+				for (SizedIngredient sizedIngredient : recipe.ingredients())
+				{
+					sizedIngredient.ingredient().getValues().forEach(itemHolder -> {
+						results.computeIfAbsent(itemHolder.value(), x -> new ArrayList<>())
+						.add(recipe);
+					});
+				}
+			}
+			return new RecipeCache(results, allRecipes.stream().toList());
+		}
 	}
 }
