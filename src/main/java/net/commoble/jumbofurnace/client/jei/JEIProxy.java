@@ -81,7 +81,6 @@ public class JEIProxy implements IModPlugin
 	
 	public List<JumboFurnaceRecipe> getRecipes()
 	{
-		@SuppressWarnings("resource")
 		ClientLevel world = Minecraft.getInstance().level;
 		if (world != null)
 		{
