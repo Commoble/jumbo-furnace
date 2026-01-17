@@ -15,13 +15,11 @@ import net.commoble.jumbofurnace.recipes.InFlightRecipe;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -151,8 +149,6 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	
 	protected void serverTick()
 	{
-		if (!(this.level instanceof ServerLevel serverLevel))
-			return;
 		boolean wasBurningBeforeTick = this.burnTimeRemaining > 0;
 		// if we're on fire, we're definitely going to call setChanged later because we're going to decrement heat
 		boolean dirty = wasBurningBeforeTick;
@@ -190,7 +186,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			// outputs have decreased since we last checked recipes
 		if (this.hasHeatOrFuel() && this.shouldCheckRecipes())
 		{
-			boolean processedAnyInputs = this.processInputs(serverLevel.recipeAccess().recipeMap());
+			boolean processedAnyInputs = this.processInputs();
 			if (processedAnyInputs)
 			{
 				dirty = true;
@@ -316,7 +312,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	/**
 	 * @return true if we processed any inputs
 	 */
-	private boolean processInputs(RecipeMap recipeMap)
+	private boolean processInputs()
 	{
 		int freeRecipeSlots = this.getMaxSimultaneousRecipes() - this.inFlightRecipes.size();
 		if (freeRecipeSlots <= 0)
@@ -373,7 +369,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		}
 		
 		boolean startedAnyRecipes = false;
-		var recipes = RecipeSorter.SERVER_INSTANCE.getSortedFurnaceRecipesValidForInputs(currentInputItems, recipeMap);
+		var recipes = RecipeSorter.serverInstance.getSortedFurnaceRecipesValidForInputs(currentInputItems);
 		
 		iterateRecipes:
 		for (var recipe : recipes)

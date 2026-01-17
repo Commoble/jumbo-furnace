@@ -19,7 +19,7 @@ group = "net.commoble.${modid}"
 base { archivesName="${modid}" }
 version = "${mod_version}"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+java.toolchain.languageVersion = JavaLanguageVersion.of("${java_version}")
 
 // include resources generated from datagen in main
 sourceSets.main.resources { srcDir 'src/generated/resources' }
@@ -65,6 +65,19 @@ dependencies {
 	
 	//compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
 	//localRuntime "dev.emi:emi-neoforge:${emi_version}"
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": "${modid}",
+            "Specification-Vendor": "Commoble",
+            "Specification-Version": "${version}",
+            "Implementation-Title": project.name,
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor" :"Commoble"
+        ])
+    }
 }
 
 java

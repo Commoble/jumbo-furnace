@@ -31,14 +31,17 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.TriState;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -189,7 +192,21 @@ public class JumboFurnace
 	
 	private void onAddServerReloadListeners(AddServerReloadListenersEvent event)
 	{
-		event.addListener(JumboFurnace.id("recipe_sorter"), RecipeSorter.SERVER_INSTANCE);
+		event.addListener(JumboFurnace.id("recipe_sorter"), new SimplePreparableReloadListener<Void>() {
+
+			@Override
+			protected Void prepare(ResourceManager resourceManager, ProfilerFiller profilerFiller)
+			{
+				return null;
+			}
+
+			@Override
+			protected void apply(Void nothing, ResourceManager resourceManager, ProfilerFiller profilerFiller)
+			{
+				RecipeSorter.onServerReload(event.getServerResources().getRecipeManager().recipeMap());
+			}
+			
+		});
 	}
 	
 	private void onRegisterPayloads(RegisterPayloadHandlersEvent event)

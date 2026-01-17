@@ -10,7 +10,6 @@ import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class JumboFurnaceOutputSlot extends ResourceHandlerSlot
 {
-	private int removeCount = 0;
 	private final Player player;
 
 	public JumboFurnaceOutputSlot(Player player, ItemStacksResourceHandler itemHandler, int index, int xPosition, int yPosition)
@@ -26,37 +25,42 @@ public class JumboFurnaceOutputSlot extends ResourceHandlerSlot
 		super.onTake(thePlayer, stack);
 	}
 
-	/**
-	 * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not
-	 * ore and wood. Typically increases an internal count then calls
-	 * onCrafting(item).
-	 */
+	// why does SlotItemHandler override this to noop??
 	@Override
-	protected void onQuickCraft(ItemStack stack, int amount)
+	public void onQuickCraft(ItemStack modifiedStack, ItemStack originalStack)
 	{
-		this.removeCount += amount;
-		this.checkTakeAchievements(stack);
+		int i = originalStack.getCount() - modifiedStack.getCount();
+		if (i > 0)
+		{
+			this.checkTakeAchievements(originalStack, i);
+		}
+	}
+	
+	@Override
+	protected void checkTakeAchievements(ItemStack stack)
+	{
+		this.checkTakeAchievements(stack, stack.getCount());
 	}
 
 	/**
 	 * the itemStack passed in is the output - ie, iron ingots, and pickaxes, not
 	 * ore and wood.
+	 * @param stack ItemStack in slot. Size of stack is not necessarily the amount taken.
+	 * @param amount int amount of stack which was actually taken
 	 */
-	@Override
-	protected void checkTakeAchievements(ItemStack stack)
+	protected void checkTakeAchievements(ItemStack stack, int amount)
 	{
-		stack.onCraftedBy(this.player, this.removeCount);
+		stack.onCraftedBy(this.player, amount);
 		
 		if (!this.player.level().isClientSide() && this.getResourceHandler() instanceof OutputItemHandler outputHandler)
 		{
 			spawnExpOrbs(this.player, outputHandler.getAndConsumeExperience());
 		}
 		
-		if (this.removeCount > 0)
+		if (amount > 0)
 		{
-			EventHooks.firePlayerSmeltedEvent(this.player, stack, this.removeCount);	
+			EventHooks.firePlayerSmeltedEvent(this.player, stack, amount);	
 		}
-		this.removeCount = 0;
 	}
 
 	public static void spawnExpOrbs(Player player, float experience)

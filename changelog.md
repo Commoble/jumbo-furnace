@@ -1,3 +1,12 @@
+## 21.11.2
+* Fix Jumbo Furnace not incrementing crafting stats when removing items from output slots
+* Shiftclick in Jumbo Furnace menu now behaves consistently with vanilla furnace menu:
+	* If quickmoved item is both an input and a fuel, it will be moved to the input slots
+	* If quickmoved item is neither an input or a fuel, it will swap between backpack and hotbar slots
+
+## 21.11.1
+* Add missing jar manifest attributes (fixes version not appearing in mods list)
+
 ## 21.11.0
 * Update to MC 1.21.11 / Neoforge 21.11.13-beta
 

@@ -1,9 +1,14 @@
 package net.commoble.jumbofurnace;
 
+import java.util.List;
+
 import org.jetbrains.annotations.Nullable;
 
+import net.commoble.jumbofurnace.recipes.RecipeSorter;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.FuelValues;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
@@ -90,5 +95,10 @@ public class JumboFurnaceUtils
 			t.commit();
 			return stack.copyWithCount(oldCount - inserted);
 		}
+	}
+	
+	public static boolean canBeJumboFurnaceInput(Item item, Level level)
+	{
+		return !RecipeSorter.getSidedRecipes(level).getSortedFurnaceRecipesValidForInputs(List.of(item)).isEmpty();
 	}
 }
