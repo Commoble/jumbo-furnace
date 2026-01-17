@@ -1,3 +1,6 @@
+## 1.21.1-5.0.0.9
+* Fix Jumbo Furnace not incrementing crafting stats when removing items from output slots
+
 ## 1.21.1-5.0.0.8
 * Jumbo Furnaces no longer retain crafting remainders of recipe inputs, to match expected behavior of vanilla furnaces. Recipes that expect crafting remainders to be generated will need to implement them as a jumbo smelting recipe with multiple outputs.
 

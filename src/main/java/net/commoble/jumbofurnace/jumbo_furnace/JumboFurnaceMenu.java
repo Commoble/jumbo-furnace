@@ -193,6 +193,10 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 				{
 					return ItemStack.EMPTY;
 				}
+				if (index >= FIRST_OUTPUT_SLOT && index < ORTHOFURNACE_SLOT)
+				{
+					slot.onQuickCraft(stackInSlot, slotStackCopy);
+				}
 			}
 			// otherwise, this is a player slot
 			else
