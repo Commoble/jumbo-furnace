@@ -1,7 +1,12 @@
 package net.commoble.jumbofurnace;
 
+import java.util.List;
+
+import net.commoble.jumbofurnace.recipes.RecipeSorter;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -44,5 +49,10 @@ public class JumboFurnaceUtils
 		{
 			to.setStackInSlot(i, from.getStackInSlot(i));
 		}
+	}
+	
+	public static boolean canBeJumboFurnaceInput(Item item, Level level)
+	{
+		return !RecipeSorter.INSTANCE.getSortedFurnaceRecipesValidForInputs(List.of(item), level.getRecipeManager()).isEmpty();
 	}
 }
