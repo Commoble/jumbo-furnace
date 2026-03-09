@@ -126,7 +126,7 @@ public class JumboFurnace
 		
 		this.jumboFurnaceBlock = blocks.registerBlock(Names.JUMBO_FURNACE, JumboFurnaceBlock::new, () -> Block.Properties.ofFullCopy(Blocks.FURNACE));
 		
-		this.jumboFurnaceItem = items.registerItem(Names.JUMBO_FURNACE, JumboFurnaceItem::new);
+		this.jumboFurnaceItem = items.registerItem(Names.JUMBO_FURNACE, (props) -> new JumboFurnaceItem(this.jumboFurnaceBlock.get(), props));
 		
 		this.jumboFurnaceJeiDummy = items.registerItem(Names.JUMBO_FURNACE_JEI, props -> new Item(props)
 		{

@@ -12,19 +12,20 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class JumboFurnaceItem extends Item
+public class JumboFurnaceItem extends BlockItem
 {
 
-	public JumboFurnaceItem(Properties properties)
+	public JumboFurnaceItem(Block block, Properties properties)
 	{
-		super(properties);
+		super(block, properties);
 	}
 
 	@Override
@@ -62,8 +63,8 @@ public class JumboFurnaceItem extends Item
 			// need to check perms on server, but have to return same action result on client
 			return InteractionResult.SUCCESS;
 		}
-		
-		return super.useOn(context);
+
+		return InteractionResult.PASS;
 	}
 	
 	public static class Settable
