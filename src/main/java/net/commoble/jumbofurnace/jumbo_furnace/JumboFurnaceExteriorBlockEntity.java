@@ -1,6 +1,6 @@
 package net.commoble.jumbofurnace.jumbo_furnace;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import net.commoble.jumbofurnace.JumboFurnace;
 import net.minecraft.core.BlockPos;
@@ -16,7 +16,7 @@ public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 {
 	public static JumboFurnaceExteriorBlockEntity create(BlockPos pos, BlockState state)
 	{
-		return new JumboFurnaceExteriorBlockEntity(JumboFurnace.get().jumboFurnaceExteriorBlockEntityType.get(), pos, state);
+		return new JumboFurnaceExteriorBlockEntity(JumboFurnace.JUMBO_FURNACE_EXTERIOR_BLOCKENTITY_TYPE.get(), pos, state);
 	}
 
 	protected JumboFurnaceExteriorBlockEntity(BlockEntityType<? extends JumboFurnaceExteriorBlockEntity> type, BlockPos pos, BlockState state)
@@ -25,13 +25,12 @@ public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 	}
 
 	// exterior blocks grant interfacing access to the internal block's itemhandlers
-	@Nullable
-	public ResourceHandler<ItemResource> getItemHandler(Direction side)
+	public @Nullable ResourceHandler<ItemResource> getItemHandler(@Nullable Direction side)
 	{
 		JumboFurnaceCoreBlockEntity core = this.getCoreTile();
 		if (core != null)
 		{
-			if (side == Direction.UP)
+			if (side == null || side == Direction.UP)
 			{
 				return core.input;
 			}
@@ -50,7 +49,10 @@ public class JumboFurnaceExteriorBlockEntity extends BlockEntity
 	@Nullable
 	public JumboFurnaceCoreBlockEntity getCoreTile()
 	{
-		Level level = this.level;
+		@Nullable Level level = this.level;
+		if (level == null)
+			return null;
+		
 		BlockPos thisPos = this.worldPosition;
 		BlockState thisState = this.getBlockState();
 		return thisState.getBlock() instanceof JumboFurnaceBlock

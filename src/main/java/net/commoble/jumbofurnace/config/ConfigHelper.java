@@ -2,10 +2,9 @@ package net.commoble.jumbofurnace.config;
 
 import java.util.function.Function;
 
-import javax.annotation.Nullable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 
 import net.commoble.jumbofurnace.JumboFurnace;
 import net.neoforged.fml.ModContainer;

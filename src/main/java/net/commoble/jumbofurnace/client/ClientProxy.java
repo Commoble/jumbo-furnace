@@ -26,12 +26,12 @@ public class ClientProxy
 	
 	private static void onRegisterMenuScreens(RegisterMenuScreensEvent event)
 	{
-		event.register(JumboFurnace.get().jumboFurnaceMenuType.get(), JumboFurnaceScreen::new);
+		event.register(JumboFurnace.JUMBO_FURNACE_MENU_TYPE.get(), JumboFurnaceScreen::new);
 	}
 	
 	private static void onDatapackSync(OnDatapackSyncEvent event)
 	{
-		event.sendRecipes(JumboFurnace.get().jumboSmeltingRecipeType.get());
+		event.sendRecipes(JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE.get());
 	}
 	
 	private static void onRecipesReceived(RecipesReceivedEvent event)

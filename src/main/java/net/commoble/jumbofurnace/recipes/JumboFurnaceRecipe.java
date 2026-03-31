@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
@@ -14,12 +14,12 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.commoble.jumbofurnace.JumboFurnace;
 import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
-import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
@@ -33,14 +33,13 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
-public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients, List<ItemStack> results, float experience, int cookingTime, Supplier<Integer> specificity) implements Recipe<RecipeInput>
+public record JumboFurnaceRecipe(List<SizedIngredient> ingredients, List<ItemStackTemplate> results, float experience, int cookingTime, Supplier<Integer> specificity) implements Recipe<RecipeInput>
 {
 	public static final MapCodec<JumboFurnaceRecipe> CODEC = RecordCodecBuilder.mapCodec(builder -> builder.group(
-			Codec.STRING.optionalFieldOf( "group", "").forGetter(JumboFurnaceRecipe::group),
 			SizedIngredient.NESTED_CODEC.listOf()
 				.comapFlatMap(JumboFurnaceRecipe::validateIngredients, Function.identity())
 				.fieldOf("ingredients").forGetter(JumboFurnaceRecipe::ingredients),
-			ItemStack.CODEC.listOf().fieldOf("results")
+			ItemStackTemplate.CODEC.listOf().fieldOf("results")
 				.flatXmap(JumboFurnaceRecipe::readResults, JumboFurnaceRecipe::writeResults)
 				.forGetter(JumboFurnaceRecipe::results),
 			Codec.FLOAT.fieldOf("experience").orElse(0.0F).forGetter(JumboFurnaceRecipe::experience),
@@ -48,16 +47,15 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 		).apply(builder, JumboFurnaceRecipe::new));
 	
 	public static final StreamCodec<RegistryFriendlyByteBuf, JumboFurnaceRecipe> STREAM_CODEC = StreamCodec.composite(
-		ByteBufCodecs.STRING_UTF8, JumboFurnaceRecipe::group,
 		SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()), JumboFurnaceRecipe::ingredients,
-		ItemStack.STREAM_CODEC.apply(ByteBufCodecs.list()), JumboFurnaceRecipe::results,
+		ItemStackTemplate.STREAM_CODEC.apply(ByteBufCodecs.list()), JumboFurnaceRecipe::results,
 		ByteBufCodecs.FLOAT, JumboFurnaceRecipe::experience,
 		ByteBufCodecs.INT, JumboFurnaceRecipe::cookingTime,
 		JumboFurnaceRecipe::new);
 	
-	public JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients, List<ItemStack> results, float experience, int cookingTime)
+	public JumboFurnaceRecipe(List<SizedIngredient> ingredients, List<ItemStackTemplate> results, float experience, int cookingTime)
 	{
-		this(group, ingredients, results, experience, cookingTime, Suppliers.memoize(() -> getSpecificity(ingredients, experience)));
+		this(ingredients, results, experience, cookingTime, Suppliers.memoize(() -> getSpecificity(ingredients, experience)));
 	}
 	
 	public static DataResult<List<SizedIngredient>> validateIngredients(List<SizedIngredient> ingredients)
@@ -74,14 +72,14 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 		return DataResult.success(ingredients);
 	}
 	
-	public static DataResult<List<ItemStack>> readResults(List<ItemStack> list)
+	public static DataResult<List<ItemStackTemplate>> readResults(List<ItemStackTemplate> list)
 	{
 		return list.isEmpty()
 			? DataResult.error(() -> "Empty result list for jumbo smelting recipe")
 			: DataResult.success(list);
 	}
 	
-	public static DataResult<List<ItemStack>> writeResults(List<ItemStack> results)
+	public static DataResult<List<ItemStackTemplate>> writeResults(List<ItemStackTemplate> results)
 	{
 		return results.isEmpty() ? DataResult.error(() -> "Empty result list for jumbo smelting recipe")
 			: DataResult.success(results);
@@ -91,11 +89,17 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 	/** Wrapper around regular furnace recipes to make single-input jumbo furnace recipes **/
 	public JumboFurnaceRecipe(SmeltingRecipe baseRecipe)
 	{
-		this(baseRecipe.group(), List.of(new SizedIngredient(baseRecipe.input(), 1)), List.of(baseRecipe.result), baseRecipe.experience(), baseRecipe.cookingTime());
+		this(List.of(new SizedIngredient(baseRecipe.input(), 1)), List.of(baseRecipe.result), baseRecipe.experience(), baseRecipe.cookingTime());
+	}
+	
+	@Override
+	public String group()
+	{
+		return "";
 	}
 
 	@Override
-	public boolean matches(RecipeInput inv, Level worldIn)
+	public boolean matches(@Nullable RecipeInput inv, Level worldIn)
 	{
 		// TODO not implemented, we still use our custom matching system
 		// might be easier to use the vanilla way now though?
@@ -126,21 +130,21 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 	}
 
 	@Override
-	public ItemStack assemble(RecipeInput input, Provider registries)
+	public ItemStack assemble(@Nullable RecipeInput input)
 	{
-		return this.results.get(0).copy();
+		return this.results.get(0).create();
 	}
 
 	@Override
 	public RecipeSerializer<JumboFurnaceRecipe> getSerializer()
 	{
-		return JumboFurnace.get().jumboSmeltingRecipeSerializer.get();
+		return JumboFurnace.JUMBO_SMELTING_RECIPE_SERIALIZER.get();
 	}
 
 	@Override
 	public RecipeType<JumboFurnaceRecipe> getType()
 	{
-		return JumboFurnace.get().jumboSmeltingRecipeType.get();
+		return JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE.get();
 	}
 	
 	@Override
@@ -188,5 +192,11 @@ public record JumboFurnaceRecipe(String group, List<SizedIngredient> ingredients
 	public RecipeBookCategory recipeBookCategory()
 	{
 		return RecipeBookCategories.FURNACE_MISC;
+	}
+
+	@Override
+	public boolean showNotification()
+	{
+		return false;
 	}
 }

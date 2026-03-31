@@ -6,7 +6,7 @@ import net.commoble.jumbofurnace.JumboFurnace;
 import net.commoble.jumbofurnace.jumbo_furnace.JumboFurnaceMenu;
 import net.commoble.jumbofurnace.recipes.InFlightRecipe;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
@@ -14,6 +14,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 
 public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu>
 {
@@ -46,15 +47,7 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int x, int y, float partialTicks)
-	{
-		this.renderBackground(graphics, x, y, partialTicks);
-		super.render(graphics, x, y, partialTicks);
-		this.renderTooltip(graphics, x, y);
-	}
-
-	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY)
+	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks)
 	{		
 		int xStart = (this.width - this.imageWidth) / 2;
 		int yStart = (this.height - this.imageHeight) / 2;
@@ -80,20 +73,20 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 				List<ItemStack> inputs = recipe.inputs();
 				for (ItemStack input : inputs)
 				{
-					graphics.renderItem(input, recipeX, recipeY);
+					graphics.item(input, recipeX, recipeY);
 				}
 			}
 			else // render outputs
 			{
-				List<ItemStack> outputs = recipe.recipe().results();
-				for (ItemStack output : outputs)
+				List<ItemStackTemplate> outputs = recipe.recipe().results();
+				for (ItemStackTemplate output : outputs)
 				{
-					graphics.renderItem(output, recipeX, recipeY);
+					graphics.item(output.create(), recipeX, recipeY);
 				}
 			}
 		}
 		
 		// draw recipe count
-		graphics.drawString(Minecraft.getInstance().font, Component.literal("x" + String.valueOf(this.menu.getCurrentRecipeCount())), xStart + COOK_METER_TO_X + 10, yStart + COOK_METER_TO_Y + 20, 0xFF373737, false);
+		graphics.text(Minecraft.getInstance().font, Component.literal("x" + String.valueOf(this.menu.getCurrentRecipeCount())), xStart + COOK_METER_TO_X + 10, yStart + COOK_METER_TO_Y + 20, 0xFF373737, false);
 	}
 }

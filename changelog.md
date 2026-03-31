@@ -1,3 +1,6 @@
+## 26.1.0.0
+* Update to MC 26.1 / neoforge 26.1.0.17-beta
+
 ## 21.11.2
 * Fix Jumbo Furnace not incrementing crafting stats when removing items from output slots
 * Shiftclick in Jumbo Furnace menu now behaves consistently with vanilla furnace menu:

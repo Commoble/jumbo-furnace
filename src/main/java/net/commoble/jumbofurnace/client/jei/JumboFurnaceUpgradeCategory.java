@@ -16,7 +16,7 @@ import net.commoble.jumbofurnace.JumboFurnace;
 import net.commoble.jumbofurnace.client.jei.JumboFurnaceUpgradeCategory.JumboFurnaceUpgrade;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -36,7 +36,7 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 	
 	public JumboFurnaceUpgradeCategory(IGuiHelper helper)
 	{
-		this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
+		this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(JumboFurnace.JUMBO_FURNACE_JEI_DUMMY.get()));
 		this.background = helper.drawableBuilder(JEIProxy.FURNACE_TEXTURE, 111, 30, 26, 26)
 			.addPadding(0, 80, 45, 45)
 			.build();
@@ -66,14 +66,16 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 		return 116;
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public IDrawable getIcon()
 	{
 		return this.icon;
 	}
 
+	@SuppressWarnings("null")
 	@Override
-	public void draw(JumboFurnaceUpgrade recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY)
+	public void draw(JumboFurnaceUpgrade recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor graphics, double mouseX, double mouseY)
 	{
 		this.background.draw(graphics);
 		Minecraft minecraft = Minecraft.getInstance();
@@ -83,10 +85,11 @@ public class JumboFurnaceUpgradeCategory implements IRecipeCategory<JumboFurnace
 		int lineCount = lines.size();
 		for (int i=0; i<lineCount; i++)
 		{
-			graphics.drawString(fontRenderer, lines.get(i), 0, 27 + i*9, 0xFF808080, false);
+			graphics.text(fontRenderer, lines.get(i), 0, 27 + i*9, 0xFF808080, false);
 		}
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public void setRecipe(IRecipeLayoutBuilder builder, JumboFurnaceUpgrade recipe, IFocusGroup focuses)
 	{

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
+
 import com.mojang.serialization.Codec;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -19,7 +21,9 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -56,7 +60,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	/**
 	 * cached copy of output slots and inflight recipe results, tossed on relevant updates
 	 */
-	public ItemStacksResourceHandler outputSimulatorCache = null;
+	public @Nullable ItemStacksResourceHandler outputSimulatorCache = null;
 	
 	public int burnTimeRemaining = 0;
 	public int lastItemBurnedValue = 200;
@@ -65,7 +69,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	
 	public static JumboFurnaceCoreBlockEntity create(BlockPos pos, BlockState state)
 	{
-		return new JumboFurnaceCoreBlockEntity(JumboFurnace.get().jumboFurnaceCoreBlockEntityType.get(), pos, state);
+		return new JumboFurnaceCoreBlockEntity(JumboFurnace.JUMBO_FURNACE_CORE_BLOCKENTITY_TYPE.get(), pos, state);
 	}
 	
 	protected JumboFurnaceCoreBlockEntity(BlockEntityType<? extends JumboFurnaceCoreBlockEntity> type, BlockPos pos, BlockState state)
@@ -112,13 +116,17 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	
 	public void updateBurningBlockstates(boolean burning)
 	{
+		@Nullable Level level = this.level;
+		if (level == null)
+			return;
+		
 		for (Direction direction : Direction.Plane.HORIZONTAL)
 		{
 			BlockPos adjacentPos = this.worldPosition.relative(direction);
-			BlockState state = this.level.getBlockState(adjacentPos);
+			BlockState state = level.getBlockState(adjacentPos);
 			if (state.getBlock() instanceof JumboFurnaceBlock)
 			{
-				this.level.setBlockAndUpdate(adjacentPos, state.setValue(JumboFurnaceBlock.LIT, burning));
+				level.setBlockAndUpdate(adjacentPos, state.setValue(JumboFurnaceBlock.LIT, burning));
 			}
 		}
 	}
@@ -149,6 +157,10 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	
 	protected void serverTick()
 	{
+		@Nullable Level level = this.level;
+		if (level == null)
+			return;
+		
 		boolean wasBurningBeforeTick = this.burnTimeRemaining > 0;
 		// if we're on fire, we're definitely going to call setChanged later because we're going to decrement heat
 		boolean dirty = wasBurningBeforeTick;
@@ -206,8 +218,8 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			this.setChanged();
 			BlockPos.betweenClosedStream(this.getBlockPos().offset(-1,-1,-1), this.getBlockPos().offset(1,1,1)).forEach(subPos ->
 			{
-				BlockState state = this.level.getBlockState(subPos);
-				this.level.updateNeighborsAt(subPos, state.getBlock());
+				BlockState state = level.getBlockState(subPos);
+				level.updateNeighborsAt(subPos, state.getBlock());
 			});
 				
 		}
@@ -314,6 +326,10 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	 */
 	private boolean processInputs()
 	{
+		@Nullable Level level = this.level;
+		if (level == null)
+			return false;
+		
 		int freeRecipeSlots = this.getMaxSimultaneousRecipes() - this.inFlightRecipes.size();
 		if (freeRecipeSlots <= 0)
 			return false;
@@ -356,7 +372,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		
 		if (!this.isBurning())
 		{
-			FuelValues fuelValues = this.level.fuelValues();
+			FuelValues fuelValues = level.fuelValues();
 			newFuelInventory = JumboFurnaceUtils.copyItemHandler(this.fuel); 
 			consumableFuel = simulateConsumeFuel(newFuelInventory, outputSimulator, fuelValues);
 			// if we can't consume fuel then we can't do anything else anyway
@@ -437,10 +453,10 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				// this requires custom recipe serializers that use a jumbo smelting recipe type
 				// so adding this feature would be in support of mods that are adding their own custom jumbo recipes
 				// so we can add support if it's requested by other mods but otherwise we'll leave it alone
-				for (ItemStack stack : recipe.results())
+				for (ItemStackTemplate stack : recipe.results())
 				{
 					// use insertItemStacked to prioritize slots that already have partial stacks of that item in them
-					if (!JumboFurnaceUtils.insertItemStacked(outputSimulatorForRecipe, stack.copy(), null).isEmpty())
+					if (!JumboFurnaceUtils.insertItemStacked(outputSimulatorForRecipe, stack.create(), null).isEmpty())
 					{
 						continue iterateRecipes;
 					}
@@ -476,7 +492,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			this.burnTimeRemaining += consumableFuelValue;
 			this.lastItemBurnedValue = consumableFuelValue;
 			JumboFurnaceUtils.copyItemHandlerTo(newFuelInventory, this.fuel);
-			ItemStack fuelRemainder = consumableFuel.getCraftingRemainder();
+			ItemStack fuelRemainder = JumboFurnaceUtils.itemStackFromTemplate(consumableFuel.getCraftingRemainder());
 			if (!fuelRemainder.isEmpty())
 			{
 				this.addToFuelOrOutputOrBackstock(fuelRemainder.copy());
@@ -530,9 +546,9 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 					if (completed)
 					{
 						// if we concluded a recipe
-						for (ItemStack stack : recipe.recipe().results())
+						for (ItemStackTemplate stack : recipe.recipe().results())
 						{
-							this.addToOutputOrBackstock(stack.copy());
+							this.addToOutputOrBackstock(stack.create());
 						}
 						this.output.addExperience(recipe.recipe().experience());
 						// we have more room for new recipes so we should check them again
@@ -596,7 +612,10 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	private boolean tryConsumeFuel(ItemStacksResourceHandler outputSimulator)
 	{
 		int slots = this.fuel.size();
-		FuelValues fuelValues = this.level.fuelValues();
+		@Nullable Level level = this.level;
+		if (level == null)
+			return false;
+		FuelValues fuelValues = level.fuelValues();
 		for (int slot=0; slot<slots; slot++)
 		{
 			try(Transaction t = Transaction.open(null))
@@ -605,7 +624,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 				int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(extractedFuel, fuelValues);
 				if (burnTime > 0)
 				{
-					ItemStack remainder = extractedFuel.getCraftingRemainder().copy();
+					ItemStack remainder = JumboFurnaceUtils.itemStackFromTemplate(extractedFuel.getCraftingRemainder());
 					// if there's a remainder then we can only consume the fuel if we can stash the remainder somewhere
 					// if remainder fits in fuel inventory, consume the fuel
 					if (!remainder.isEmpty() && JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder, fuelValues) > 0)
@@ -651,7 +670,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot, fuelValues);
 			if (burnTime > 0)
 			{
-				ItemStack remainder = stackInSlot.getCraftingRemainder();
+				ItemStack remainder = JumboFurnaceUtils.itemStackFromTemplate(stackInSlot.getCraftingRemainder());
 				// if there is a remainder item, use the fuel if it fits in the output simulator
 				// if there is no remainder item, no further checks needed.
 				if (remainder.isEmpty())
@@ -683,19 +702,20 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	
 	private ItemStacksResourceHandler getOutputAndInFlightRecipeResults()
 	{
-		if (this.outputSimulatorCache == null)
+		var outputSimulator = this.outputSimulatorCache;
+		if (outputSimulator  == null)
 		{
-			ItemStacksResourceHandler outputSimulator = JumboFurnaceUtils.copyItemHandler(this.output);
+			outputSimulator = JumboFurnaceUtils.copyItemHandler(this.output);
 			for (InFlightRecipe recipe : this.inFlightRecipes)
 			{
-				for (ItemStack stack : recipe.recipe().results())
+				for (ItemStackTemplate stack : recipe.recipe().results())
 				{
-					JumboFurnaceUtils.insertItemStacked(outputSimulator, stack, null);
+					JumboFurnaceUtils.insertItemStacked(outputSimulator, stack.create(), null);
 				}
 			}
 			this.outputSimulatorCache = outputSimulator;
 		}
-		return this.outputSimulatorCache;
+		return outputSimulator;
 	}
 	
 //	public void craft()
@@ -773,16 +793,21 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	public void setChanged()
 	{
 		super.setChanged();
+		@Nullable Level level = this.level;
+		if (level == null)
+			return;
 		
 		// make sure comparators reading from exterior blocks are updated as well
 		MultiBlockHelper.get3x3CubeAround(this.worldPosition)
 			.filter(exteriorPos -> !exteriorPos.equals(this.worldPosition))
-			.forEach(exteriorPos -> this.level.updateNeighbourForOutputSignal(exteriorPos, this.getBlockState().getBlock()));
+			.forEach(exteriorPos -> level.updateNeighbourForOutputSignal(exteriorPos, this.getBlockState().getBlock()));
 	}
 	
 	private void addToFuelOrOutputOrBackstock(ItemStack stack)
 	{
-		if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stack, this.level.fuelValues()) > 0)
+		@Nullable Level level = this.level;
+		
+		if (level != null && JumboFurnaceUtils.getJumboSmeltingBurnTime(stack, level.fuelValues()) > 0)
 		{
 			stack = JumboFurnaceUtils.insertItemStacked(this.fuel, stack, null);
 		}
@@ -834,14 +859,18 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			drops.add(stack);
 		}
 		// take all those items and spawn them in the world
-		for (ItemStack drop : drops)
+		@Nullable Level level = this.level;
+		if (level != null)
 		{
-			Containers.dropItemStack(level, x, y, z, drop);
-		}
-		Player player = level.getNearestPlayer(x, y, z, 16D, null);
-		if (player != null)
-		{
-			JumboFurnaceOutputSlot.spawnExpOrbs(player, experience);
+			for (ItemStack drop : drops)
+			{
+				Containers.dropItemStack(level, x, y, z, drop);
+			}
+			Player player = level.getNearestPlayer(x, y, z, 16D, null);
+			if (player != null)
+			{
+				JumboFurnaceOutputSlot.spawnExpOrbs(player, experience);
+			}
 		}
 	}
 	

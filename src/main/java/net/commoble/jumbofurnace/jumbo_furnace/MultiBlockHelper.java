@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
+
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 
@@ -33,7 +35,7 @@ public class MultiBlockHelper
 	 * @param placePos
 	 * @return
 	 */
-	public static List<Pair<BlockPos, BlockState>> getJumboFurnaceStates(ResourceKey<Level> key, LevelAccessor world, BlockPos placePos, BlockState againstState, Entity entity)
+	public static List<Pair<BlockPos, BlockState>> getJumboFurnaceStates(ResourceKey<Level> key, LevelAccessor world, BlockPos placePos, BlockState againstState, @Nullable Entity entity)
 	{
 		return get3x3CubeAround(placePos)
 			.filter(pos -> canJumboFurnaceFormAt(world, pos, placePos))
@@ -78,15 +80,15 @@ public class MultiBlockHelper
 		return BlockPos.betweenClosedStream(pos.offset(-1, -1, -1), pos.offset(1,1,1));
 	}
 	
-	public static List<Pair<BlockPos, BlockState>> getStatesForPlacementIfPermitted(ResourceKey<Level> key, LevelAccessor world, BlockPos corePos, BlockState againstState, Entity placer)
+	public static List<Pair<BlockPos, BlockState>> getStatesForPlacementIfPermitted(ResourceKey<Level> key, LevelAccessor world, BlockPos corePos, BlockState againstState, @Nullable Entity placer)
 	{
-		List<Pair<BlockPos, BlockState>> pairs = JumboFurnace.get().jumboFurnaceBlock.get().getStatesForFurnace(corePos);
+		List<Pair<BlockPos, BlockState>> pairs = JumboFurnace.JUMBO_FURNACE_BLOCK.get().getStatesForFurnace(corePos);
 		return doesPlayerHavePermissionToMakeJumboFurnace(key, world, pairs, againstState, placer)
 			? pairs
 			: NO_SNAPSHOTS;
 	}
 	
-	public static boolean doesPlayerHavePermissionToMakeJumboFurnace(ResourceKey<Level> key, LevelAccessor world, List<Pair<BlockPos, BlockState>> pairs, BlockState placedAgainst, Entity entity)
+	public static boolean doesPlayerHavePermissionToMakeJumboFurnace(ResourceKey<Level> key, LevelAccessor world, List<Pair<BlockPos, BlockState>> pairs, BlockState placedAgainst, @Nullable Entity entity)
 	{
 		List<BlockSnapshot> snapshots = pairs.stream()
 			.map(pair -> BlockSnapshot.create(key, world, pair.getFirst()))

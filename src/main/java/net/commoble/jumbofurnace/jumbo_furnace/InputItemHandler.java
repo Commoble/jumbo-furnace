@@ -14,7 +14,7 @@ public class InputItemHandler extends ItemStacksResourceHandler
 	}
 
 	@Override
-	protected void onContentsChanged(int slot, ItemStack oldStack)
+	protected void onContentsChanged(int slot, @SuppressWarnings("null") ItemStack oldStack)
 	{
 		super.onContentsChanged(slot, oldStack);
 		this.te.setChanged();

@@ -17,10 +17,11 @@ import net.commoble.jumbofurnace.Names;
 import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe>
@@ -35,7 +36,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	
 	public JumboSmeltingCategory(IGuiHelper helper)
 	{
-		this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
+		this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(JumboFurnace.JUMBO_FURNACE_JEI_DUMMY.get()));
 		this.backgroundInputs = helper.createDrawable(JEIProxy.CRAFTING_TEXTURE, 29, 16, 54, 54);
 		this.xlBackgroundOutputs = helper.createDrawable(JEIProxy.CRAFTING_TEXTURE, 29, 16, 54, 54);
 		this.animatedFlame = helper.createAnimatedRecipeFlame(300);
@@ -66,6 +67,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 		return Component.translatable("gui.jumbofurnace.category.jumbo_smelting");
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public IDrawable getIcon()
 	{
@@ -73,7 +75,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 	}
 
 	@Override
-	public void draw(JumboFurnaceRecipe recipe, IRecipeSlotsView slots, GuiGraphics graphics, double mouseX, double mouseY)
+	public void draw(@SuppressWarnings("null") JumboFurnaceRecipe recipe, IRecipeSlotsView slots, GuiGraphicsExtractor graphics, double mouseX, double mouseY)
 	{
 		this.backgroundInputs.draw(graphics);
 		this.xlBackgroundOutputs.draw(graphics, 110, 0);
@@ -87,16 +89,16 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 			Minecraft minecraft = Minecraft.getInstance();
 			Font fontRenderer = minecraft.font;
 			int stringWidth = fontRenderer.width(experienceString);
-			graphics.drawString(fontRenderer, experienceString, this.getWidth() - this.xlBackgroundOutputs.getWidth() - stringWidth, 0, 0xFF808080, false);
+			graphics.text(fontRenderer, experienceString, this.getWidth() - this.xlBackgroundOutputs.getWidth() - stringWidth, 0, 0xFF808080, false);
 		}
 	}
 
 	@Override
-	public void setRecipe(IRecipeLayoutBuilder recipeLayout, JumboFurnaceRecipe recipe, IFocusGroup focuses)
+	public void setRecipe(IRecipeLayoutBuilder recipeLayout, @SuppressWarnings("null") JumboFurnaceRecipe recipe, IFocusGroup focuses)
 	{
 		recipeLayout.setShapeless(60,0);
 
-		List<ItemStack> results = recipe.results();
+		List<ItemStackTemplate> results = recipe.results();
 		int resultCount = results.size();
 		for (int i=0; i<resultCount; i++)
 		{
@@ -105,7 +107,7 @@ public class JumboSmeltingCategory implements IRecipeCategory<JumboFurnaceRecipe
 			int x = 111 + (column) * 18;
 			int y = row*18 + 1;
 			recipeLayout.addSlot(RecipeIngredientRole.OUTPUT, x, y)
-				.add(results.get(i));
+				.add(results.get(i).create());
 		}
 
 		// input slots

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.mojang.datafixers.util.Pair;
 
@@ -23,7 +23,6 @@ import net.commoble.jumbofurnace.jumbo_furnace.MultiBlockHelper;
 import net.commoble.jumbofurnace.recipes.InFlightRecipeSyncPacket;
 import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
-import net.commoble.jumbofurnace.recipes.SimpleRecipeSerializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.CriterionTrigger;
 import net.minecraft.core.BlockPos;
@@ -85,75 +84,48 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
 
 @Mod(JumboFurnace.MODID)
 public class JumboFurnace
-{
-	private static JumboFurnace instance;
-	public static JumboFurnace get() { return instance; }
-	
+{	
 	public static final String MODID = "jumbofurnace";
 	public static final TagKey<Block> JUMBOFURNACEABLE_TAG = TagKey.create(Registries.BLOCK, id("jumbofurnaceable"));
 	public static final TagKey<Item> MULTIPROCESSING_UPGRADE_TAG = TagKey.create(Registries.ITEM, id("multiprocessing_upgrade"));
 	
-	public final ServerConfig serverConfig;
-	public final DeferredHolder<Block, JumboFurnaceBlock> jumboFurnaceBlock;
-	public final DeferredHolder<Item, JumboFurnaceItem> jumboFurnaceItem;
-	public final DeferredHolder<Item, Item> jumboFurnaceJeiDummy;
-	public final DeferredHolder<BlockEntityType<?>, BlockEntityType<JumboFurnaceCoreBlockEntity>> jumboFurnaceCoreBlockEntityType;
-	public final DeferredHolder<BlockEntityType<?>, BlockEntityType<JumboFurnaceExteriorBlockEntity>> jumboFurnaceExteriorBlockEntityType;
-	public final DeferredHolder<MenuType<?>, MenuType<JumboFurnaceMenu>> jumboFurnaceMenuType;
-	public final DeferredHolder<RecipeType<?>, RecipeType<JumboFurnaceRecipe>> jumboSmeltingRecipeType;
-	public final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<JumboFurnaceRecipe>> jumboSmeltingRecipeSerializer;
-	public final DeferredHolder<CriterionTrigger<?>, AssembleJumboFurnaceTrigger> assembleJumboFurnaceTrigger;
-	public final DeferredHolder<CriterionTrigger<?>, UpgradeJumboFurnaceTrigger> upgradeJumboFurnaceTrigger;
+	public static final ServerConfig SERVERCONFIG = ConfigHelper.register(ModConfig.Type.SERVER, ServerConfig::create);
+
+	private static final DeferredRegister.Blocks BLOCKS = defreg(DeferredRegister::createBlocks);
+	private static final DeferredRegister.Items ITEMS = defreg(DeferredRegister::createItems);
+	private static final DeferredRegister<BlockEntityType<?>> BLOCKENTITIES = defreg(Registries.BLOCK_ENTITY_TYPE);
+	private static final DeferredRegister<MenuType<?>> MENUS = defreg(Registries.MENU);
+	private static final DeferredRegister<RecipeType<?>> RECIPE_TYPES = defreg(Registries.RECIPE_TYPE);
+	private static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = defreg(Registries.RECIPE_SERIALIZER);
+	private static final DeferredRegister<CriterionTrigger<?>> CRITERION_TRIGGERS = defreg(Registries.TRIGGER_TYPE);
+	
+	public static final DeferredHolder<Block, JumboFurnaceBlock> JUMBO_FURNACE_BLOCK = BLOCKS.registerBlock(Names.JUMBO_FURNACE, JumboFurnaceBlock::new, () -> Block.Properties.ofFullCopy(Blocks.FURNACE));
+	public static final DeferredHolder<Item, JumboFurnaceItem> JUMBO_FURNACE_ITEM = ITEMS.registerItem(Names.JUMBO_FURNACE, JumboFurnaceItem::new);
+	public static final DeferredHolder<Item, Item> JUMBO_FURNACE_JEI_DUMMY = ITEMS.registerItem(Names.JUMBO_FURNACE_JEI, props -> new Item(props)
+	{
+		/**
+		 * allows items to add custom lines of information to the mouseover description
+		 */
+		@Override
+		public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flagIn)
+		{
+			tooltip.accept(Component.translatable("jumbofurnace.jumbo_furnace_info_tooltip")
+				.withStyle(ChatFormatting.GRAY));
+		}
+	});
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<JumboFurnaceCoreBlockEntity>> JUMBO_FURNACE_CORE_BLOCKENTITY_TYPE = BLOCKENTITIES.register(Names.JUMBO_FURNACE_CORE,
+		() -> new BlockEntityType<>(JumboFurnaceCoreBlockEntity::create, JUMBO_FURNACE_BLOCK.get()));
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<JumboFurnaceExteriorBlockEntity>> JUMBO_FURNACE_EXTERIOR_BLOCKENTITY_TYPE = BLOCKENTITIES.register(Names.JUMBO_FURNACE_EXTERIOR,
+		() -> new BlockEntityType<>(JumboFurnaceExteriorBlockEntity::create, JUMBO_FURNACE_BLOCK.get()));
+	public static final DeferredHolder<MenuType<?>, MenuType<JumboFurnaceMenu>> JUMBO_FURNACE_MENU_TYPE = MENUS.register(Names.JUMBO_FURNACE, () -> new MenuType<>(JumboFurnaceMenu::getClientMenu, FeatureFlags.VANILLA_SET));
+	public static final DeferredHolder<RecipeType<?>, RecipeType<JumboFurnaceRecipe>> JUMBO_SMELTING_RECIPE_TYPE = RECIPE_TYPES.register(Names.JUMBO_SMELTING, () -> RecipeType.simple(Identifier.fromNamespaceAndPath(MODID, Names.JUMBO_SMELTING)));
+	public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<JumboFurnaceRecipe>> JUMBO_SMELTING_RECIPE_SERIALIZER = RECIPE_SERIALIZERS.register(Names.JUMBO_SMELTING, () -> new RecipeSerializer<>(JumboFurnaceRecipe.CODEC, JumboFurnaceRecipe.STREAM_CODEC));
+	public static final DeferredHolder<CriterionTrigger<?>, AssembleJumboFurnaceTrigger> ASSEMBLE_JUMBO_FURNACE_TRIGGER = CRITERION_TRIGGERS.register(Names.ASSEMBLE_JUMBO_FURNACE, AssembleJumboFurnaceTrigger::new);
+	public static final DeferredHolder<CriterionTrigger<?>, UpgradeJumboFurnaceTrigger> UPGRADE_JUMBO_FURNACE_TRIGGER = CRITERION_TRIGGERS.register(Names.UPGRADE_JUMBO_FURNACE, UpgradeJumboFurnaceTrigger::new);
 	
 	public JumboFurnace(IEventBus modBus)
-	{
-		if (instance != null)
-			throw new IllegalStateException("Jumbo Furnace initialized twice!");
-		instance = this;
-		
+	{		
 		IEventBus forgeBus = NeoForge.EVENT_BUS;
-		
-		this.serverConfig = ConfigHelper.register(ModConfig.Type.SERVER, ServerConfig::create);
-		
-		// register forge objects
-		DeferredRegister.Blocks blocks = defreg(DeferredRegister::createBlocks);
-		DeferredRegister.Items items = defreg(DeferredRegister::createItems);
-		DeferredRegister<BlockEntityType<?>> blockEntities = defreg(Registries.BLOCK_ENTITY_TYPE);
-		DeferredRegister<MenuType<?>> menus = defreg(Registries.MENU);
-		DeferredRegister<RecipeType<?>> recipeTypes = defreg(Registries.RECIPE_TYPE);
-		DeferredRegister<RecipeSerializer<?>> recipeSerializers = defreg(Registries.RECIPE_SERIALIZER);
-		DeferredRegister<CriterionTrigger<?>> triggerTypes = defreg(Registries.TRIGGER_TYPE);
-		
-		this.jumboFurnaceBlock = blocks.registerBlock(Names.JUMBO_FURNACE, JumboFurnaceBlock::new, () -> Block.Properties.ofFullCopy(Blocks.FURNACE));
-		
-		this.jumboFurnaceItem = items.registerItem(Names.JUMBO_FURNACE, JumboFurnaceItem::new);
-		
-		this.jumboFurnaceJeiDummy = items.registerItem(Names.JUMBO_FURNACE_JEI, props -> new Item(props)
-		{
-			/**
-			 * allows items to add custom lines of information to the mouseover description
-			 */
-			@Override
-			public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flagIn)
-			{
-				tooltip.accept(Component.translatable("jumbofurnace.jumbo_furnace_info_tooltip")
-					.withStyle(ChatFormatting.GRAY));
-			}
-		});
-		
-		this.jumboFurnaceCoreBlockEntityType = blockEntities.register(Names.JUMBO_FURNACE_CORE,
-			() -> new BlockEntityType<>(JumboFurnaceCoreBlockEntity::create, this.jumboFurnaceBlock.get()));
-		this.jumboFurnaceExteriorBlockEntityType = blockEntities.register(Names.JUMBO_FURNACE_EXTERIOR,
-			() -> new BlockEntityType<>(JumboFurnaceExteriorBlockEntity::create, this.jumboFurnaceBlock.get()));
-		
-		this.jumboFurnaceMenuType = menus.register(Names.JUMBO_FURNACE, () -> new MenuType<>(JumboFurnaceMenu::getClientMenu, FeatureFlags.VANILLA_SET));
-		
-		this.jumboSmeltingRecipeType = recipeTypes.register(Names.JUMBO_SMELTING, () -> RecipeType.simple(Identifier.fromNamespaceAndPath(MODID, Names.JUMBO_SMELTING)));
-		
-		this.jumboSmeltingRecipeSerializer = recipeSerializers.register(Names.JUMBO_SMELTING, () -> new SimpleRecipeSerializer<>(JumboFurnaceRecipe.CODEC, JumboFurnaceRecipe.STREAM_CODEC));
-		
-		this.assembleJumboFurnaceTrigger = triggerTypes.register(Names.ASSEMBLE_JUMBO_FURNACE, AssembleJumboFurnaceTrigger::new);
-		this.upgradeJumboFurnaceTrigger = triggerTypes.register(Names.UPGRADE_JUMBO_FURNACE, UpgradeJumboFurnaceTrigger::new);
 		
 		modBus.addListener(this::onBuildCreativeTabs);
 		modBus.addListener(this::onRegisterCapabilities);
@@ -187,21 +159,21 @@ public class JumboFurnace
 	
 	private void onRegisterCapabilities(RegisterCapabilitiesEvent event)
 	{
-		event.registerBlockEntity(Capabilities.Item.BLOCK, this.jumboFurnaceExteriorBlockEntityType.get(), (be, side) -> be.getItemHandler(side));
+		event.registerBlockEntity(Capabilities.Item.BLOCK, JUMBO_FURNACE_EXTERIOR_BLOCKENTITY_TYPE.get(), (be, side) -> be.getItemHandler(side));
 	}
 	
 	private void onAddServerReloadListeners(AddServerReloadListenersEvent event)
 	{
-		event.addListener(JumboFurnace.id("recipe_sorter"), new SimplePreparableReloadListener<Void>() {
+		event.addListener(JumboFurnace.id("recipe_sorter"), new SimplePreparableReloadListener<@Nullable Void>() {
 
 			@Override
-			protected Void prepare(ResourceManager resourceManager, ProfilerFiller profilerFiller)
+			protected @Nullable Void prepare(ResourceManager resourceManager, ProfilerFiller profilerFiller)
 			{
 				return null;
 			}
 
 			@Override
-			protected void apply(Void nothing, ResourceManager resourceManager, ProfilerFiller profilerFiller)
+			protected void apply(@Nullable Void nothing, ResourceManager resourceManager, ProfilerFiller profilerFiller)
 			{
 				RecipeSorter.onServerReload(event.getServerResources().getRecipeManager().recipeMap());
 			}
@@ -219,11 +191,11 @@ public class JumboFurnace
 	{
 		BlockState state = event.getPlacedBlock();
 		LevelAccessor levelAccess = event.getLevel();
+		@Nullable Entity entity = event.getEntity();
 		if (!(event instanceof EntityMultiPlaceEvent) && state.is(JumboFurnace.JUMBOFURNACEABLE_TAG) && levelAccess instanceof ServerLevel level)
 		{
 			BlockPos pos = event.getPos();
 			BlockState againstState = event.getPlacedAgainst();
-			Entity entity = event.getEntity();
 			List<ItemStack> stacks = new ArrayList<>();
 			
 			// returns a non-empty list if we can make furnace
@@ -253,7 +225,7 @@ public class JumboFurnace
 				}
 				if (entity instanceof ServerPlayer)
 				{
-					this.assembleJumboFurnaceTrigger.get().trigger((ServerPlayer)entity);
+					ASSEMBLE_JUMBO_FURNACE_TRIGGER.get().trigger((ServerPlayer)entity);
 				}
 			}
 			if (!stacks.isEmpty())
@@ -265,9 +237,8 @@ public class JumboFurnace
 						((Player)entity).addItem(stack);
 					}
 				}
-				else
+				else if (entity != null)
 				{
-
 					for (ItemStack stack : stacks)
 					{
 						entity.spawnAtLocation(level, stack);
@@ -286,7 +257,7 @@ public class JumboFurnace
 	private void onRightClickBlockLow(RightClickBlock event)
 	{
 		// if block or item usage is denied, do nothing
-		if (this.serverConfig.allowShearing().get() && event.getUseItem() != TriState.FALSE && event.getUseBlock() != TriState.FALSE)
+		if (SERVERCONFIG.allowShearing().get() && event.getUseItem() != TriState.FALSE && event.getUseBlock() != TriState.FALSE)
 		{
 			Player player = event.getEntity();
 			ItemStack stack = event.getItemStack();
@@ -295,7 +266,7 @@ public class JumboFurnace
 				Level level = event.getLevel();
 				BlockPos pos = event.getPos();
 				BlockState state = level.getBlockState(pos);
-				if (state.getBlock() == this.jumboFurnaceBlock.get())
+				if (state.getBlock() == JUMBO_FURNACE_BLOCK.get())
 				{
 					// we used shears on a jumbo furnace while sneaking -- event will now be cancelled/overridden
 					
@@ -305,7 +276,7 @@ public class JumboFurnace
 						BlockPos corePos = JumboFurnaceBlock.getCorePos(state, pos);
 						// forge fires a RightClickBlock event before this is called, we can assume that this would fail if the player didn't have
 						// permission to use items on the block
-			            Block.popResource(level, pos, new ItemStack(this.jumboFurnaceItem.get()));
+			            Block.popResource(level, pos, new ItemStack(JUMBO_FURNACE_ITEM.get()));
 			            InteractionHand hand = event.getHand();
 			            stack.hurtAndBreak(1, player, hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
 						
@@ -326,7 +297,7 @@ public class JumboFurnace
 	{
 		if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS)
 		{
-			event.accept(this.jumboFurnaceItem.get());
+			event.accept(JUMBO_FURNACE_ITEM.get());
 		}
 	}
 	

@@ -95,7 +95,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 	
 	protected JumboFurnaceMenu(int id, Inventory playerInventory, BlockPos pos, ItemStacksResourceHandler inputs, ItemStacksResourceHandler fuel, ItemStacksResourceHandler outputs, ItemStacksResourceHandler multiprocessUpgrades, ContainerData furnaceData, Optional<JumboFurnaceCoreBlockEntity> serverFurnace)
 	{
-		super(JumboFurnace.get().jumboFurnaceMenuType.get(), id);
+		super(JumboFurnace.JUMBO_FURNACE_MENU_TYPE.get(), id);
 		
 		this.player = playerInventory.player;
 		this.usabilityTest = ContainerLevelAccess.create(player.level(), pos);
@@ -169,7 +169,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		if (player instanceof ServerPlayer serverPlayer)
 		{
 			ItemStack finalUpgradeStack = this.getSlot(ORTHOFURNACE_SLOT).getItem();
-			JumboFurnace.get().upgradeJumboFurnaceTrigger.get().test(serverPlayer, finalUpgradeStack);
+			JumboFurnace.UPGRADE_JUMBO_FURNACE_TRIGGER.get().test(serverPlayer, finalUpgradeStack);
 		}
 		
 		
@@ -179,7 +179,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 	@Override
 	public boolean stillValid(Player player)
 	{
-		return stillValid(this.usabilityTest, player, JumboFurnace.get().jumboFurnaceBlock.get());
+		return stillValid(this.usabilityTest, player, JumboFurnace.JUMBO_FURNACE_BLOCK.get());
 	}
 
 	@Override
@@ -188,7 +188,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 		ItemStack slotStackCopy = ItemStack.EMPTY;
 		Slot slot = this.slots.get(index);
 		
-		if (slot != null && slot.hasItem())
+		if (slot.hasItem())
 		{
 			ItemStack stackInSlot = slot.getItem();
 			slotStackCopy = stackInSlot.copy();

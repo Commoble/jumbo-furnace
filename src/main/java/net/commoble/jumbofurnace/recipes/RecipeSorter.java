@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
+import org.jspecify.annotations.Nullable;
+
 import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.commoble.jumbofurnace.JumboFurnace;
@@ -25,7 +27,7 @@ public class RecipeSorter
 	public static RecipeSorter serverInstance = new RecipeSorter(RecipeMap.EMPTY);
 	
 	private final RecipeMap recipeMap;
-	private RecipeCache cache = null;
+	private @Nullable RecipeCache cache = null;
 	
 	public static void onServerReload(RecipeMap recipeMap)
 	{
@@ -113,7 +115,7 @@ public class RecipeSorter
 						.add(wrappedRecipes.computeIfAbsent(key, x -> recipe));
 				});
 			}
-			for (var holder : recipeMap.byType(JumboFurnace.get().jumboSmeltingRecipeType.get()))
+			for (var holder : recipeMap.byType(JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE.get()))
 			{
 				JumboFurnaceRecipe recipe = holder.value();
 				allRecipes.add(recipe);

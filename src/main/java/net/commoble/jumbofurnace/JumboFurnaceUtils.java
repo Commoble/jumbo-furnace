@@ -2,11 +2,12 @@ package net.commoble.jumbofurnace;
 
 import java.util.List;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.FuelValues;
@@ -27,7 +28,7 @@ public class JumboFurnaceUtils
 	 */
 	public static int getJumboSmeltingBurnTime(ItemStack stack, FuelValues fuelValues)
 	{
-		int jumboSmeltingBurnTime = stack.getBurnTime(JumboFurnace.get().jumboSmeltingRecipeType.get(), fuelValues);
+		int jumboSmeltingBurnTime = stack.getBurnTime(JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE.get(), fuelValues);
 		return jumboSmeltingBurnTime >= 0
 			? jumboSmeltingBurnTime
 			: stack.getBurnTime(RecipeType.SMELTING, fuelValues);
@@ -100,5 +101,10 @@ public class JumboFurnaceUtils
 	public static boolean canBeJumboFurnaceInput(Item item, Level level)
 	{
 		return !RecipeSorter.getSidedRecipes(level).getSortedFurnaceRecipesValidForInputs(List.of(item)).isEmpty();
+	}
+	
+	public static ItemStack itemStackFromTemplate(@Nullable ItemStackTemplate template)
+	{
+		return template == null ? ItemStack.EMPTY : template.create();
 	}
 }

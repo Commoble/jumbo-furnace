@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+
+import org.jspecify.annotations.Nullable;
 
 import com.mojang.datafixers.util.Pair;
 
@@ -66,11 +67,11 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 	}
 
 	@Override
-	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
+	public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state)
 	{
 		return this.isCore(state)
-			? JumboFurnace.get().jumboFurnaceCoreBlockEntityType.get().create(pos,state)
-			: JumboFurnace.get().jumboFurnaceExteriorBlockEntityType.get().create(pos,state);
+			? JumboFurnace.JUMBO_FURNACE_CORE_BLOCKENTITY_TYPE.get().create(pos,state)
+			: JumboFurnace.JUMBO_FURNACE_EXTERIOR_BLOCKENTITY_TYPE.get().create(pos,state);
 	}
 	
 	
@@ -364,9 +365,9 @@ public class JumboFurnaceBlock extends Block implements EntityBlock
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type)
+	public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type)
 	{
-		return type == JumboFurnace.get().jumboFurnaceCoreBlockEntityType.get() && !level.isClientSide()
+		return type == JumboFurnace.JUMBO_FURNACE_CORE_BLOCKENTITY_TYPE.get() && !level.isClientSide()
 			? (BlockEntityTicker<T>)JumboFurnaceCoreBlockEntity.SERVER_TICKER
 			: null;
 	}

@@ -2,7 +2,7 @@ package net.commoble.jumbofurnace.client.jei;
 
 import java.util.List;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -61,16 +61,16 @@ public class JEIProxy implements IModPlugin
 		registration.addCraftingStation(
 			RecipeTypes.SMELTING,
 			VanillaTypes.ITEM_STACK,
-			new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
+			new ItemStack(JumboFurnace.JUMBO_FURNACE_JEI_DUMMY.get()));
 		registration.addCraftingStation(
 			JumboSmeltingCategory.TYPE,
 			VanillaTypes.ITEM_STACK,
-			new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
+			new ItemStack(JumboFurnace.JUMBO_FURNACE_JEI_DUMMY.get()));
 
 		registration.addCraftingStation(
 			JumboFurnaceUpgradeCategory.TYPE,
 			VanillaTypes.ITEM_STACK,
-			new ItemStack(JumboFurnace.get().jumboFurnaceJeiDummy.get()));
+			new ItemStack(JumboFurnace.JUMBO_FURNACE_JEI_DUMMY.get()));
 	}
 
 	/**
