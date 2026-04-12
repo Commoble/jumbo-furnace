@@ -1,3 +1,6 @@
+## 26.1.0.1
+* Fix smelting items rendering in different places depending on screen size
+
 ## 26.1.0.0
 * Update to MC 26.1 / neoforge 26.1.0.17-beta
 

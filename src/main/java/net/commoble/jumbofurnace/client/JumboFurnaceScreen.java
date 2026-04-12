@@ -67,7 +67,7 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 		{
 			float progress = (float)(recipe.progress()) / (float)(recipe.recipe().cookingTime());
 			int recipeX = Mth.lerpInt(progress, xStart + RECIPE_LINE_X_START, xStart + RECIPE_LINE_X_END);
-			int recipeY = COOK_METER_TO_Y;
+			int recipeY = yStart + COOK_METER_TO_Y;
 			if (progress < 0.5F) // render inputs
 			{
 				List<ItemStack> inputs = recipe.inputs();
