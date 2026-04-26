@@ -48,7 +48,8 @@ public class JumboFurnaceScreen extends AbstractContainerScreen<JumboFurnaceMenu
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks)
-	{		
+	{
+		super.extractBackground(graphics, mouseX, mouseY, partialTicks);
 		int xStart = (this.width - this.imageWidth) / 2;
 		int yStart = (this.height - this.imageHeight) / 2;
 		

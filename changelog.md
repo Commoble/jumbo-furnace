@@ -1,3 +1,6 @@
+## 26.1.0.2
+* Fix background dimmer not rendering behind jumbo furnace GUI
+
 ## 26.1.0.1
 * Fix smelting items rendering in different places depending on screen size
 
