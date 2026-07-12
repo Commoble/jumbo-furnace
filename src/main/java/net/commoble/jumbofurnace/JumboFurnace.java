@@ -24,7 +24,7 @@ import net.commoble.jumbofurnace.recipes.InFlightRecipeSyncPacket;
 import net.commoble.jumbofurnace.recipes.JumboFurnaceRecipe;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.ChatFormatting;
-import net.minecraft.advancements.CriterionTrigger;
+import net.minecraft.advancements.triggers.CriterionTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;

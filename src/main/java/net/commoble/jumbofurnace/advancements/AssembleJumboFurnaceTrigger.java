@@ -6,9 +6,9 @@ import com.google.common.base.Predicates;
 import com.mojang.serialization.Codec;
 
 import net.commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger.Criterion;
-import net.minecraft.advancements.criterion.ContextAwarePredicate;
-import net.minecraft.advancements.criterion.EntityPredicate;
-import net.minecraft.advancements.criterion.SimpleCriterionTrigger;
+import net.minecraft.advancements.predicates.ContextAwarePredicate;
+import net.minecraft.advancements.predicates.entity.EntityPredicate;
+import net.minecraft.advancements.triggers.SimpleCriterionTrigger;
 import net.minecraft.server.level.ServerPlayer;
 
 public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<Criterion>
