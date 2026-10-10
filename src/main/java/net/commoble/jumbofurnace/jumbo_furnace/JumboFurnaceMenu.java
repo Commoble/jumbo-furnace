@@ -9,6 +9,7 @@ import net.commoble.jumbofurnace.JumboFurnaceUtils;
 import net.commoble.jumbofurnace.recipes.InFlightRecipe;
 import net.commoble.jumbofurnace.recipes.InFlightRecipeSyncPacket;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -122,7 +123,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 			{
 				int x = FUEL_START_X + SLOT_SPACING*column;
 				int index = row * SLOT_COLUMNS + column;
-				this.addSlot(new JumboFurnaceFuelSlot(fuel, index, x, y, playerInventory.player.level().fuelValues()));
+				this.addSlot(new JumboFurnaceFuelSlot(fuel, index, x, y));
 			}
 		}
 		
@@ -237,7 +238,7 @@ public class JumboFurnaceMenu extends AbstractContainerMenu
 					}
 				}
 				// if we can burn the item, try to put it in the fuel slots
-				else if (JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot, player.level().fuelValues()) > 0)
+				else if (stackInSlot.has(DataComponents.COOKING_FUEL))
 				{
 					// if we changed any fuel item slots
 					if (this.moveItemStackTo(stackInSlot, FIRST_FUEL_SLOT, END_FUEL_SLOTS, false))

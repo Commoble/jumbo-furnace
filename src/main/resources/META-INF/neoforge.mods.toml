@@ -23,7 +23,8 @@ displayName="Jumbo Furnace" #mandatory
 # A URL for the "homepage" for this mod, displayed in the mod UI
 displayURL="https://www.curseforge.com/minecraft/mc-mods/jumbo-furnace" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
-logoFile="logo.png" #optional
+iconFile="logo.png" #optional
+bannerFile="logo.png"
 # A text field displayed in the mod UI
 credits="I hear the Minecraft Mod Development discord channel is the cat's bananas" #optional
 # A text field displayed in the mod UI
@@ -39,7 +40,7 @@ Jumbo Furnaces are created when a player places 27 standard furnaces in a 3x3x3 
     # Does this dependency have to exist - if not, ordering below must be specified
     type="required"
     # The version range of the dependency
-    versionRange="[26.2.0.10-beta,)" #mandatory
+    versionRange="[26.3.0.48-beta,)" #mandatory
     # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
     ordering="NONE"
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
@@ -48,6 +49,6 @@ Jumbo Furnaces are created when a player places 27 standard furnaces in a 3x3x3 
 [[dependencies.jumbofurnace]]
     modId="minecraft"
     type="required"
-    versionRange="[26.2,26.3)"
+    versionRange="[26.3,26.4)"
     ordering="NONE"
     side="BOTH"

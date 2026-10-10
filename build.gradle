@@ -86,23 +86,34 @@ java
 	withJavadocJar()
 }
 
-artifacts {
-	archives javadocJar
-	archives sourcesJar
+tasks.named("javadoc", Javadoc) {
+	options.addBooleanOption("-no-fonts", true)
 }
 
+
+// run "gradlew build" to build the jars without mavening them
+// run "gradlew build publishToMavenLocal" to publish to local maven
+// to publish to remote maven, add mavenUsername and mavenPassword and url properties to USERHOME/.gradle/gradle.properties (in user folder, not project folder)
+// run "gradlew build publish" to publish snapshot
+// run "gradlew build -Prelease publish" to publish release
 publishing {
-    publications {
+	repositories {
+		maven {
+			def releasesRepoUrl = "${mavenReleasesUrl}"
+			def snapshotsRepoUrl = "${mavenSnapshotsUrl}"
+			url = project.hasProperty('release') ? releasesRepoUrl : snapshotsRepoUrl
+			credentials {
+				username = "${mavenUsername}"
+				password = "${mavenPassword}"
+			}
+			authentication{ basic(BasicAuthentication) }
+		}
+	}
+	publications {
 		register('mavenJava', MavenPublication) {
 			from components.java
-        }
-    }
-    repositories {
-        maven {
-			name="localMaven"
-			url = "./maven"
-        }
-    }
+		}
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {

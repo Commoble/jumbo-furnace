@@ -6,10 +6,10 @@ import com.google.common.base.Predicates;
 import com.mojang.serialization.Codec;
 
 import net.commoble.jumbofurnace.advancements.AssembleJumboFurnaceTrigger.Criterion;
-import net.minecraft.advancements.predicates.ContextAwarePredicate;
-import net.minecraft.advancements.predicates.entity.EntityPredicate;
 import net.minecraft.advancements.triggers.SimpleCriterionTrigger;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
 public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<Criterion>
 {
@@ -24,9 +24,9 @@ public class AssembleJumboFurnaceTrigger extends SimpleCriterionTrigger<Criterio
 		this.trigger(player, Predicates.alwaysTrue());
 	}
 
-	public static record Criterion(Optional<ContextAwarePredicate> player) implements SimpleCriterionTrigger.SimpleInstance
+	public static record Criterion(Optional<Holder<LootItemCondition>> player) implements SimpleCriterionTrigger.SimpleInstance
 	{
-		public static final Codec<Criterion> CODEC = EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("player")
+		public static final Codec<Criterion> CODEC = LootItemCondition.CODEC.optionalFieldOf("player")
 			.xmap(Criterion::new, Criterion::player)
 			.codec();
 	}

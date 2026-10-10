@@ -89,7 +89,7 @@ public class JumboFurnace
 	public static final TagKey<Block> JUMBOFURNACEABLE_TAG = TagKey.create(Registries.BLOCK, id("jumbofurnaceable"));
 	public static final TagKey<Item> MULTIPROCESSING_UPGRADE_TAG = TagKey.create(Registries.ITEM, id("multiprocessing_upgrade"));
 	
-	public static final ServerConfig SERVERCONFIG = ConfigHelper.register(ModConfig.Type.SERVER, ServerConfig::create);
+	public static final ServerConfig SERVERCONFIG = ConfigHelper.register(ModConfig.Type.SYNCED, ServerConfig::create);
 
 	private static final DeferredRegister.Blocks BLOCKS = defreg(DeferredRegister::createBlocks);
 	private static final DeferredRegister.Items ITEMS = defreg(DeferredRegister::createItems);

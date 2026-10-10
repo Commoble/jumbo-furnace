@@ -1,10 +1,7 @@
 package net.commoble.jumbofurnace.jumbo_furnace;
 
-import org.jspecify.annotations.Nullable;
-
-import net.commoble.jumbofurnace.JumboFurnaceUtils;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 
@@ -20,12 +17,8 @@ public class FuelItemHandler extends ItemStacksResourceHandler
 
 	@Override
 	public boolean isValid(int slot, ItemResource resource)
-	{
-		@Nullable Level level = core.getLevel();
-		if (level == null)
-			return false;
-		
-		return JumboFurnaceUtils.getJumboSmeltingBurnTime(resource.toStack(), level.fuelValues()) > 0;
+	{		
+		return resource.get(DataComponents.COOKING_FUEL) != null;
 	}
 
 	@Override

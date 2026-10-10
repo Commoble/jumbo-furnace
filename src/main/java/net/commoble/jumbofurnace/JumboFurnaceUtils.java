@@ -5,12 +5,14 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
-import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.component.CookingFuel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.FuelValues;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
 import net.neoforged.neoforge.transfer.item.ItemResource;
@@ -23,15 +25,13 @@ public class JumboFurnaceUtils
 {
 	/** 
 	 * @param stack Itemstack to be used as fuel for a jumbo furnace.
-	 * @return If the itemstack provides a burn time specific to jumbo smelting, returns that.
-	 * Otherwise, returns the burn time for vanilla furnace smelting.
+	 * @param lootContext LootContext 
+	 * @return burn time
 	 */
-	public static int getJumboSmeltingBurnTime(ItemStack stack, FuelValues fuelValues)
+	public static int getJumboSmeltingBurnTime(ItemStack stack, LootContext lootContext)
 	{
-		int jumboSmeltingBurnTime = stack.getBurnTime(JumboFurnace.JUMBO_SMELTING_RECIPE_TYPE.get(), fuelValues);
-		return jumboSmeltingBurnTime >= 0
-			? jumboSmeltingBurnTime
-			: stack.getBurnTime(RecipeType.SMELTING, fuelValues);
+		int burnDuration = ResolvableInt.getFromItem(stack, DataComponents.COOKING_FUEL, CookingFuel::burnTime, lootContext, 0);
+		return burnDuration;
 	}
 	
 	public static ItemStacksResourceHandler copyItemHandler(ItemStacksResourceHandler itemHandler)

@@ -3,6 +3,7 @@ package net.commoble.jumbofurnace.jumbo_furnace;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -17,7 +18,11 @@ import net.commoble.jumbofurnace.recipes.InFlightRecipe;
 import net.commoble.jumbofurnace.recipes.RecipeSorter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
+import net.minecraft.world.entity.SlotAccess;
+import net.minecraft.world.entity.SlotProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,16 +32,22 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
+import net.neoforged.neoforge.common.loot.NeoForgeLootContextParams;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 
-public class JumboFurnaceCoreBlockEntity extends BlockEntity
+public class JumboFurnaceCoreBlockEntity extends BlockEntity implements SlotProvider
 {
 	public static final String INPUT = "input";
 	public static final String FUEL = "fuel";
@@ -326,8 +337,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	 */
 	private boolean processInputs()
 	{
-		@Nullable Level level = this.level;
-		if (level == null)
+		if (!(this.level instanceof ServerLevel level))
 			return false;
 		
 		int freeRecipeSlots = this.getMaxSimultaneousRecipes() - this.inFlightRecipes.size();
@@ -369,14 +379,14 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		ItemStack consumableFuel = ItemStack.EMPTY;
 		int consumableFuelValue = 0;
 		ItemStacksResourceHandler newFuelInventory = this.fuel;
+		Function<ItemStack, LootContext> lootContext = stack -> this.getLootContextForFuel(level, stack);
 		
 		if (!this.isBurning())
 		{
-			FuelValues fuelValues = level.fuelValues();
 			newFuelInventory = JumboFurnaceUtils.copyItemHandler(this.fuel); 
-			consumableFuel = simulateConsumeFuel(newFuelInventory, outputSimulator, fuelValues);
+			consumableFuel = simulateConsumeFuel(newFuelInventory, outputSimulator, lootContext);
 			// if we can't consume fuel then we can't do anything else anyway
-			consumableFuelValue = JumboFurnaceUtils.getJumboSmeltingBurnTime(consumableFuel, fuelValues);
+			consumableFuelValue = JumboFurnaceUtils.getJumboSmeltingBurnTime(consumableFuel, lootContext.apply(consumableFuel));
 			if (consumableFuelValue <= 0)
 			{
 				return false;
@@ -612,22 +622,21 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	private boolean tryConsumeFuel(ItemStacksResourceHandler outputSimulator)
 	{
 		int slots = this.fuel.size();
-		@Nullable Level level = this.level;
-		if (level == null)
+		if (!(this.level instanceof ServerLevel level))
 			return false;
-		FuelValues fuelValues = level.fuelValues();
+		Function<ItemStack, LootContext> lootContext = stack -> this.getLootContextForFuel(level, stack);
 		for (int slot=0; slot<slots; slot++)
 		{
 			try(Transaction t = Transaction.open(null))
 			{
 				ItemStack extractedFuel = JumboFurnaceUtils.extract(slot, this.fuel, 1, t);
-				int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(extractedFuel, fuelValues);
+				int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(extractedFuel, lootContext.apply(extractedFuel));
 				if (burnTime > 0)
 				{
 					ItemStack remainder = JumboFurnaceUtils.itemStackFromTemplate(extractedFuel.getCraftingRemainder());
 					// if there's a remainder then we can only consume the fuel if we can stash the remainder somewhere
 					// if remainder fits in fuel inventory, consume the fuel
-					if (!remainder.isEmpty() && JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder, fuelValues) > 0)
+					if (!remainder.isEmpty() && JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder, lootContext.apply(remainder)) > 0)
 					{
 						remainder = JumboFurnaceUtils.insertItemStacked(this.fuel, remainder, t);
 					}
@@ -656,7 +665,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	 * @param outputInventory Output inventory (simulated or otherwise). Will be modified if consumed fuel has remainder item.
 	 * @return ItemStack of the fuel which would be consumed. Returns EMPTY if no consumable fuel exists.
 	 */
-	private static ItemStack simulateConsumeFuel(ItemStacksResourceHandler fuelInventory, ItemStacksResourceHandler outputInventory, FuelValues fuelValues)
+	private static ItemStack simulateConsumeFuel(ItemStacksResourceHandler fuelInventory, ItemStacksResourceHandler outputInventory, Function<ItemStack, LootContext> lootContext)
 	{
 		int slots = fuelInventory.size();
 		for (int slot=0; slot<slots; slot++)
@@ -667,7 +676,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 			{
 				continue;
 			}
-			int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot, fuelValues);
+			int burnTime = JumboFurnaceUtils.getJumboSmeltingBurnTime(stackInSlot, lootContext.apply(stackInSlot));
 			if (burnTime > 0)
 			{
 				ItemStack remainder = JumboFurnaceUtils.itemStackFromTemplate(stackInSlot.getCraftingRemainder());
@@ -678,7 +687,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 					return stackInSlot.copy(); 
 				}
 				// if remainder item is also a fuel, try to return it to the fuel inventory
-				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder, fuelValues) > 0)
+				if (JumboFurnaceUtils.getJumboSmeltingBurnTime(remainder, lootContext.apply(remainder)) > 0)
 				{
 					try(Transaction t = Transaction.open(null))
 					{
@@ -807,7 +816,7 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 	{
 		@Nullable Level level = this.level;
 		
-		if (level != null && JumboFurnaceUtils.getJumboSmeltingBurnTime(stack, level.fuelValues()) > 0)
+		if (level != null && stack.has(DataComponents.COOKING_FUEL))
 		{
 			stack = JumboFurnaceUtils.insertItemStacked(this.fuel, stack, null);
 		}
@@ -874,5 +883,49 @@ public class JumboFurnaceCoreBlockEntity extends BlockEntity
 		}
 	}
 	
-	
+	public LootContext getLootContextForFuel(ServerLevel level, ItemStack fuel)
+	{
+		return new LootContext.Builder(
+			new LootParams.Builder(level)
+				.withParameter(LootContextParams.BLOCK_STATE, this.getBlockState())
+				.withParameter(LootContextParams.BLOCK_ENTITY, this)
+				.withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(this.getBlockPos()))
+				.withParameter(LootContextParams.CONTAINER, this)
+				.withOptionalParameter(NeoForgeLootContextParams.QUERIED_STACK, fuel.isEmpty() ? null : fuel)
+				.create(LootContextParamSets.CONTAINER_PROCESS)).create(Optional.empty());
+	}
+
+	@Override
+	public @Nullable SlotAccess getSlot(int slot)
+	{
+		if (slot < 0 || slot >= 27) {
+			return null;
+		}
+		int subSlot = slot % 9;
+		int slotType = slot / 9; // 0=input, 1=fuel, 2=result
+		ItemStacksResourceHandler handler = switch(slotType) {
+			case 0 -> this.input;
+			case 1 -> this.fuel;
+			default -> this.output;
+		};
+		return new SlotAccess() {
+
+			@Override
+			public ItemStack get()
+			{
+				ItemResource resource = handler.getResource(subSlot);
+				int amount = handler.getAmountAsInt(subSlot);
+				return resource.toStack(amount);
+			}
+
+			@Override
+			public boolean set(ItemStack itemStack)
+			{
+				ItemResource resource = ItemResource.of(itemStack);
+				handler.set(subSlot, resource, itemStack.count());
+				return false;
+			}
+			
+		};
+	}
 }
