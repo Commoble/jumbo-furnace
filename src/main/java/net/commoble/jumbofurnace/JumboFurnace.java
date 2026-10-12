@@ -2,6 +2,7 @@ package net.commoble.jumbofurnace;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -123,6 +124,10 @@ public class JumboFurnace
 	public static final DeferredHolder<CriterionTrigger<?>, AssembleJumboFurnaceTrigger> ASSEMBLE_JUMBO_FURNACE_TRIGGER = CRITERION_TRIGGERS.register(Names.ASSEMBLE_JUMBO_FURNACE, AssembleJumboFurnaceTrigger::new);
 	public static final DeferredHolder<CriterionTrigger<?>, UpgradeJumboFurnaceTrigger> UPGRADE_JUMBO_FURNACE_TRIGGER = CRITERION_TRIGGERS.register(Names.UPGRADE_JUMBO_FURNACE, UpgradeJumboFurnaceTrigger::new);
 	
+	private static final IEventBus modBus() {
+		return Objects.requireNonNull(ModList.get().getModContainerById(MODID).get().getEventBus());
+	}
+	
 	public JumboFurnace(IEventBus modBus)
 	{		
 		IEventBus forgeBus = NeoForge.EVENT_BUS;
@@ -143,7 +148,7 @@ public class JumboFurnace
 	
 	private static <T> DeferredRegister<T> defreg(ResourceKey<Registry<T>> registryKey)
 	{
-		IEventBus modBus = ModList.get().getModContainerById(MODID).get().getEventBus();
+		IEventBus modBus = modBus();
 		DeferredRegister<T> register = DeferredRegister.create(registryKey, MODID);
 		register.register(modBus);
 		return register;
@@ -151,7 +156,7 @@ public class JumboFurnace
 	
 	private static <R extends DeferredRegister<?>> R defreg(Function<String,R> defregFactory)
 	{
-		IEventBus modBus = ModList.get().getModContainerById(MODID).get().getEventBus();
+		IEventBus modBus = modBus();
 		R register = defregFactory.apply(MODID);
 		register.register(modBus);
 		return register;
